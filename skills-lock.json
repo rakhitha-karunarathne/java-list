@@ -25,6 +25,11 @@
       "skillPath": "skills/bmad-agent-architect/SKILL.md",
       "computedHash": "1fb2a37de79a60d36a18e4023934ea7da5d8dc31de30d9ea14774434ffb5d27c"
     },
+    "bmad-agent-builder": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "ed52c0e9fc30f1750da13fc9712c69e8bb01af4c4b51b75ad901bf51b783de58"
+    },
     "bmad-agent-dev": {
       "source": "bmad-code-org/BMAD-METHOD",
       "sourceType": "github",
@@ -43,6 +48,11 @@
       "skillPath": "skills/bmad-agent-po/SKILL.md",
       "computedHash": "1bd7c5781a69fac12481719733a9fc09ee7defdeb9b72a7652c4c2d3cbd65925"
     },
+    "bmad-agent-tech-writer": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "727a59cd03a80951fba29f1ffa322262525683fbf4296a5e498e39834b65e345"
+    },
     "bmad-agent-ux-designer": {
       "source": "bmad-code-org/BMAD-METHOD",
       "sourceType": "github",
@@ -54,6 +64,11 @@
       "sourceType": "github",
       "skillPath": "skills/bmad-architecture/SKILL.md",
       "computedHash": "2548da63a12fad56018044369d1e10b49659f558bf83c617a32b411ac2ff5211"
+    },
+    "bmad-bmb-setup": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "a780c2a460a21c091b0db1779dda0637834bcaf610f8437bade6cf825b078a9e"
     },
     "bmad-brainstorming": {
       "source": "bmad-code-org/BMAD-METHOD",
@@ -73,11 +88,96 @@
       "skillPath": "skills/bmad-build-auto/SKILL.md",
       "computedHash": "c159817a870a8ba1bb8380b35ecb310d97baef0c027152b15e4904f37de05a1c"
     },
+    "bmad-check-implementation-readiness": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "e4ac75a6122567d6c236f6eebce69e8169b5ed970410cda58fba9ec90ead14e3"
+    },
+    "bmad-checkpoint-preview": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "0ab86bac1e05610173641f39d91a3d5cd2d0898b4d0b5ab0d28ec12ee41483df"
+    },
+    "bmad-cis-agent-brainstorming-coach": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "cf20d7a162afa1f3980e986767103eb2181b884178ef2e6d5d1f4ea6b5f156f5"
+    },
+    "bmad-cis-agent-creative-problem-solver": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "0bdc398c0371cc1132838acb848fe263b4855b6e70b67c68d29b7dd10f44af28"
+    },
+    "bmad-cis-agent-design-thinking-coach": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "f903ef45587555fdba923e6804819fc1819737510563f60e44ea8595ad8c70ec"
+    },
+    "bmad-cis-agent-innovation-strategist": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "9f04076bff7b925002cb9b42b05add3d23a1a19de6e1cae9e7965c8ef1d9d679"
+    },
+    "bmad-cis-agent-presentation-master": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "1a79c456c4ad5ddcd180a98883cd8ed1bdaaa1115979803d2342b6cd8b9a15bb"
+    },
+    "bmad-cis-agent-storyteller": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "191d2c768384ab4b9ccd3dd2d25d6a9a26dc3975f75520c5107d2a71e199d282"
+    },
+    "bmad-cis-design-thinking": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "9cc93f0a51caa78c3e6fffaf038ddcea8a28028bf09efed9ea9125e7d8b5892c"
+    },
+    "bmad-cis-innovation-strategy": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "47686682b60be865f23fa7f5ae2f08222216b0772f05c26f6a6cecb54f88088d"
+    },
+    "bmad-cis-problem-solving": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "71172f3c0b3522723f5af768475f7472245bec256e7dfd82a693bbc216cdde6e"
+    },
+    "bmad-cis-storytelling": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "3d6badeb1c608c95f54e0782c872ec3b7ef68bbb2895e4dd048f2449670c287f"
+    },
     "bmad-code-review": {
       "source": "bmad-code-org/BMAD-METHOD",
       "sourceType": "github",
       "skillPath": "skills/bmad-code-review/SKILL.md",
       "computedHash": "c0083243f642c893eb2985b47cb4ae03398088db965b22853dedec169f6da8e9"
+    },
+    "bmad-correct-course": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "8e80969e0b906a6ff7a37fe56cdd93464c76ced4b82958a6054b35f0fb94b554"
+    },
+    "bmad-create-architecture": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "72302ca5fc614e6f2c59d5ba70c91b8a6bbf8a7827ba09ebc8839d8a05b06db5"
+    },
+    "bmad-create-epics-and-stories": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "353049a2eee961f68237af7cfec85dcbf20209d390d5a9d0a60a40bfdd456ebb"
+    },
+    "bmad-create-prd": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "427b45e3e4938329cf6c9791d4344b8432172912fd1ed3c9b618a096b9fa42ff"
+    },
+    "bmad-create-story": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "889bda4e8cae19b855916749c83a2e4c1ee9611c697aa49715107379af682b45"
     },
     "bmad-customize": {
       "source": "bmad-code-org/BMAD-METHOD",
@@ -91,17 +191,82 @@
       "skillPath": "skills/bmad-deep-recon/SKILL.md",
       "computedHash": "975006fc14c711926e378176444910d5e9324cc2c617f178707b44ab3b33964a"
     },
+    "bmad-dev-story": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "ec53e1b1dc06955cc57945f58f546c00656b8ebe7d90653436d775fc5613d155"
+    },
+    "bmad-document-project": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "22f50e852e7ef23ba0fe831db3ce5f5f3f1f46595d86031d55f57d86062b130c"
+    },
+    "bmad-domain-research": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "b214ee05979b6505ab517f6357fb2911d99ff4c8852d8929ce86a1c08884065a"
+    },
+    "bmad-edit-prd": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "81ae257e7c0f678633e5898e289e14d1dec92a29f0434cceff1345b779d5b6cb"
+    },
+    "bmad-editorial-review-prose": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "76625946103c848ff9b3bdaaada60a5f945e420110dc1b0146404f94569f326d"
+    },
+    "bmad-editorial-review-structure": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "1f1190b5f45b32365cacc2695072ae8f9cb6d889bd7254b37332873f2ef5e8a6"
+    },
     "bmad-eval": {
       "source": "bmad-code-org/BMAD-METHOD",
       "sourceType": "github",
       "skillPath": "skills/bmad-eval/SKILL.md",
       "computedHash": "622df0916e5280a018e09d7c4c8fd1720875b17fd81f705388d4a7811339c023"
     },
+    "bmad-eval-runner": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "26ee414e376b9162c162ad9bf23aaadeff1a4db6735e7524c70008c92af587f1"
+    },
     "bmad-forge-idea": {
       "source": "bmad-code-org/BMAD-METHOD",
       "sourceType": "github",
       "skillPath": "skills/bmad-forge-idea/SKILL.md",
       "computedHash": "131a644dab2b9d7756d0c9e0b511c433647901ce7ca83a980a0f1db0cfa9ef65"
+    },
+    "bmad-generate-project-context": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "a79009217eea11ffcad3db959bec7190d81ded5c57c03debfc295fae7f2c38d7"
+    },
+    "bmad-help": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "3903e306a46dd7e110ee89593ef1de8c76a7f4b7863df30646ee760d28b59a6d"
+    },
+    "bmad-index-docs": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "843f60344a4938aa9a18ec6013c1dfeaea814722b7d00954d6bed3a7ee9fad35"
+    },
+    "bmad-investigate": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "a7e0bf81ab8588ad4712fd1cc2b98d1f12f315fa8f5dcae5415c2c9febe39233"
+    },
+    "bmad-market-research": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "98b075c7c78d98a1768f9cf17389bab295b64bd03c65a6dd616aa9cc0bf05819"
+    },
+    "bmad-module-builder": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "1f69fd9ea0815be94e35847a7e6cc3a0d645e72639589aa8893fdac44980aa0c"
     },
     "bmad-party-mode": {
       "source": "bmad-code-org/BMAD-METHOD",
@@ -139,11 +304,116 @@
       "skillPath": "skills/bmad-qa-generate-e2e-tests/SKILL.md",
       "computedHash": "79fb9e60c96664e15539bdd853738da2fac80d7f9f982b343a74568ca3ff5ef2"
     },
+    "bmad-quick-dev": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "f58bdf7e2a33f2b830a867a928f03f23e7b2f00be8e11137356778b1b5a8fc01"
+    },
+    "bmad-retrospective": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "0d99ef38f24bca0e6738e5a76b0fd2f47276714b10b9d8beac4a8aa7bf5308e3"
+    },
     "bmad-review": {
       "source": "bmad-code-org/BMAD-METHOD",
       "sourceType": "github",
       "skillPath": "skills/bmad-review/SKILL.md",
       "computedHash": "0aadea57f2951226f440a4f33eb13820c012d898c1201aacb0df3358f3c30769"
+    },
+    "bmad-review-adversarial-general": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "3c341d6f5ab5fddc124eef46ba5381573e1e13dad9695afe880997d23f8768f2"
+    },
+    "bmad-review-edge-case-hunter": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "047efb68781fa79b8ca6b4743fe5a43028fd937a51bcf6d7d90109adf8a757ee"
+    },
+    "bmad-shard-doc": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "37a4546f9c53b51e6770dd9318da3394282bcf9b855868fd4e7dd9689cf2cedb"
+    },
+    "bmad-spec": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "00be04b5c034a5271eac981e7e4a57949346ba4df77e1fe468e11169bf463644"
+    },
+    "bmad-sprint-planning": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "9fcbab91c29d5226bea4504f324d608b6e37d95aca7f08a3b70d5a3c48eb1e44"
+    },
+    "bmad-sprint-status": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "beda399876676d4c7e63d0cfd15be6ecc07b6d4cec5e699ae97678554aeac259"
+    },
+    "bmad-story-automator": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "04d48e863641757d80010416f671740ba9b122ad035fca80aad329aef1e43c7b"
+    },
+    "bmad-story-automator-review": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "7447dfeffd62dcb5359706d2498e83786788401af8336853a1bc8540b9461645"
+    },
+    "bmad-tea": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "4aa85ba8c896a1c16d824dd5228249dfbf8829a34f6ddcd8c153ee6119e9a85d"
+    },
+    "bmad-teach-me-testing": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "d42b14e0c9210784ae63c84b4e20af420fa2401b510b58e2c8d37b6f70b85b76"
+    },
+    "bmad-technical-research": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "e2552e755d67256ee7fdde2a05a22c59bddef366da0b6a7ad38f8f2858fc2050"
+    },
+    "bmad-testarch-atdd": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "25cf3f66cc204cb34437709f071ae6309f9458f1dbe38b9e005c0d3cd091c53b"
+    },
+    "bmad-testarch-automate": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "0ce29469b90e549ee5ab88af04a80988593c394ac2b02e7cb748921ee1420184"
+    },
+    "bmad-testarch-ci": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "ded63361c2dcad7b5c2ffe71c88dfe1da94fd87baed89e81a200d79ca1b20d48"
+    },
+    "bmad-testarch-framework": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "afd061298c6f85276827499761929bc90cacd882e30749542568e61388830911"
+    },
+    "bmad-testarch-nfr": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "5710cb9298fc2fae9d51106703cd608cb37b76711be034ed92496f16dc0ae3b8"
+    },
+    "bmad-testarch-test-design": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "887904d0cbfb9913fbda656a1d4ed05bdb59bdc91b8fee33e7e70dc1727a2be2"
+    },
+    "bmad-testarch-test-review": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "899b112012b70d71f939882149f74896847a1d06425757ef89813b1f3bc9b71b"
+    },
+    "bmad-testarch-trace": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "390dce2670327414b9de34996e879609f5f2378b9aa925eb30cee259c9847092"
     },
     "bmad-toolsmith": {
       "source": "bmad-code-org/BMAD-METHOD",
@@ -157,11 +427,21 @@
       "skillPath": "skills/bmad-ux/SKILL.md",
       "computedHash": "960633524966656e224452898b382db50dfdafe2b2404d95d6d55eabf77d8809"
     },
+    "bmad-validate-prd": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "153e311a1282a7c39f56319290c570e56c0e603a0918c21a35ac0938cc3708ad"
+    },
     "bmad-walkthrough": {
       "source": "bmad-code-org/BMAD-METHOD",
       "sourceType": "github",
       "skillPath": "skills/bmad-walkthrough/SKILL.md",
       "computedHash": "289ddacc4d3061837d86211cd40c9cad967167e4fa608906bd31219afd4cbeb5"
+    },
+    "bmad-workflow-builder": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "f52d23d0ac41d3bd5a94e1d67f1e17b0945b75b1365daddfda30aaab1b178ac9"
     },
     "bmod-core-tools": {
       "source": "bmad-code-org/BMAD-METHOD",
@@ -186,6 +466,81 @@
       "sourceType": "github",
       "skillPath": "skills/caveman/SKILL.md",
       "computedHash": "71b600c88c8d1d36f18c4875db23b53c5d6cb9ba3195e19451d6b1bb67db07c4"
+    },
+    "memory": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "63e65c1c3b2f1df4adb15022869fdf340c91416293714eabc300e5c6d3fdc9f3"
+    },
+    "sync": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "594207e7e01372483f488ad4188eb07e604851cc188be55eb55236ff57347ea0"
+    },
+    "wds-0-alignment-signoff": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "8940e447621443198c688145adaea6baf7c87e085ee10b493239e4ff556f1939"
+    },
+    "wds-0-project-setup": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "5c188ad22ced7cbcad043cbc8457fb862e6feeea9fab9dd612c44a8a9cd5b7d4"
+    },
+    "wds-1-project-brief": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "0d1856eb50f3ef79215d13309cfda4d04b5c9c2369f2f2fb6286a7e11e3689ab"
+    },
+    "wds-2-trigger-mapping": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "24f649f95634155821a1c6b92e81ee28a51f7083de5c6162e54605d423fada82"
+    },
+    "wds-3-scenarios": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "d0918f788d4d3513f36ba52b5c7f0744396bcaf0413d55b406940b9f3fa35e85"
+    },
+    "wds-4-ux-design": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "11320444bc22094eb9fb880de90960727abf0eb1e56da0492c8d719984268412"
+    },
+    "wds-5-agentic-development": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "be52653036f6ff89e13c60363640b847b191206e60b269ca484db1f5fee7d7d6"
+    },
+    "wds-6-asset-generation": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "0c198d104bd3d2e00ae4179ea6ac6ef192dd45c28e0e434ecd2ded9b6b161e33"
+    },
+    "wds-7-design-system": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "618cf4b5bc3d0bfe23b71c6c0815aca31ec23939ed5ae465dcf084f89b92e11d"
+    },
+    "wds-8-product-evolution": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "721842e4a98d5618caa4c58d8aee3d0dd774b1f3b8f5a33030a26c4537a4fccf"
+    },
+    "wds-agent-freya-ux": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "37477eb65a537dc0b22f1d31ba884f94bda965ca883c5d8b178fd071855fe123"
+    },
+    "wds-agent-mimir-builder": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "32562fd432a24c5ce0214622d8916ade8f78ac90366dde4a299ed0ee27eece6c"
+    },
+    "wds-agent-saga-analyst": {
+      "source": "C:/bmad",
+      "sourceType": "local",
+      "computedHash": "8efcab54a69a09144b0d244711b3ba55c8ac7047aaa54cad3bd54c787a728901"
     }
   }
 }
