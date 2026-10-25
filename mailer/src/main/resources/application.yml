@@ -26,10 +26,11 @@ management:
       show-details: when_authorized
 
 mailer:
+  public-base-url: ${MAILER_PUBLIC_BASE_URL:https://lists.example.com}
   bootstrap:
     email: ${MAILER_BOOTSTRAP_EMAIL:admin@example.com}
     password: ${MAILER_BOOTSTRAP_PASSWORD:changeme}
   jwt:
-    # Dev-only default (≥32 bytes). Override via env in real deploys.
+    # Dev-only default (≥32 bytes). Override via env in real deploys. Never store in Parameters.
     secret: ${MAILER_JWT_SECRET:dev-only-change-me-32chars-minimum!!}
 

@@ -37,3 +37,5 @@ docker compose --profile test up -d
 ```
 
 Default / production-shaped Compose omits GreenMail (app + MariaDB only; phpMyAdmin stays behind `tools`).
+
+See [docs/deploy.md](docs/deploy.md) for HTTPS (Flexible unsupported), secrets placement, and Public base URL.
