@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 class UsersAdminControllerTest {
 
   @Mock UserRepository users;
+  @Mock UserListGrantRepository grants;
   @Mock PasswordEncoder passwordEncoder;
   @InjectMocks UsersAdminController controller;
 

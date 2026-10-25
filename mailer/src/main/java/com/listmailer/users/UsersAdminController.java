@@ -2,15 +2,19 @@ package com.listmailer.users;
 
 import com.listmailer.kernel.ids.Guids;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,10 +25,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class UsersAdminController {
 
   private final UserRepository users;
+  private final UserListGrantRepository grants;
   private final PasswordEncoder passwordEncoder;
 
-  public UsersAdminController(UserRepository users, PasswordEncoder passwordEncoder) {
+  public UsersAdminController(
+      UserRepository users, UserListGrantRepository grants, PasswordEncoder passwordEncoder) {
     this.users = users;
+    this.grants = grants;
     this.passwordEncoder = passwordEncoder;
   }
 
@@ -81,6 +88,47 @@ public class UsersAdminController {
     return UserResponse.from(users.save(user));
   }
 
+  @GetMapping("/{id}/grants")
+  public List<GrantResponse> listGrants(@PathVariable String id) {
+    requireUser(id);
+    return grants.findByUserId(id).stream().map(GrantResponse::from).toList();
+  }
+
+  @PutMapping("/{id}/grants")
+  @Transactional
+  public List<GrantResponse> replaceGrants(
+      @PathVariable String id, @RequestBody(required = false) List<GrantRequest> body) {
+    requireUser(id);
+    if (body == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "grants body required");
+    }
+    Set<String> seen = new HashSet<>();
+    for (GrantRequest g : body) {
+      if (g == null || !StringUtils.hasText(g.listId()) || (!g.manage() && !g.send())) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "listId required; manage and/or send must be true");
+      }
+      String listId = g.listId().trim();
+      if (!seen.add(listId)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "duplicate listId");
+      }
+    }
+    for (UserListGrantEntity existing : grants.findByUserId(id)) {
+      grants.delete(existing);
+    }
+    grants.flush();
+    for (GrantRequest g : body) {
+      grants.save(new UserListGrantEntity(id, g.listId().trim(), g.manage(), g.send()));
+    }
+    return grants.findByUserId(id).stream().map(GrantResponse::from).toList();
+  }
+
+  private UserEntity requireUser(String id) {
+    return users
+        .findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+  }
+
   private long countActiveAdminsExcluding(String excludeId) {
     return users.findAll().stream()
         .filter(u -> u.getRole() == UserRole.ADMIN && u.isEnabled() && !u.getId().equals(excludeId))
@@ -90,6 +138,14 @@ public class UsersAdminController {
   public record CreateUserRequest(String email, String password, UserRole role) {}
 
   public record PatchUserRequest(Boolean enabled, UserRole role) {}
+
+  public record GrantRequest(String listId, boolean manage, boolean send) {}
+
+  public record GrantResponse(String listId, boolean manage, boolean send) {
+    static GrantResponse from(UserListGrantEntity g) {
+      return new GrantResponse(g.getListId(), g.isCanManage(), g.isCanSend());
+    }
+  }
 
   public record UserResponse(String id, String email, UserRole role, boolean enabled) {
     static UserResponse from(UserEntity u) {
