@@ -3,7 +3,7 @@ title: 'Compose MariaDB Boot Flyway tracer'
 type: 'feature'
 ticket: '1'
 created: '2026-10-25'
-status: 'built'
+status: done
 baseline_revision: '1ef3538c383ab408f4b0ead31c43967886c80f43'
 route: 'oneshot'
 route_source: 'pinned'
