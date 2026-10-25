@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Palette options — List Mailer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Figtree:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap');
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 2rem;
+      font-family: system-ui, sans-serif;
+      background: #e8eaed; color: #111;
+    }
+    h1 { margin: 0 0 0.35rem; font-size: 1.35rem; }
+    .intro { color: #555; margin: 0 0 1.75rem; max-width: 40rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+    .theme {
+      background: var(--canvas);
+      color: var(--ink);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #c5c9d0;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+      font-family: var(--font);
+    }
+    .theme header {
+      padding: 1rem 1.1rem 0.75rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .theme header strong { display: block; font-size: 1rem; letter-spacing: -0.02em; }
+    .theme header span { font-size: 0.8rem; color: var(--muted); }
+    .snippet {
+      display: flex; min-height: 200px;
+    }
+    .side {
+      width: 88px; flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 0.75rem 0.5rem;
+      font-size: 0.65rem; font-weight: 600;
+    }
+    .side div { padding: 0.35rem 0.4rem; border-radius: 6px; margin-bottom: 0.2rem; color: var(--muted); }
+    .side .on { background: var(--accent-subtle); color: var(--accent-hover); }
+    .body { flex: 1; padding: 0.85rem; }
+    .body h3 { margin: 0 0 0.5rem; font-size: 0.95rem; letter-spacing: -0.02em; }
+    .btn {
+      display: inline-block; padding: 0.4rem 0.75rem; border-radius: 8px;
+      background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 600;
+      border: none; margin-right: 0.35rem;
+    }
+    .ghost {
+      background: var(--surface); color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.72rem; margin-top: 0.65rem; }
+    th { text-align: left; color: var(--muted); font-weight: 600; padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
+    td { padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
+    .chips { display: flex; gap: 0.35rem; flex-wrap: wrap; padding: 0.65rem 1rem 1rem; background: var(--surface); border-top: 1px solid var(--border); }
+    .chip {
+      width: 1.35rem; height: 1.35rem; border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .hex {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.62rem; color: var(--muted);
+      padding: 0 1rem 0.85rem; background: var(--surface);
+      line-height: 1.45;
+    }
+    /* 1 Clearwater — cyan, cool */
+    .t1 {
+      --canvas: #F1F5F9; --surface: #FFFFFF; --border: #E2E8F0;
+      --ink: #0F172A; --muted: #64748B;
+      --accent: #0891B2; --accent-hover: #0E7490; --accent-subtle: #ECFEFF;
+      --font: "DM Sans", system-ui, sans-serif;
+    }
+    /* 2 Cobalt — classic blue SaaS */
+    .t2 {
+      --canvas: #F8FAFC; --surface: #FFFFFF; --border: #E2E8F0;
+      --ink: #0F172A; --muted: #64748B;
+      --accent: #2563EB; --accent-hover: #1D4ED8; --accent-subtle: #EFF6FF;
+      --font: "Plus Jakarta Sans", system-ui, sans-serif;
+    }
+    /* 3 Meadow — green modern */
+    .t3 {
+      --canvas: #F4F6F4; --surface: #FFFFFF; --border: #E2E8E4;
+      --ink: #14532D; --muted: #5B7164;
+      --accent: #059669; --accent-hover: #047857; --accent-subtle: #ECFDF5;
+      --font: "Source Sans 3", system-ui, sans-serif;
+    }
+    /* 4 Graphite — near-neutral, ink accent */
+    .t4 {
+      --canvas: #F4F4F5; --surface: #FFFFFF; --border: #E4E4E7;
+      --ink: #18181B; --muted: #71717A;
+      --accent: #3F3F46; --accent-hover: #27272A; --accent-subtle: #F4F4F5;
+      --font: "IBM Plex Sans", system-ui, sans-serif;
+    }
+    /* 5 Coral Signal — warm accent on cool gray (not cream/terracotta page) */
+    .t5 {
+      --canvas: #F7F8FA; --surface: #FFFFFF; --border: #E5E7EB;
+      --ink: #111827; --muted: #6B7280;
+      --accent: #E11D48; --accent-hover: #BE123C; --accent-subtle: #FFF1F2;
+      --font: "Figtree", system-ui, sans-serif;
+    }
+    /* 6 Indigo Night-edge — deep indigo accent, still light UI */
+    .t6 {
+      --canvas: #F5F3FF; --surface: #FFFFFF; --border: #EDE9FE;
+      --ink: #1E1B4B; --muted: #6B7280;
+      --accent: #4F46E5; --accent-hover: #4338CA; --accent-subtle: #EEF2FF;
+      --font: "Plus Jakarta Sans", system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <h1>Light · airy SaaS — pick a palette</h1>
+  <p class="intro">Six distinct registers. Reply with a name (e.g. Cobalt). All stay light-mode admin.</p>
+  <div class="grid">
+
+    <article class="theme t1">
+      <!-- Clearwater: #F1F5F9 #FFF #0F172A #64748B #0891B2 DM Sans -->
+      <header><strong>1 · Clearwater</strong><span>Cool cyan — calm ops console</span></header>
+      <div class="snippet">
+        <div class="side"><div class="on">Lists</div><div>Members</div><div>Campaigns</div></div>
+        <div class="body">
+          <h3>Lists</h3>
+          <span class="btn">New list</span><span class="btn ghost">Export</span>
+          <table><tr><th>Name</th><th>Count</th></tr><tr><td>Updates</td><td>1,240</td></tr></table>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" style="background:#F1F5F9"></div>
+        <div class="chip" style="background:#FFF;border-color:#94A3B8"></div>
+        <div class="chip" style="background:#0F172A"></div>
+        <div class="chip" style="background:#0891B2"></div>
+      </div>
+      <div class="hex">accent #0891B2 · DM Sans</div>
+    </article>
+
+    <article class="theme t2">
+      <!-- Cobalt: #F8FAFC #FFF #0F172A #64748B #2563EB Plus Jakarta -->
+      <header><strong>2 · Cobalt</strong><span>Familiar blue SaaS — crisp &amp; direct</span></header>
+      <div class="snippet">
+        <div class="side"><div class="on">Lists</div><div>Members</div><div>Campaigns</div></div>
+        <div class="body">
+          <h3>Lists</h3>
+          <span class="btn">New list</span><span class="btn ghost">Export</span>
+          <table><tr><th>Name</th><th>Count</th></tr><tr><td>Updates</td><td>1,240</td></tr></table>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" style="background:#F8FAFC"></div>
+        <div class="chip" style="background:#FFF;border-color:#94A3B8"></div>
+        <div class="chip" style="background:#0F172A"></div>
+        <div class="chip" style="background:#2563EB"></div>
+      </div>
+      <div class="hex">accent #2563EB · Plus Jakarta Sans</div>
+    </article>
+
+    <article class="theme t3">
+      <!-- Meadow: #F4F6F4 #FFF #14532D #5B7164 #059669 Source Sans 3 -->
+      <header><strong>3 · Meadow</strong><span>Green modern — steady, trustworthy</span></header>
+      <div class="snippet">
+        <div class="side"><div class="on">Lists</div><div>Members</div><div>Campaigns</div></div>
+        <div class="body">
+          <h3>Lists</h3>
+          <span class="btn">New list</span><span class="btn ghost">Export</span>
+          <table><tr><th>Name</th><th>Count</th></tr><tr><td>Updates</td><td>1,240</td></tr></table>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" style="background:#F4F6F4"></div>
+        <div class="chip" style="background:#FFF;border-color:#94A3B8"></div>
+        <div class="chip" style="background:#14532D"></div>
+        <div class="chip" style="background:#059669"></div>
+      </div>
+      <div class="hex">accent #059669 · Source Sans 3</div>
+    </article>
+
+    <article class="theme t4">
+      <!-- Graphite: #F4F4F5 #FFF #18181B #71717A #3F3F46 IBM Plex -->
+      <header><strong>4 · Graphite</strong><span>Near-neutral — quiet, tool-like</span></header>
+      <div class="snippet">
+        <div class="side"><div class="on">Lists</div><div>Members</div><div>Campaigns</div></div>
+        <div class="body">
+          <h3>Lists</h3>
+          <span class="btn">New list</span><span class="btn ghost">Export</span>
+          <table><tr><th>Name</th><th>Count</th></tr><tr><td>Updates</td><td>1,240</td></tr></table>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" style="background:#F4F4F5"></div>
+        <div class="chip" style="background:#FFF;border-color:#A1A1AA"></div>
+        <div class="chip" style="background:#18181B"></div>
+        <div class="chip" style="background:#3F3F46"></div>
+      </div>
+      <div class="hex">accent #3F3F46 · IBM Plex Sans</div>
+    </article>
+
+    <article class="theme t5">
+      <!-- Coral Signal: #F7F8FA #FFF #111827 #6B7280 #E11D48 Figtree -->
+      <header><strong>5 · Coral Signal</strong><span>Rose accent — high energy CTAs</span></header>
+      <div class="snippet">
+        <div class="side"><div class="on">Lists</div><div>Members</div><div>Campaigns</div></div>
+        <div class="body">
+          <h3>Lists</h3>
+          <span class="btn">New list</span><span class="btn ghost">Export</span>
+          <table><tr><th>Name</th><th>Count</th></tr><tr><td>Updates</td><td>1,240</td></tr></table>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" style="background:#F7F8FA"></div>
+        <div class="chip" style="background:#FFF;border-color:#9CA3AF"></div>
+        <div class="chip" style="background:#111827"></div>
+        <div class="chip" style="background:#E11D48"></div>
+      </div>
+      <div class="hex">accent #E11D48 · Figtree</div>
+    </article>
+
+    <article class="theme t6">
+      <!-- Indigo Night-edge: #F5F3FF #FFF #1E1B4B #6B7280 #4F46E5 Plus Jakarta -->
+      <header><strong>6 · Indigo Edge</strong><span>Deep indigo — product-y, sharper</span></header>
+      <div class="snippet">
+        <div class="side"><div class="on">Lists</div><div>Members</div><div>Campaigns</div></div>
+        <div class="body">
+          <h3>Lists</h3>
+          <span class="btn">New list</span><span class="btn ghost">Export</span>
+          <table><tr><th>Name</th><th>Count</th></tr><tr><td>Updates</td><td>1,240</td></tr></table>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" style="background:#F5F3FF"></div>
+        <div class="chip" style="background:#FFF;border-color:#A78BFA"></div>
+        <div class="chip" style="background:#1E1B4B"></div>
+        <div class="chip" style="background:#4F46E5"></div>
+      </div>
+      <div class="hex">accent #4F46E5 · Plus Jakarta Sans</div>
+    </article>
+
+  </div>
+</body>
+</html>
