@@ -34,7 +34,7 @@ R4 (parent C3; architecture AD-8, AD-21): Maven single-module Spring Boot app; F
 
 R5 (parent C3; architecture AD-9): React SPA is packaged into Boot static resources; JSON API under `/api`; non-API routes fall back to `index.html`.
 
-R6 (architecture AD-2, AD-6, AD-18, AD-19, AD-24): Thin kernel scaffold is present — security/JWT Bearer path, opaque-token helper stub, GUID id convention, Parameters port stub, mailbox and SMTP port stubs, scheduler host stub. Operator JWT is stored in sessionStorage on the SPA stub.
+R6 (architecture AD-2, AD-6, AD-18, AD-19, AD-24, AD-28): Thin kernel scaffold is present — security/JWT Bearer path, opaque-token helper stub, GUID id convention, Parameters port stub, mailbox and SMTP port stubs, scheduler host stub, and **empty filter chains** on port attachments and HTTP endpoints with a registration API (no plugin packs in V1). Operator JWT is stored in sessionStorage on the SPA stub.
 
 R7 (architecture AD-15 seed): Parameters port exposes at least Public base URL for later Admin UI; signing secrets and mailbox credentials are never stored as Parameters (env/secret file only).
 
@@ -72,7 +72,7 @@ C6 (architecture AD-10, AD-13): V1 assumes one app instance; no ShedLock/file/DB
 ## References
 
 - parent — `_bmad-output/initiative-java-list-mailer/initiative-java-list-mailer.md`, Requirements R34, Constraints C1–C4, C6
-- architecture — `_bmad-output/initiative-java-list-mailer/architecture-java-list-mailer/architecture-java-list-mailer.md`, AD-2, AD-6–AD-10, AD-13, AD-15, AD-18–AD-19, AD-21, AD-24, AD-27
+- architecture — `_bmad-output/initiative-java-list-mailer/architecture-java-list-mailer/architecture-java-list-mailer.md`, AD-2, AD-6–AD-10, AD-13, AD-15, AD-18–AD-19, AD-21, AD-24, AD-27–AD-28
 
 ## Notes
 
@@ -80,3 +80,4 @@ C6 (architecture AD-10, AD-13): V1 assumes one app instance; no ShedLock/file/DB
 - Decision: 2026-10-25 — Refine: parent R34 + architecture companions are sufficient; no epic-local PRD/UX. Bootstrap JWT stub uses env credentials for smoke only; full user store is epic-users-access. CI deferred unless a story needs it.
 - Assumption: Stack versions follow the architecture spine pin table until a story bumps them.
 - Decision: 2026-10-25 — Bootstrap JWT stub credentials use an **email** as login id (parent R1); full user store remains epic-users-access.
+- Decision: 2026-10-25 — Plugin filter-chain seams (AD-28) owned by this epic; plugin pack implementations stay out of V1.

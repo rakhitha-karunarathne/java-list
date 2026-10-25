@@ -211,6 +211,12 @@ flowchart TB
 - **Prevents:** tests hitting real SMTP/IMAP providers or a non-Compose MariaDB assumption
 - **Rule:** Automated and local integration tests use **Docker MariaDB** plus a **fake SMTP+IMAP** service (**GreenMail** standalone image). `smtp-adapter` and `mailbox-query` point at GreenMail. Prod/default Compose omits GreenMail (app + MariaDB + phpMyAdmin only). Prefer Compose profile `test` (or equivalent) for GreenMail + test MariaDB.
 
+### AD-28 — Plugin filter chains [ADOPTED]
+
+- **Binds:** kernel ports, all HTTP endpoints, future plugins
+- **Prevents:** ad-hoc plugin hooks per slice; expecting a full plugin OS in V1
+- **Rule:** Every **kernel port attachment** and every **API/public HTTP endpoint** runs an ordered **filter/interceptor chain**. Plugins may register filters on those chains only (observe/short-circuit/transform within the chain contract). V1 ships empty chains + registration API in the kernel/platform. First-party or third-party **plugin packs** are out of V1 product scope; this seam is enough flexibility for now.
+
 ## Consistency Conventions
 
 | Concern | Convention |
@@ -330,6 +336,7 @@ flowchart LR
 | Public subscribe / click tracking / POP3 / plugins | Ticket Boundaries |
 | List public/private flag | R10 / Boundaries |
 | ArchUnit dependency rules | Add when packages exist — enforce AD-1/AD-3 |
+| Plugin pack implementations | Seam only in V1 (AD-28); packs later |
 | Multi-env backup/DR runbooks | V1 = single Compose stack; add at first non-dev deploy |
 | MTS outcome matrix field-level ports | Owned by send-to-mail (R29–R32); detail at epic |
 | Attention role-scope field rules | Owned by attention (R8); detail at epic |

@@ -120,7 +120,7 @@ C8 (ux / prd IA): Detail pages for List, Member, Campaign, inbox, bounce mailbox
 
 ## Boundaries
 
-- Out of V1: public subscribe / preference center / template library; click tracking; POP3; plugin implementations; Cloudflare Flexible; external spam service / AI spam scoring.
+- Out of V1: public subscribe / preference center / template library; click tracking; POP3; **plugin pack implementations** (filter-chain **seams** ship in platform — AD-28); Cloudflare Flexible; external spam service / AI spam scoring.
 - No List public/private visibility flag in V1 (deferred intent only).
 - Touch point: architecture spine — binds deploy and module boundaries when finalized; owner: architecture-java-list-mailer
 - Tracer path: catalogs → lists/members → compose or mail-to-send → queue → bounce/ops → Attention/audit
@@ -139,8 +139,8 @@ C8 (ux / prd IA): Detail pages for List, Member, Campaign, inbox, bounce mailbox
 - Decision: 2026-10-25 — Requirements R1–R34 and Constraints C1–C8 approved in batches.
 - Decision: 2026-10-25 — Ops log retention is a Parameters field, default 90 days (closes prior Assumption).
 - Decision: 2026-10-25 — Compose: app + MariaDB + phpMyAdmin; phpMyAdmin private-only / off Cloudflare public path (architecture AD-7).
-- Open question: Plugin seams named in architecture only — no V1 implementations (Boundary).
 - Decision: 2026-10-25 — SPEC self-validate Pass 1 (coherence) and Pass 2 (preservation) recorded in memlog.
+- Decision: 2026-10-25 — Plugin seam: filter chains on each kernel port attachment and each API endpoint (architecture AD-28). V1 ships hooks; plugin pack implementations remain out of V1 (Boundary).
 - Decision: 2026-10-25 — Initiative sliced into 9 epics (platform → users → catalogs → lists/members → campaigns/send → unsub/consent → bounce → MTS → ops/Attention/audit). First product demo after campaigns epic; MTS after bounce for mailbox-query; thin Compose demo after platform/users.
 - Decision: 2026-10-25 — Operator username/login id is email (R1).
 - Decision: 2026-10-25 — Operator TOTP MFA optional by default; Admin can make MFA mandatory via Parameters (R1/R7).
