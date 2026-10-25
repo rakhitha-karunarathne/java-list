@@ -92,6 +92,28 @@ public class CampaignsController {
     return detail(sendService.queueAndSend(id));
   }
 
+  @PostMapping("/{id}/stop")
+  @Transactional
+  public CampaignDetail stop(@PathVariable String id) {
+    CampaignEntity c = require(id);
+    if (c.getStatus() != CampaignStatus.DRAFT
+        && c.getStatus() != CampaignStatus.QUEUED
+        && c.getStatus() != CampaignStatus.SENDING) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot stop from " + c.getStatus());
+    }
+    c.setStatus(CampaignStatus.STOPPED);
+    return detail(campaigns.save(c));
+  }
+
+  @PostMapping("/{id}/requeue")
+  public CampaignDetail requeue(@PathVariable String id) {
+    CampaignEntity c = require(id);
+    if (c.getStatus() != CampaignStatus.STOPPED) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "requeue only from Stopped");
+    }
+    return detail(sendService.queueAndSend(id));
+  }
+
   private CampaignEntity require(String id) {
     return campaigns
         .findById(id)
