@@ -24,3 +24,12 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+
+mailer:
+  bootstrap:
+    email: ${MAILER_BOOTSTRAP_EMAIL:admin@example.com}
+    password: ${MAILER_BOOTSTRAP_PASSWORD:changeme}
+  jwt:
+    # Dev-only default (≥32 bytes). Override via env in real deploys.
+    secret: ${MAILER_JWT_SECRET:dev-only-change-me-32chars-minimum!!}
+
