@@ -1,5 +1,7 @@
 package com.listmailer.kernel.security;
 
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.users.UserEntity;
 import com.listmailer.users.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -22,9 +24,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class EnabledUserFilter extends OncePerRequestFilter {
 
   private final UserRepository users;
+  private final ParametersPort parameters;
 
-  public EnabledUserFilter(UserRepository users) {
+  public EnabledUserFilter(UserRepository users, ParametersPort parameters) {
     this.users = users;
+    this.parameters = parameters;
   }
 
   @Override
@@ -33,7 +37,14 @@ public class EnabledUserFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof Jwt jwt) {
-      if ("mfa".equals(jwt.getClaimAsString("purpose"))) {
+      String purpose = jwt.getClaimAsString("purpose");
+      if ("mfa".equals(purpose)) {
+        response.sendError(HttpStatus.UNAUTHORIZED.value());
+        return;
+      }
+      String path = request.getServletPath();
+      boolean mfaRoute = "/api/me/mfa".equals(path) || path.startsWith("/api/me/mfa/");
+      if ("enroll".equals(purpose) && !mfaRoute) {
         response.sendError(HttpStatus.UNAUTHORIZED.value());
         return;
       }
@@ -43,10 +54,21 @@ public class EnabledUserFilter extends OncePerRequestFilter {
         response.sendError(HttpStatus.UNAUTHORIZED.value());
         return;
       }
+      if (!"enroll".equals(purpose) && mfaMandatory() && !user.isTotpEnabled() && !mfaRoute) {
+        response.sendError(HttpStatus.UNAUTHORIZED.value());
+        return;
+      }
       var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
       SecurityContextHolder.getContext()
           .setAuthentication(new JwtAuthenticationToken(jwt, authorities));
     }
     filterChain.doFilter(request, response);
+  }
+
+  private boolean mfaMandatory() {
+    return parameters
+        .get(ParameterKeys.MFA_MANDATORY)
+        .map(v -> "true".equalsIgnoreCase(v))
+        .orElse(false);
   }
 }

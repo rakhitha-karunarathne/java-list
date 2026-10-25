@@ -1,6 +1,8 @@
 package com.listmailer.kernel.security;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.users.MfaService;
 import com.listmailer.users.UserEntity;
 import com.listmailer.users.UserRepository;
@@ -31,6 +33,7 @@ public class AuthController {
   private final JwtDecoder jwtDecoder;
   private final MfaService mfa;
   private final MfaTokenStore mfaTokens;
+  private final ParametersPort parameters;
 
   public AuthController(
       UserRepository users,
@@ -38,13 +41,15 @@ public class AuthController {
       JwtEncoder jwtEncoder,
       JwtDecoder jwtDecoder,
       MfaService mfa,
-      MfaTokenStore mfaTokens) {
+      MfaTokenStore mfaTokens,
+      ParametersPort parameters) {
     this.users = users;
     this.passwordEncoder = passwordEncoder;
     this.jwtEncoder = jwtEncoder;
     this.jwtDecoder = jwtDecoder;
     this.mfa = mfa;
     this.mfaTokens = mfaTokens;
+    this.parameters = parameters;
   }
 
   @PostMapping("/login")
@@ -53,7 +58,21 @@ public class AuthController {
     if (user.isTotpEnabled()) {
       return Map.of("mfaRequired", true, "mfaToken", mfaToken(user));
     }
+    if (mfaMandatory()) {
+      return Map.of("enrollmentRequired", true, "enrollmentToken", enrollmentToken(user));
+    }
     return Map.of("token", accessToken(user));
+  }
+
+  public boolean mfaMandatory() {
+    return parameters
+        .get(ParameterKeys.MFA_MANDATORY)
+        .map(v -> "true".equalsIgnoreCase(v))
+        .orElse(false);
+  }
+
+  public String accessTokenFor(UserEntity user) {
+    return accessToken(user);
   }
 
   @PostMapping("/mfa")
@@ -126,6 +145,19 @@ public class AuthController {
             .expiresAt(now.plusSeconds(300))
             .subject(user.getId())
             .claim("purpose", "mfa")
+            .build();
+    return encode(claims);
+  }
+
+  private String enrollmentToken(UserEntity user) {
+    Instant now = Instant.now();
+    JwtClaimsSet claims =
+        JwtClaimsSet.builder()
+            .issuer("list-mailer")
+            .issuedAt(now)
+            .expiresAt(now.plusSeconds(900))
+            .subject(user.getId())
+            .claim("purpose", "enroll")
             .build();
     return encode(claims);
   }

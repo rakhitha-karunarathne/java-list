@@ -1,5 +1,9 @@
 package com.listmailer.users;
 
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
+import com.listmailer.kernel.security.AuthController;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -18,10 +22,18 @@ public class MfaController {
 
   private final UserRepository users;
   private final MfaService mfa;
+  private final ParametersPort parameters;
+  private final AuthController authController;
 
-  public MfaController(UserRepository users, MfaService mfa) {
+  public MfaController(
+      UserRepository users,
+      MfaService mfa,
+      ParametersPort parameters,
+      AuthController authController) {
     this.users = users;
     this.mfa = mfa;
+    this.parameters = parameters;
+    this.authController = authController;
   }
 
   @PostMapping("/setup")
@@ -40,7 +52,13 @@ public class MfaController {
     UserEntity user = current(auth);
     try {
       List<String> codes = mfa.confirmSetup(user, body.code());
-      return Map.of("enabled", true, "backupCodes", codes);
+      Map<String, Object> out = new LinkedHashMap<>();
+      out.put("enabled", true);
+      out.put("backupCodes", codes);
+      if (auth.getPrincipal() instanceof Jwt jwt && "enroll".equals(jwt.getClaimAsString("purpose"))) {
+        out.put("token", authController.accessTokenFor(user));
+      }
+      return out;
     } catch (IllegalStateException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
     } catch (IllegalArgumentException ex) {
@@ -50,6 +68,12 @@ public class MfaController {
 
   @DeleteMapping
   public Map<String, Boolean> unenroll(Authentication auth, @RequestBody CodeRequest body) {
+    if (parameters
+        .get(ParameterKeys.MFA_MANDATORY)
+        .map(v -> "true".equalsIgnoreCase(v))
+        .orElse(false)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "MFA is mandatory");
+    }
     UserEntity user = current(auth);
     try {
       mfa.unenroll(user, body.code());
