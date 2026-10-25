@@ -13,8 +13,8 @@ Technical-how, rejected options, and sizing defaults that belong downstream (arc
 
 - Backend: Java, Spring Boot (latest), Spring schedules for periodic work
 - Frontend: React
-- Database: MySQL
-- Delivery: single Docker container
+- Database: MariaDB
+- Delivery: single Docker container for app + schedulers; Compose also includes MariaDB + phpMyAdmin (phpMyAdmin private-only, not on Cloudflare public path)
 - Plugin architecture: required later; hook list deferred to architecture
 - No integrations beyond what the PRD lists for V1
 
@@ -58,6 +58,7 @@ Open for architecture: which extra standard headers beyond Message-ID to parse i
 | Campaign TTL default / hard max | 180 / 365 days |
 | Bounce log processed / unprocessed TTL | 180 / 365 days |
 | Audit retention | 365 days |
+| Ops log retention | 90 days |
 | Consent invite expiry | 14 days |
 | Auto-block | 10 counted rejects / day (sender only) |
 | VERP | off |

@@ -15,7 +15,7 @@ Not a phpList port. New product with phpList-like operator behaviors and interac
 
 - Backend: Java, Spring Boot (latest), Spring schedules for periodic work
 - Frontend: React
-- Database: MySQL
+- Database: MariaDB
 - Delivery: single Docker container
 - Plugin architecture: required later; **hook list deferred to architecture** (not further product-grilled here)
 - No integrations beyond what is listed here (V1)

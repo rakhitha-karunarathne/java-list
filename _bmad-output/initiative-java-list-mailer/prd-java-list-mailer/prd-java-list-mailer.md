@@ -149,7 +149,7 @@ Admin can configure exactly one Notice sending path used for system/consent/admi
 
 #### FR-7: Parameters (admin-only)
 
-Admin can edit all system-wide non-credential tunables on a single Parameters page/entity (bounce limits, VERP, schedules including bounce-process default 02:00 and timezone default UTC, throttle, image fetch timeout default 30s, payload/image hard uppers, campaign TTL default/max, bounce log TTLs, audit retention, image-fetch mode, consent expiry, auto-block default 10/day, hard bounce limit default 3, soft default initially 2× hard then independent, holdback multiplier default 2, etc.). Credentials remain only on Sending paths / mailboxes. Signing secrets for pixel/unsubscribe/consent are not stored as Parameters plaintext.
+Admin can edit all system-wide non-credential tunables on a single Parameters page/entity (bounce limits, VERP, schedules including bounce-process default 02:00 and timezone default UTC, throttle, image fetch timeout default 30s, payload/image hard uppers, campaign TTL default/max, bounce log TTLs, audit retention, **ops log retention default 90 days**, image-fetch mode, consent expiry, auto-block default 10/day, hard bounce limit default 3, soft default initially 2× hard then independent, holdback multiplier default 2, etc.). Credentials remain only on Sending paths / mailboxes. Signing secrets for pixel/unsubscribe/consent are not stored as Parameters plaintext.
 
 **Consequences (testable):**
 - Changing hard bounce limit does not change an already-customized soft limit.
@@ -250,12 +250,13 @@ On Campaign compose (phpList-like), an authorized sender can enter a list of ema
 
 #### FR-39: Ops Logs (send / poll issues)
 
-Admins have Ops Logs covering at least: **send issues** (production queue and test-send SMTP/transport failures); **bounce mailbox polling issues**; **mail-to-send inbox polling issues**. UI may be one filtered log with category views or separate detail pages linked from an index — each entry shows time, category, severity, summary, and detail. **Error**-severity entries are highlighted on the **Admin Attention** list (FR-8) with navigation into the Ops Log entry. List managers / List senders do not get Ops Logs in V1. Retention follows a Parameters-configurable TTL or audit-adjacent purge — `[ASSUMPTION: default 90 days for ops log detail; confirm with Parameters defaults later.]`
+Admins have Ops Logs covering at least: **send issues** (production queue and test-send SMTP/transport failures); **bounce mailbox polling issues**; **mail-to-send inbox polling issues**. UI may be one filtered log with category views or separate detail pages linked from an index — each entry shows time, category, severity, summary, and detail. **Error**-severity entries are highlighted on the **Admin Attention** list (FR-8) with navigation into the Ops Log entry. List managers / List senders do not get Ops Logs in V1. **Retention** is a Parameters setting (**ops log retention**), **default 90 days**; older entries purged by a scheduled job (clock = entry `created_at`).
 
 **Consequences (testable):**
 - A bounce IMAP poll auth failure creates an Ops Log error and an Admin Attention item linking to it.
 - A mail-to-send poll failure likewise.
 - A Campaign or test-send SMTP failure appears under send issues and on Admin Attention when severity is error.
+- Ops log retention is editable on Parameters; default value is 90 days.
 
 #### FR-18: Send queue processor
 
@@ -420,7 +421,6 @@ Install produces an initial Admin. Admins can create/disable Users and assign ro
 
 - Inline assumption from §4.6 FR-31 — mail-to-send inboxes are not public / hard to guess.
 - Inline assumption from §4.7 FR-34 — local username/password auth in V1; no SSO required.
-- Inline assumption from §4.4 FR-39 — Ops Log detail retention default 90 days (Parameters later).
 - Inline assumption from §4.1 FR-5 — unsubscribe link always injected even when Footer catalog empty.
 - Inline assumption from §10 — WCAG 2.1 AA target for operator UI (confirm in UX).
 - `[ASSUMPTION: competitive landscape is Listmonk/Keila/Mautic/phpList; product differentiates on phpList-like operator paths + mail-to-send/bounce rigor on a non-PHP stack — not on matching Listmonk throughput claims.]`
