@@ -1,22 +1,15 @@
 package com.listmailer.kernel.security;
 
-import com.listmailer.kernel.ids.Guids;
 import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.users.MfaService;
 import com.listmailer.users.UserEntity;
 import com.listmailer.users.UserRepository;
-import java.time.Instant;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,50 +22,39 @@ public class AuthController {
 
   private final UserRepository users;
   private final PasswordEncoder passwordEncoder;
-  private final JwtEncoder jwtEncoder;
   private final JwtDecoder jwtDecoder;
   private final MfaService mfa;
   private final MfaTokenStore mfaTokens;
   private final ParametersPort parameters;
+  private final AccessTokenService tokens;
 
   public AuthController(
       UserRepository users,
       PasswordEncoder passwordEncoder,
-      JwtEncoder jwtEncoder,
       JwtDecoder jwtDecoder,
       MfaService mfa,
       MfaTokenStore mfaTokens,
-      ParametersPort parameters) {
+      ParametersPort parameters,
+      AccessTokenService tokens) {
     this.users = users;
     this.passwordEncoder = passwordEncoder;
-    this.jwtEncoder = jwtEncoder;
     this.jwtDecoder = jwtDecoder;
     this.mfa = mfa;
     this.mfaTokens = mfaTokens;
     this.parameters = parameters;
+    this.tokens = tokens;
   }
 
   @PostMapping("/login")
   public Map<String, Object> login(@RequestBody LoginRequest body) {
     UserEntity user = authenticatePassword(body.email(), body.password());
     if (user.isTotpEnabled()) {
-      return Map.of("mfaRequired", true, "mfaToken", mfaToken(user));
+      return Map.of("mfaRequired", true, "mfaToken", tokens.mfaToken(user));
     }
     if (mfaMandatory()) {
-      return Map.of("enrollmentRequired", true, "enrollmentToken", enrollmentToken(user));
+      return Map.of("enrollmentRequired", true, "enrollmentToken", tokens.enrollmentToken(user));
     }
-    return Map.of("token", accessToken(user));
-  }
-
-  public boolean mfaMandatory() {
-    return parameters
-        .get(ParameterKeys.MFA_MANDATORY)
-        .map(v -> "true".equalsIgnoreCase(v))
-        .orElse(false);
-  }
-
-  public String accessTokenFor(UserEntity user) {
-    return accessToken(user);
+    return Map.of("token", tokens.accessToken(user));
   }
 
   @PostMapping("/mfa")
@@ -102,7 +84,14 @@ public class AuthController {
     if (!mfa.verifyCode(user, body.code()) || !mfaTokens.consume(jti)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid MFA");
     }
-    return Map.of("token", accessToken(user));
+    return Map.of("token", tokens.accessToken(user));
+  }
+
+  private boolean mfaMandatory() {
+    return parameters
+        .get(ParameterKeys.MFA_MANDATORY)
+        .map(v -> "true".equalsIgnoreCase(v))
+        .orElse(false);
   }
 
   private UserEntity authenticatePassword(String email, String password) {
@@ -119,53 +108,6 @@ public class AuthController {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
     return user;
-  }
-
-  private String accessToken(UserEntity user) {
-    Instant now = Instant.now();
-    JwtClaimsSet claims =
-        JwtClaimsSet.builder()
-            .issuer("list-mailer")
-            .issuedAt(now)
-            .expiresAt(now.plusSeconds(8 * 3600))
-            .subject(user.getId())
-            .claim("email", user.getEmail())
-            .claim("role", user.getRole().name())
-            .build();
-    return encode(claims);
-  }
-
-  private String mfaToken(UserEntity user) {
-    Instant now = Instant.now();
-    JwtClaimsSet claims =
-        JwtClaimsSet.builder()
-            .id(Guids.newGuid())
-            .issuer("list-mailer")
-            .issuedAt(now)
-            .expiresAt(now.plusSeconds(300))
-            .subject(user.getId())
-            .claim("purpose", "mfa")
-            .build();
-    return encode(claims);
-  }
-
-  private String enrollmentToken(UserEntity user) {
-    Instant now = Instant.now();
-    JwtClaimsSet claims =
-        JwtClaimsSet.builder()
-            .issuer("list-mailer")
-            .issuedAt(now)
-            .expiresAt(now.plusSeconds(900))
-            .subject(user.getId())
-            .claim("purpose", "enroll")
-            .build();
-    return encode(claims);
-  }
-
-  private String encode(JwtClaimsSet claims) {
-    return jwtEncoder
-        .encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
-        .getTokenValue();
   }
 
   public record LoginRequest(String email, String password) {}
