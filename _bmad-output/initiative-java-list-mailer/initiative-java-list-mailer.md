@@ -36,7 +36,7 @@ R5 (prd FR-5, FR-37): Footers are catalogued; detail shows Used By (Lists, mappi
 
 R6 (prd FR-6): One Notice sending path for system/consent/admin mail; bypasses bounce-disable; Campaign queue never does.
 
-R7 (prd FR-7): Admin-only Parameters hold non-credential tunables (including ops log retention default 90 days, and whether operator MFA is mandatory); credentials on paths/mailboxes; signing secrets and MFA secrets/backup codes not in Parameters.
+R7 (prd FR-7): Admin-only Parameters hold non-credential tunables (including ops log retention default 90 days, and whether operator MFA is mandatory); each Parameter on the Admin page shows a description covering purpose, supported values, and value range; credentials on paths/mailboxes; signing secrets and MFA secrets/backup codes not in Parameters.
 
 R8 (prd FR-8, FR-39): Attention inbox for human action; Admin sees all including highlighted ops errors; List managers see only their Lists/Members; List senders have no Attention inbox.
 
@@ -144,4 +144,5 @@ C8 (ux / prd IA): Detail pages for List, Member, Campaign, inbox, bounce mailbox
 - Decision: 2026-10-25 — Initiative sliced into 9 epics (platform → users → catalogs → lists/members → campaigns/send → unsub/consent → bounce → MTS → ops/Attention/audit). First product demo after campaigns epic; MTS after bounce for mailbox-query; thin Compose demo after platform/users.
 - Decision: 2026-10-25 — Operator username/login id is email (R1).
 - Decision: 2026-10-25 — Operator TOTP MFA optional by default; Admin can make MFA mandatory via Parameters (R1/R7).
+- Decision: 2026-10-25 — Each Parameter on Admin page shows description: purpose, supported values, value range (R7).
 

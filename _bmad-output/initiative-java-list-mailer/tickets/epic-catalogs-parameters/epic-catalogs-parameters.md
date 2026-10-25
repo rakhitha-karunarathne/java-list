@@ -24,7 +24,7 @@ Ava can stand up system catalogs and Parameters before any list or campaign work
 
 1. Sending paths, bounce mailboxes, and footers CRUD with Used By / delete guards.
 2. One Notice sending path is configurable.
-3. Parameters Admin UI/API covers product defaults (ops log 90d, VERP off, **MFA mandatory** flag default off, etc.).
+3. Parameters Admin UI/API covers product defaults (ops log 90d, VERP off, **MFA mandatory** flag default off, etc.); **each parameter shows description** (purpose, supported values, value range).
 4. Credentials stay on paths/mailboxes; secrets never in Parameters (incl. TOTP secrets/backup codes — those live with users).
 
 ## Boundaries

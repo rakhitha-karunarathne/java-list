@@ -132,7 +132,7 @@ flowchart TB
 
 - **Binds:** R7, R25, R28, C6
 - **Prevents:** per-slice settings tables; secrets in Parameters
-- **Rule:** Kernel publishes Parameters port. **parameters** slice owns persistence + Admin `/api/parameters`. Other slices declare keys (constant + default + type) and read/write only via the port. Secrets never in Parameters. Seed defaults (product-locked): ops log retention 90d; audit retention 365d; consent link expiry 14d; bounce mailbox poll default 15m; VERP off; **operator MFA mandatory = off**.
+- **Rule:** Kernel publishes Parameters port. **parameters** slice owns persistence + Admin `/api/parameters`. Other slices declare keys (constant + default + type + **description**: purpose, supported values, value range/constraints) and read/write only via the port. Admin Parameters page **always shows** that description beside each value. Secrets never in Parameters. Seed defaults (product-locked): ops log retention 90d; audit retention 365d; consent link expiry 14d; bounce mailbox poll default 15m; VERP off; **operator MFA mandatory = off**.
 
 ### AD-16 — Slice inventory [ADOPTED]
 
