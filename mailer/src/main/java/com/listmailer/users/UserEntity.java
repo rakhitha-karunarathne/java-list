@@ -32,6 +32,12 @@ public class UserEntity {
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
+  @Column(name = "totp_secret", length = 64)
+  private String totpSecret;
+
+  @Column(name = "totp_enabled", nullable = false)
+  private boolean totpEnabled;
+
   protected UserEntity() {}
 
   public UserEntity(
@@ -42,6 +48,7 @@ public class UserEntity {
     this.role = role;
     this.enabled = enabled;
     this.createdAt = createdAt;
+    this.totpEnabled = false;
   }
 
   public String getId() {
@@ -74,5 +81,21 @@ public class UserEntity {
 
   public Instant getCreatedAt() {
     return createdAt;
+  }
+
+  public String getTotpSecret() {
+    return totpSecret;
+  }
+
+  public void setTotpSecret(String totpSecret) {
+    this.totpSecret = totpSecret;
+  }
+
+  public boolean isTotpEnabled() {
+    return totpEnabled;
+  }
+
+  public void setTotpEnabled(boolean totpEnabled) {
+    this.totpEnabled = totpEnabled;
   }
 }

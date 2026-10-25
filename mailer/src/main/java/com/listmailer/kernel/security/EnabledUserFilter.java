@@ -33,6 +33,10 @@ public class EnabledUserFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof Jwt jwt) {
+      if ("mfa".equals(jwt.getClaimAsString("purpose"))) {
+        response.sendError(HttpStatus.UNAUTHORIZED.value());
+        return;
+      }
       UserEntity user =
           users.findById(jwt.getSubject()).filter(UserEntity::isEnabled).orElse(null);
       if (user == null) {

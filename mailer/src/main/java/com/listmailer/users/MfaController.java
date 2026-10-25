@@ -1,0 +1,74 @@
+package com.listmailer.users;
+
+import java.util.List;
+import java.util.Map;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+@RestController
+@RequestMapping("/api/me/mfa")
+public class MfaController {
+
+  private final UserRepository users;
+  private final MfaService mfa;
+
+  public MfaController(UserRepository users, MfaService mfa) {
+    this.users = users;
+    this.mfa = mfa;
+  }
+
+  @PostMapping("/setup")
+  public Map<String, String> setup(Authentication auth) {
+    UserEntity user = current(auth);
+    try {
+      MfaService.Setup setup = mfa.startSetup(user);
+      return Map.of("secret", setup.secret(), "otpAuthUrl", setup.otpAuthUrl());
+    } catch (IllegalStateException ex) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
+    }
+  }
+
+  @PostMapping("/confirm")
+  public Map<String, Object> confirm(Authentication auth, @RequestBody CodeRequest body) {
+    UserEntity user = current(auth);
+    try {
+      List<String> codes = mfa.confirmSetup(user, body.code());
+      return Map.of("enabled", true, "backupCodes", codes);
+    } catch (IllegalStateException ex) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
+    } catch (IllegalArgumentException ex) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+  }
+
+  @DeleteMapping
+  public Map<String, Boolean> unenroll(Authentication auth, @RequestBody CodeRequest body) {
+    UserEntity user = current(auth);
+    try {
+      mfa.unenroll(user, body.code());
+      return Map.of("enabled", false);
+    } catch (IllegalStateException ex) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
+    } catch (IllegalArgumentException ex) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+  }
+
+  private UserEntity current(Authentication auth) {
+    if (auth == null || !(auth.getPrincipal() instanceof Jwt jwt)) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+    return users
+        .findById(jwt.getSubject())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+  }
+
+  public record CodeRequest(String code) {}
+}
