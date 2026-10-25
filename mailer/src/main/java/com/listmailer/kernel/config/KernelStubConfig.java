@@ -2,7 +2,6 @@ package com.listmailer.kernel.config;
 
 import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.SchedulerHost;
-import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.kernel.token.OpaqueTokenHelper;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,13 +12,6 @@ import org.springframework.context.annotation.Configuration;
 /** In-memory / no-op stubs until feature slices and adaptors land. */
 @Configuration
 public class KernelStubConfig {
-
-  @Bean
-  SmtpPort smtpPort() {
-    return message -> {
-      /* stub: smtp-adapter wires GreenMail later */
-    };
-  }
 
   @Bean
   MailboxPort mailboxPort() {

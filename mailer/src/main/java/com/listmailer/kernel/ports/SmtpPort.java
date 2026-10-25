@@ -1,9 +1,10 @@
 package com.listmailer.kernel.ports;
 
-/** Outbound SMTP port; smtp-adapter implements later. */
+/** Outbound SMTP port; smtp-adapter implements against a Sending path. */
 public interface SmtpPort {
 
   void send(SmtpMessage message);
 
-  record SmtpMessage(String from, String to, String subject, String textBody, String htmlBody) {}
+  record SmtpMessage(
+      String sendingPathId, String toEmail, String subject, String textBody, String htmlBody) {}
 }
