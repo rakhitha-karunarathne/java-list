@@ -24,7 +24,7 @@ Operators can leave PHP list software and run campaigns, lists, bounce handling,
 
 ## Requirements
 
-R1 (prd FR-1, FR-34): Install yields an initial Admin; Admins create/disable Users with local username/password; roles Admin / List manager / List sender enforce scoped access.
+R1 (prd FR-1, FR-34): Install yields an initial Admin; Admins create/disable Users with local email + password (email is the login id / username); roles Admin / List manager / List sender enforce scoped access.
 
 R2 (prd FR-2, FR-34): Per-List manage and/or send grants are edited on User detail; removing a grant takes effect immediately; Admin needs no list grants.
 
@@ -142,4 +142,5 @@ C8 (ux / prd IA): Detail pages for List, Member, Campaign, inbox, bounce mailbox
 - Open question: Plugin seams named in architecture only — no V1 implementations (Boundary).
 - Decision: 2026-10-25 — SPEC self-validate Pass 1 (coherence) and Pass 2 (preservation) recorded in memlog.
 - Decision: 2026-10-25 — Initiative sliced into 9 epics (platform → users → catalogs → lists/members → campaigns/send → unsub/consent → bounce → MTS → ops/Attention/audit). First product demo after campaigns epic; MTS after bounce for mailbox-query; thin Compose demo after platform/users.
+- Decision: 2026-10-25 — Operator username/login id is email (R1).
 

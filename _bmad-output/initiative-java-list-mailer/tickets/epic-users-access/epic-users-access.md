@@ -14,7 +14,7 @@ risk: high
 
 ## Description
 
-Install creates the initial Admin. Admins create/disable users with local credentials; Admin / List manager / List sender roles and per-list manage/send grants enforce scoped access via real JWT.
+Install creates the initial Admin. Admins create/disable users with local **email** + password (email is the login id); Admin / List manager / List sender roles and per-list manage/send grants enforce scoped access via real JWT.
 
 ## Outcome
 

@@ -79,3 +79,4 @@ C6 (architecture AD-10, AD-13): V1 assumes one app instance; no ShedLock/file/DB
 - Decision: 2026-10-25 — Opening platform-baseline epic (initiative slice).
 - Decision: 2026-10-25 — Refine: parent R34 + architecture companions are sufficient; no epic-local PRD/UX. Bootstrap JWT stub uses env credentials for smoke only; full user store is epic-users-access. CI deferred unless a story needs it.
 - Assumption: Stack versions follow the architecture spine pin table until a story bumps them.
+- Decision: 2026-10-25 — Bootstrap JWT stub credentials use an **email** as login id (parent R1); full user store remains epic-users-access.

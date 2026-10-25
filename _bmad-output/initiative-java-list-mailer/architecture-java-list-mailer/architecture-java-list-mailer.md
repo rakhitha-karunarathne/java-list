@@ -221,6 +221,7 @@ flowchart TB
 | Operator errors | `{ code, message, details? }` |
 | Operator lists | `page`, `size` → `items`, `page`, `size`, `total` |
 | Auth | `/api/**` JWT Bearer; public paths listed in AD-17 |
+| Operator login id | **Email** (not free-form username); initiative R1 |
 | Logging | No raw secrets/credentials in logs or Audit (C6) |
 | Config secrets | Env/secret file; Parameters = non-credential tunables only |
 | Utility slices | Adaptors only — no durable domain tables (`mailbox-query`, `smtp-adapter`) |
