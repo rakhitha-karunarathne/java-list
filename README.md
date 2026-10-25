@@ -4,7 +4,7 @@ java-list is an email newsletter and mailing-list application written in Java. I
 
 ## Status
 
-This repository is at the starting point. The application, build, and run instructions will be added as the project grows.
+Platform tracer is in place: Compose runs the Spring Boot app with MariaDB and Flyway. Feature work continues by epic.
 
 ## Goals
 
@@ -15,11 +15,13 @@ This repository is at the starting point. The application, build, and run instru
 
 ## Getting started
 
-Clone the repository:
+Requires Docker and (for local builds) JDK 21+ and Maven 3.9+.
 
 ```bash
 git clone https://github.com/rakhitha-karunarathne/java-list.git
 cd java-list
+docker compose up -d --build
+curl http://127.0.0.1:8080/actuator/health
 ```
 
-A Java version and build command will be documented here once the project has a build.
+Stack pins: Java 21, Spring Boot 4.1.2, MariaDB 12.3.3 (see architecture spine). App code lives in `mailer/`.

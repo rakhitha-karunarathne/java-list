@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: mailer
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://localhost:3306/mailer}
+    username: ${SPRING_DATASOURCE_USERNAME:mailer}
+    password: ${SPRING_DATASOURCE_PASSWORD:mailer}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
