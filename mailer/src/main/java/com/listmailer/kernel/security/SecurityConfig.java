@@ -41,7 +41,12 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/t/**", "/dl/**", "/unsubscribe/**", "/approve/**")
                     .permitAll()
-                    .requestMatchers("/api/users/**", "/api/parameters/**")
+                    .requestMatchers(
+                        "/api/users/**",
+                        "/api/parameters/**",
+                        "/api/sending-paths/**",
+                        "/api/bounce-mailboxes/**",
+                        "/api/footers/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/api/**")
                     .authenticated()
