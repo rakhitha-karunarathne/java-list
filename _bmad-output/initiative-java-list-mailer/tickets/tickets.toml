@@ -1,0 +1,79 @@
+# Initiative epic breakdown — build order. Approved 2026-10-25.
+
+[[epic]]
+id = 1
+slug = "epic-platform-kernel"
+title = "Platform & kernel"
+description = "Compose app + MariaDB (+ phpMyAdmin; GreenMail on test profile) runs; Flyway migrates; React-in-jar shell loads; JWT sessionStorage login stub and kernel ports skeleton are in place."
+covers = ["R34"]
+
+[[epic]]
+id = 2
+slug = "epic-users-access"
+title = "Users & access"
+description = "Install yields an Admin; Admins manage users, roles, and per-list grants; operator API uses real JWT."
+covers = ["R1", "R2"]
+after = [{ epic = 1, needs = "app shell, MariaDB, JWT stub" }]
+
+[[epic]]
+id = 3
+slug = "epic-catalogs-parameters"
+title = "Catalogs & Parameters"
+description = "Admin can catalogue sending paths, bounce mailboxes, footers, and the Notice path; Parameters hold non-credential tunables with product defaults; Used By blocks unsafe deletes."
+covers = ["R3", "R4", "R5", "R6", "R7", "R9", "R28"]
+after = [{ epic = 2, needs = "Admin auth and roles" }]
+
+[[epic]]
+id = 4
+slug = "epic-lists-members"
+title = "Lists & members"
+description = "Authorized users manage Lists and memberships (incl. bulk paste); Members index/detail with enable/disable distinct from unsubscribe."
+covers = ["R10", "R11", "R12", "R13", "R16", "R17"]
+after = [{ epic = 3, needs = "sending paths and footers" }]
+
+[[epic]]
+id = 5
+slug = "epic-campaigns-send"
+title = "Campaigns & send path"
+description = "Multi-list campaign compose through send-queue with blobs and open pixel; test send and reporting work against GreenMail."
+covers = ["R18", "R19", "R20", "R21", "R22", "R23", "R24"]
+after = [{ epic = 4, needs = "lists and members" }]
+
+[[epic]]
+id = 6
+slug = "epic-unsubscribe-consent"
+title = "Unsubscribe & consent"
+description = "HTTPS unsubscribe (one URL per send) and consent clear-unsub via notice-mail work and are audited."
+covers = ["R14", "R15"]
+after = [{ epic = 5, needs = "campaign send and opaque tokens" }]
+
+[[epic]]
+id = 7
+slug = "epic-bounce-processing"
+title = "Bounce processing"
+description = "Bounce poll and daily process correlate safely; hard/soft limits disable; uncorrelated never auto-disable; ops/Attention hooks fire."
+covers = ["R26", "R27"]
+after = [{ epic = 5, needs = "send-queue correlation contract" }]
+
+[[epic]]
+id = 8
+slug = "epic-mail-to-send"
+title = "Mail-to-send"
+description = "IMAP mail-to-send inboxes with auth/spam/drop/issues create campaigns for authorized senders; strangers stay silent or logged."
+covers = ["R29", "R30", "R31", "R32"]
+after = [
+  { epic = 5, needs = "campaigns and smtp-adapter" },
+  { epic = 7, needs = "mailbox-query utility" },
+]
+
+[[epic]]
+id = 9
+slug = "epic-ops-attention-audit"
+title = "Ops, Attention & audit close"
+description = "Ops logs with retention, Attention by role (incl. highlighted ops errors), and append-only audit with retention are complete; sidebar IA for detail pages holds."
+covers = ["R8", "R25", "R33"]
+after = [
+  { epic = 6, needs = "consent/unsub audit events" },
+  { epic = 7, needs = "bounce ops/Attention hooks" },
+  { epic = 8, needs = "MTS ops/Attention hooks" },
+]
