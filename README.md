@@ -25,3 +25,15 @@ curl http://127.0.0.1:8080/actuator/health
 ```
 
 Stack pins: Java 21, Spring Boot 4.1.2, MariaDB 12.3.3 (see architecture spine). App code lives in `mailer/`.
+
+Optional Compose profiles:
+
+```bash
+# phpMyAdmin on http://127.0.0.1:8081 only (never publish on a public edge)
+docker compose --profile tools up -d
+
+# GreenMail SMTP 3025 / IMAP 3143 for tests; point app with SPRING_PROFILES_ACTIVE=test
+docker compose --profile test up -d
+```
+
+Default / production-shaped Compose omits GreenMail (app + MariaDB only; phpMyAdmin stays behind `tools`).

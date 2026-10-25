@@ -1,0 +1,9 @@
+# Activate with SPRING_PROFILES_ACTIVE=test when Compose profile `test` runs GreenMail.
+# smtp-adapter / mailbox-query (later epics) should read these host/ports.
+mailer:
+  smtp:
+    host: ${MAILER_SMTP_HOST:greenmail}
+    port: ${MAILER_SMTP_PORT:3025}
+  imap:
+    host: ${MAILER_IMAP_HOST:greenmail}
+    port: ${MAILER_IMAP_PORT:3143}
