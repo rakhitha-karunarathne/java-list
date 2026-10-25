@@ -3,41 +3,41 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Java list mailer — clickable UX mockup</title>
+<title>List Mailer — clickable UX mockup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
-  /* Decision: modernize chrome; keep page map + sidebar groups; responsive web+mobile. Spines win later. */
+  /* Clearwater (DESIGN.md) — light airy SaaS; spines win on conflict */
   :root {
-    --sidebar: #0b1220;
-    --sidebar-text: #b8c0cc;
-    --sidebar-hover: #151d2e;
-    --accent: #0f766e;
-    --accent-hover: #0d9488;
-    --accent-soft: #ccfbf1;
-    --topbar: rgba(255,255,255,.86);
+    --sidebar: #ffffff;
+    --sidebar-text: #0f172a;
+    --sidebar-hover: #f1f5f9;
+    --accent: #0891b2;
+    --accent-hover: #0e7490;
+    --accent-soft: #ecfeff;
+    --topbar: rgba(255,255,255,.92);
     --border: #e2e8f0;
     --text: #0f172a;
     --muted: #64748b;
-    --danger: #b91c1c;
-    --warn: #b45309;
-    --info: #0369a1;
+    --danger: #dc2626;
+    --warn: #d97706;
+    --info: #0284c7;
     --bg: #f1f5f9;
     --card: #ffffff;
-    --radius: 10px;
-    --shadow: 0 1px 2px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.04);
-    --font: "IBM Plex Sans", "Segoe UI", sans-serif;
-    --mono: "IBM Plex Mono", ui-monospace, monospace;
-    --sidebar-w: 260px;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(15,23,42,.04);
+    --font: "DM Sans", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --sidebar-w: 220px;
   }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: var(--font); color: var(--text); background: var(--bg); }
-  body.member-chrome { background: linear-gradient(180deg, #ecfeff 0%, #f1f5f9 40%); }
+  body.member-chrome { background: #f1f5f9; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { color: var(--accent-hover); text-decoration: underline; }
   .banner-mock {
-    background: #0b1220; color: #94a3b8; font-size: 12px; padding: 8px 14px; text-align: center;
+    background: #0e7490; color: #ecfeff; font-size: 12px; padding: 8px 14px; text-align: center;
   }
   .banner-mock strong { color: #fff; }
   .app { display: flex; min-height: 100vh; position: relative; }
@@ -49,25 +49,26 @@
     width: var(--sidebar-w); background: var(--sidebar); color: var(--sidebar-text);
     flex-shrink: 0; display: flex; flex-direction: column;
     position: sticky; top: 0; height: 100vh; z-index: 50;
+    border-right: 1px solid var(--border);
   }
   .brand {
-    padding: 20px 20px 16px; font-weight: 700; color: #fff; font-size: 16px;
-    border-bottom: 1px solid rgba(255,255,255,.06); letter-spacing: -.01em;
+    padding: 20px 20px 16px; font-weight: 700; color: var(--text); font-size: 16px;
+    border-bottom: 1px solid var(--border); letter-spacing: -.02em;
   }
-  .brand small { display: block; font-weight: 400; color: #64748b; font-size: 12px; margin-top: 6px; }
+  .brand small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 6px; }
   .nav { flex: 1; overflow-y: auto; padding: 10px 10px 28px; }
   .nav-section { margin-top: 12px; }
   .nav-section > button.cat {
-    width: 100%; text-align: left; background: transparent; border: 0; color: #64748b;
-    padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+    width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted);
+    padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
     cursor: default; font-family: inherit; font-weight: 600;
   }
   .nav a {
     display: block; padding: 9px 12px; color: var(--sidebar-text); text-decoration: none;
     font-size: 14px; border-radius: 8px; margin: 2px 0; font-weight: 500;
   }
-  .nav a:hover { background: var(--sidebar-hover); color: #fff; text-decoration: none; }
-  .nav a.active { background: var(--accent); color: #fff; }
+  .nav a:hover { background: var(--sidebar-hover); color: var(--text); text-decoration: none; }
+  .nav a.active { background: var(--accent-soft); color: var(--accent-hover); }
   .nav a.role-hidden { display: none; }
   .nav-section.role-hidden { display: none; }
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -130,21 +131,26 @@
   tr.row-error:hover td { background: #fee2e2; }
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
   .toolbar .spacer { flex: 1; min-width: 8px; }
-  label.field { display: block; font-size: 12px; font-weight: 600; margin: 10px 0 5px; color: #334155; }
+  label.field { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: var(--text); }
+  label.field:first-child { margin-top: 0; }
   input[type=text], input[type=password], input[type=email], input[type=number], select, textarea {
     width: 100%; max-width: 480px; padding: 9px 11px; border: 1px solid var(--border);
     border-radius: 8px; font: inherit; font-size: 14px; background: #fff;
   }
   input:focus, select:focus, textarea:focus {
-    outline: 2px solid var(--accent-soft); border-color: var(--accent-hover);
+    outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent;
   }
+  .param-desc { font-size: 13px; color: var(--muted); margin: 6px 0 0; line-height: 1.45; max-width: 480px; }
+  .login-step { display: none; }
+  .login-step.active { display: block; }
+  .mfa-box { border: 1px dashed var(--border); border-radius: 8px; padding: 12px; margin-top: 12px; background: #f8fafc; }
   textarea { min-height: 110px; max-width: 100%; font-family: var(--mono); font-size: 13px; }
   textarea.wide, .full input, .full select, .full textarea { max-width: 100%; }
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
   .badge {
     display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
   }
-  .badge.ok { background: var(--accent-soft); color: #115e59; }
+  .badge.ok { background: var(--accent-soft); color: var(--accent-hover); }
   .badge.warn { background: #ffedd5; color: var(--warn); }
   .badge.bad { background: #fee2e2; color: var(--danger); }
   .badge.info { background: #e0f2fe; color: var(--info); }
@@ -216,12 +222,12 @@
 </style>
 </head>
 <body>
-<div class="banner-mock"><strong>Clickable UX mockup</strong> — modernized chrome · same page map · resize window / use hamburger on mobile · role switcher · Member surfaces in nav</div>
+<div class="banner-mock"><strong>List Mailer mock</strong> — Clearwater theme · airy SaaS · email login + MFA · stacked Parameters · role switcher · spines win on conflict</div>
 
 <div class="backdrop" id="backdrop" aria-hidden="true"></div>
 <div class="app" id="app">
   <aside class="sidebar" id="sidebar" aria-label="Primary">
-    <div class="brand">Java list mailer<small>V1 operator UI · responsive mock</small></div>
+    <div class="brand">List Mailer<small>V1 operator UI · Clearwater</small></div>
     <nav class="nav" id="nav">
       <div class="nav-section">
         <button type="button" class="cat">DASHBOARD</button>
@@ -1127,36 +1133,58 @@ poll_interval_min=15</textarea>
 
       <section class="page" id="page-parameters" data-title="Parameters">
         <div class="crumb">Catalogs / Parameters</div>
-        <div class="flash">Admin-only. Credentials stay on paths/mailboxes. Signing secrets are env-only (not shown here).</div>
+        <div class="flash">Admin-only. Each field shows purpose, supported values, and range. Credentials stay on paths/mailboxes; signing secrets are env-only.</div>
         <div class="grid-2">
           <div class="card full">
             <h2>Bounce &amp; Process</h2>
-            <label class="field">Hard bounce limit</label><input type="number" value="3" />
-            <label class="field">Soft bounce limit</label><input type="number" value="6" />
-            <p class="hint">Soft independent after init — changing hard does not auto-update soft.</p>
-            <label class="field">Holdback multiplier</label><input type="number" value="2" />
-            <label class="field">Bounce-process time</label><input type="text" value="02:00" />
-            <label class="field">Timezone</label><input type="text" value="UTC" />
+            <label class="field">Hard bounce limit</label>
+            <input type="number" value="3" />
+            <p class="param-desc">Purpose: disable after this many hard bounces. Values: integer. Range: 1–50.</p>
+            <label class="field">Soft bounce limit</label>
+            <input type="number" value="6" />
+            <p class="param-desc">Purpose: disable after soft-bounce streak. Independent of hard after init. Values: integer. Range: 1–50.</p>
+            <label class="field">Holdback multiplier</label>
+            <input type="number" value="2" />
+            <p class="param-desc">Purpose: delay between soft walks. Values: integer multiplier. Range: 1–10.</p>
+            <label class="field">Bounce-process time</label>
+            <input type="text" value="02:00" />
+            <p class="param-desc">Purpose: daily process clock time. Values: HH:MM. Range: 00:00–23:59.</p>
+            <label class="field">Timezone</label>
+            <input type="text" value="UTC" />
+            <p class="param-desc">Purpose: timezone for bounce-process. Values: IANA name. Example: UTC, America/New_York.</p>
             <label class="field">VERP</label>
             <select><option>Off (default)</option><option>On</option></select>
+            <p class="param-desc">Purpose: per-message Return-Path correlation. Values: Off | On. Default Off.</p>
           </div>
           <div class="card full">
-            <h2>Send &amp; Content</h2>
-            <label class="field">Message interval (sec)</label><input type="number" value="1" />
-            <label class="field">Messages per run</label><input type="number" value="900" />
-            <label class="field">Message rate / hour</label><input type="number" value="3600" />
+            <h2>Send, Content &amp; Access</h2>
+            <label class="field">Message interval (sec)</label>
+            <input type="number" value="1" />
+            <p class="param-desc">Purpose: minimum seconds between queue sends. Values: integer seconds. Range: 0–3600.</p>
+            <label class="field">Messages per run</label>
+            <input type="number" value="900" />
+            <p class="param-desc">Purpose: max messages per scheduler tick. Values: integer. Range: 1–100000.</p>
+            <label class="field">Message rate / hour</label>
+            <input type="number" value="3600" />
+            <p class="param-desc">Purpose: system-wide hourly throttle. Values: integer. Range: 1–1000000.</p>
             <label class="field">Image-fetch mode</label>
             <select><option>Best Effort</option><option>Off</option><option>Mandatory</option></select>
-            <label class="field">Image fetch timeout (sec)</label><input type="number" value="30" />
-            <label class="field">Payload hard upper (MB)</label><input type="number" value="5" />
-            <label class="field">Stored-image hard upper (MB)</label><input type="number" value="5" />
-            <label class="field">Campaign TTL default / max (days)</label>
-            <div class="row"><input type="number" value="180" style="max-width:100px" /> <input type="number" value="365" style="max-width:100px" /></div>
-            <label class="field">Auto-block counted rejects / day</label><input type="number" value="10" />
-            <label class="field">Consent invite expiry (days)</label><input type="number" value="14" />
-            <label class="field">Audit retention (days)</label><input type="number" value="365" />
-            <label class="field">Ops log retention (days)</label><input type="number" value="90" />
-            <label class="field">Public base URL</label><input type="text" value="https://lists.brand.example" style="max-width:100%" />
+            <p class="param-desc">Purpose: rewrite remote images. Values: Off | Best Effort | Mandatory.</p>
+            <label class="field">Ops log retention (days)</label>
+            <input type="number" value="90" />
+            <p class="param-desc">Purpose: purge ops logs older than N days. Values: integer days. Range: 1–3650. Default 90.</p>
+            <label class="field">Audit retention (days)</label>
+            <input type="number" value="365" />
+            <p class="param-desc">Purpose: retain audit rows. Values: integer days. Range: 30–3650. Default 365.</p>
+            <label class="field">Consent invite expiry (days)</label>
+            <input type="number" value="14" />
+            <p class="param-desc">Purpose: clear-unsub consent link lifetime. Values: integer days. Range: 1–90. Default 14.</p>
+            <label class="field">Require MFA for all operators</label>
+            <select><option selected>Off (default)</option><option>On</option></select>
+            <p class="param-desc">Purpose: when On, every operator must complete TOTP at login (enrolled or forced enroll). Values: Off | On. Default Off. MFA secrets are not Parameters.</p>
+            <label class="field">Public base URL</label>
+            <input type="text" value="https://lists.brand.example" style="max-width:100%" />
+            <p class="param-desc">Purpose: absolutize pixel, unsub, consent, and /dl links. Values: https:// origin, no trailing path required. Must be HTTPS.</p>
           </div>
         </div>
         <button class="btn">Save Parameters</button>
@@ -1171,21 +1199,21 @@ poll_interval_min=15</textarea>
             <thead><tr><th>User</th><th>Role</th><th>List grants</th><th>Status</th><th></th></tr></thead>
             <tbody>
               <tr>
-                <td><a href="#user-detail">ava</a></td>
+                <td><a href="#user-detail">ava@brand.example</a></td>
                 <td>Admin</td>
                 <td>All</td>
-                <td><span class="badge ok">Active</span></td>
+                <td><span class="badge ok">Active</span> · <span class="badge info">MFA</span></td>
                 <td><a href="#user-detail">Edit</a></td>
               </tr>
               <tr>
-                <td><a href="#user-detail">mei</a></td>
+                <td><a href="#user-detail">mei@brand.example</a></td>
                 <td>List manager</td>
                 <td>Newsletter, Product updates</td>
                 <td><span class="badge ok">Active</span></td>
                 <td><a href="#user-detail">Edit</a></td>
               </tr>
               <tr>
-                <td><a href="#user-detail">sam</a></td>
+                <td><a href="#user-detail">sam@brand.example</a></td>
                 <td>List sender</td>
                 <td>Newsletter</td>
                 <td><span class="badge ok">Active</span></td>
@@ -1197,17 +1225,21 @@ poll_interval_min=15</textarea>
         <p class="hint">User detail (settings, role, list grants) opens only from this list — not a sidebar item.</p>
       </section>
 
-      <section class="page" id="page-user-detail" data-title="User · mei">
-        <div class="crumb"><a href="#users">Users &amp; Grants</a> / mei</div>
-        <div class="grid-2">
+      <section class="page" id="page-user-detail" data-title="User · mei@brand.example">
+        <div class="crumb"><a href="#users">Users &amp; Grants</a> / mei@brand.example</div>
+        <div class="tabs">
+          <a href="#user-detail" class="active" data-user-tab="settings">Settings</a>
+          <a href="#user-detail" data-user-tab="grants">List Grants</a>
+          <a href="#user-detail" data-user-tab="security">Security</a>
+        </div>
+        <div id="user-tab-settings" class="user-tab">
           <div class="card full">
             <h2>User Settings</h2>
-            <label class="field">Username</label>
-            <input type="text" value="mei" style="max-width:100%" />
+            <label class="field">Email (login id)</label>
+            <input type="email" value="mei@brand.example" style="max-width:100%" />
+            <p class="param-desc">Purpose: sign-in identity. Values: valid email. Must be unique.</p>
             <label class="field">Display name</label>
             <input type="text" value="Mei Chen" style="max-width:100%" />
-            <label class="field">Email</label>
-            <input type="email" value="mei@brand.example" style="max-width:100%" />
             <label class="field">Role</label>
             <select style="max-width:100%">
               <option>Admin</option>
@@ -1227,6 +1259,8 @@ poll_interval_min=15</textarea>
               <button class="btn secondary">Disable User</button>
             </div>
           </div>
+        </div>
+        <div id="user-tab-grants" class="user-tab" hidden>
           <div class="card full">
             <h2>List Grants</h2>
             <p class="hint">Per list: manage and/or send. Removing a grant takes effect immediately.</p>
@@ -1253,6 +1287,26 @@ poll_interval_min=15</textarea>
             <div class="toolbar" style="margin-top:12px"><button class="btn">Save Grants</button></div>
           </div>
         </div>
+        <div id="user-tab-security" class="user-tab" hidden>
+          <div class="card full">
+            <h2>Security · Authenticator app</h2>
+            <p class="hint">Optional TOTP MFA. When Parameters “Require MFA” is On, login requires a code (or enroll first).</p>
+            <div class="mfa-box">
+              <p><strong>Status:</strong> <span class="badge muted">Not enrolled</span></p>
+              <p class="param-desc">Scan QR with an authenticator app, then enter a 6-digit code to confirm.</p>
+              <div style="width:120px;height:120px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#64748b;margin:12px 0">QR mock</div>
+              <label class="field">Verification code</label>
+              <input type="text" inputmode="numeric" placeholder="123456" style="max-width:160px" />
+              <div class="toolbar" style="margin-top:12px">
+                <button class="btn">Enroll authenticator</button>
+                <button class="btn secondary" disabled>Unenroll</button>
+              </div>
+            </div>
+            <h3>Backup codes</h3>
+            <p class="param-desc">Shown once at enroll. Each code is single-use. Store offline.</p>
+            <button class="btn secondary sm">Generate new backup codes</button>
+          </div>
+        </div>
       </section>
 
       <section class="page" id="page-audit" data-title="Audit Log">
@@ -1265,7 +1319,7 @@ poll_interval_min=15</textarea>
           <div class="table-scroll"><table>
             <thead><tr><th>When</th><th>Actor</th><th>Event</th><th>Detail</th></tr></thead>
             <tbody>
-              <tr><td>2026-10-25 10:00</td><td>ava</td><td>Parameters changed</td><td>soft bounce limit 6 → 8 <span class="badge muted admin-only">admin-only row</span></td></tr>
+              <tr><td>2026-10-25 10:00</td><td>ava@brand.example</td><td>Parameters changed</td><td>soft bounce limit 6 → 8 <span class="badge muted admin-only">admin-only row</span></td></tr>
               <tr><td>2026-10-24 22:11</td><td>system</td><td>Member disabled</td><td>blake@example.com · soft limit</td></tr>
               <tr><td>2026-10-20 09:00</td><td>sam</td><td>Campaign queued</td><td>October tips</td></tr>
             </tbody>
@@ -1275,13 +1329,27 @@ poll_interval_min=15</textarea>
 
       <section class="page" id="page-login" data-title="Sign In">
         <div class="login-wrap card">
-          <h2>Sign In</h2>
-          <label class="field">Username</label>
-          <input type="text" value="ava" style="max-width:100%" />
-          <label class="field">Password</label>
-          <input type="password" value="••••••••" style="max-width:100%" />
-          <div class="toolbar" style="margin-top:12px"><a class="btn" href="#attention">Sign in</a></div>
-          <p class="hint">V1 local username/password (FR-34). No SSO.</p>
+          <div class="login-step active" id="login-step-password">
+            <h2>Sign In</h2>
+            <label class="field">Email</label>
+            <input type="email" value="ava@brand.example" style="max-width:100%" />
+            <label class="field">Password</label>
+            <input type="password" value="••••••••" style="max-width:100%" />
+            <div class="toolbar" style="margin-top:12px">
+              <button type="button" class="btn" id="login-continue">Continue</button>
+            </div>
+            <p class="hint">Login id is email. No SSO in V1. MFA enroll lives under User → Security.</p>
+          </div>
+          <div class="login-step" id="login-step-mfa">
+            <h2>Authenticator code</h2>
+            <p class="hint">Enter the 6-digit code from your authenticator app (or a backup code).</p>
+            <label class="field">Code</label>
+            <input type="text" inputmode="numeric" placeholder="123456" style="max-width:160px" />
+            <div class="toolbar" style="margin-top:12px">
+              <a class="btn" href="#attention">Verify &amp; sign in</a>
+              <button type="button" class="btn secondary" id="login-back">Back</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1417,6 +1485,27 @@ poll_interval_min=15</textarea>
   tabHtml?.addEventListener('click', (e) => { e.preventDefault(); setPreviewMode('html'); });
   tabText?.addEventListener('click', (e) => { e.preventDefault(); setPreviewMode('text'); });
   syncComposePreview();
+
+  document.getElementById('login-continue')?.addEventListener('click', () => {
+    document.getElementById('login-step-password')?.classList.remove('active');
+    document.getElementById('login-step-mfa')?.classList.add('active');
+  });
+  document.getElementById('login-back')?.addEventListener('click', () => {
+    document.getElementById('login-step-mfa')?.classList.remove('active');
+    document.getElementById('login-step-password')?.classList.add('active');
+  });
+
+  document.querySelectorAll('[data-user-tab]').forEach((tab) => {
+    tab.addEventListener('click', (e) => {
+      e.preventDefault();
+      const name = tab.getAttribute('data-user-tab');
+      document.querySelectorAll('[data-user-tab]').forEach((t) => t.classList.toggle('active', t === tab));
+      ['settings', 'grants', 'security'].forEach((id) => {
+        const el = document.getElementById('user-tab-' + id);
+        if (el) el.hidden = id !== name;
+      });
+    });
+  });
 
   applyRole();
   route();

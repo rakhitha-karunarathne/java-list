@@ -7,4 +7,4 @@ updated: 2026-10-25
 
 Spines: [DESIGN.md](./DESIGN.md) (look) · [EXPERIENCE.md](./EXPERIENCE.md) (behavior).
 
-Theme preview: [`.working/color-theme-clearwater.html`](./.working/color-theme-clearwater.html) · IA mock (spines win on visual conflict): [`.working/clickable-mockup/index.html`](./.working/clickable-mockup/index.html).
+Theme: [`mockups/theme-clearwater.html`](./mockups/theme-clearwater.html) · Clickable UI: [`mockups/clickable/index.html`](./mockups/clickable/index.html) (Clearwater; spines win on conflict).
