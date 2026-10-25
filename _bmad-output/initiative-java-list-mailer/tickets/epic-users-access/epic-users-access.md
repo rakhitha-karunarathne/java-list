@@ -62,4 +62,4 @@ C3 (architecture AD-4): Operator UI talks JSON under `/api`; this epic owns real
 - Decision: 2026-10-25 — Refine from parent R1–R2 + architecture AD-6/AD-19; no epic-local PRD/UX. MFA-mandatory Parameter owned by catalogs; enforcement at login owned here.
 - Assumption: Bootstrap Admin from install uses env seed once; thereafter Admin manages users in-app.
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 2.1 Install Admin and real JWT. Refactor sweep included.
+- Decision: 2026-10-25 — Stories planned. Tracer: 2.1 Install Admin and real JWT. Refactor sweep included.

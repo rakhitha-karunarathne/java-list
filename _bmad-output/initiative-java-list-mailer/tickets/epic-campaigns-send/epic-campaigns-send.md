@@ -84,4 +84,4 @@ C5 (parent R35): Already-sent addresses are never re-sent on Requeue; test sends
 - Decision: 2026-10-25 — Stopped/Finished Requeue rules per updated R35.
 - Assumption: Mail-to-send–created Campaigns enter Queued (skip Draft).
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 5.1 Compose Draft queue GreenMail; least-sure next: 5.4 Stop/Requeue. Refactor sweep included. Closing e2e suite after sweep.
+- Decision: 2026-10-25 — Stories planned. Tracer: 5.1 Compose Draft queue GreenMail; least-sure next: 5.4 Stop/Requeue. Refactor sweep included. Closing e2e suite after sweep.

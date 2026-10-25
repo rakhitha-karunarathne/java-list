@@ -70,4 +70,4 @@ C3 (architecture AD-15): Parameters are Admin-only; product defaults ship as see
 - Waits on epic-users-access because: Admin auth and roles.
 - Decision: 2026-10-25 — Refine from parent covers + AD-15; Parameter descriptions and MFA-mandatory flag land here.
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 3.1 Sending paths catalog. Refactor sweep included.
+- Decision: 2026-10-25 — Stories planned. Tracer: 3.1 Sending paths catalog. Refactor sweep included.

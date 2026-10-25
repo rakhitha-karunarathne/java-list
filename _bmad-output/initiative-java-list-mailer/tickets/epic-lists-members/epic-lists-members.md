@@ -66,4 +66,4 @@ C3: Bounce-driven disable is applied by epic-bounce-processing; this epic owns t
 - Waits on epic-catalogs-parameters because: sending paths and footers.
 - Decision: 2026-10-25 — Refine from parent covers; bounce≠unsub kept as Constraint so stories do not conflate.
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 4.1 List CRUD with path and footer. Refactor sweep included.
+- Decision: 2026-10-25 — Stories planned. Tracer: 4.1 List CRUD with path and footer. Refactor sweep included.

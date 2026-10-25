@@ -71,4 +71,4 @@ C3: Strangers stay silent or logged — never a courtesy reject that confirms th
 - Decision: 2026-10-25 — Refine from parent R29–R32; Issues≠Drop kept explicit so stories do not merge the surfaces.
 - Decision: 2026-10-25 — MTS-created Campaigns enter Queued per R35 (skip Draft).
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 8.1 MTS inbox ? Queued Campaign. Refactor sweep included.
+- Decision: 2026-10-25 — Stories planned. Tracer: 8.1 MTS inbox ? Queued Campaign. Refactor sweep included.

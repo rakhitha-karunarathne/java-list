@@ -80,4 +80,4 @@ C6 (architecture AD-10, AD-13): V1 assumes one app instance; no ShedLock/file/DB
 - Decision: 2026-10-25 — Bootstrap JWT stub credentials use an **email** as login id (parent R1); full user store remains epic-users-access.
 - Decision: 2026-10-25 — Plugin filter-chain seams (AD-28) owned by this epic; plugin pack implementations stay out of V1.
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 1.1 Compose MariaDB Boot Flyway. Refactor sweep included.
+- Decision: 2026-10-25 — Stories planned. Tracer: 1.1 Compose MariaDB Boot Flyway. Refactor sweep included.

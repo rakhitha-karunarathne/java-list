@@ -62,4 +62,4 @@ C3: Unsub is per-list membership state; must not flip global Member Enabled/Disa
 - Waits on epic-campaigns-send because: campaign send and opaque tokens.
 - Decision: 2026-10-25 — Refine from parent R14–R15 + notice-mail/AD-17/18; one List-Unsubscribe URL per send kept.
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 6.1 HTTPS unsubscribe opaque token. Refactor sweep included.
+- Decision: 2026-10-25 — Stories planned. Tracer: 6.1 HTTPS unsubscribe opaque token. Refactor sweep included.

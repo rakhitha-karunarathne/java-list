@@ -65,4 +65,4 @@ C3: Bounce disable sets Member global Disabled with reason; must not mark list u
 - Waits on epic-campaigns-send because: send-queue correlation contract.
 - Decision: 2026-10-25 — Refine from parent R26–R27 + AD-12/25; mailbox-query introduced here for MTS reuse.
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 7.1 mailbox-query IMAP utility. Refactor sweep included.
+- Decision: 2026-10-25 — Stories planned. Tracer: 7.1 mailbox-query IMAP utility. Refactor sweep included.

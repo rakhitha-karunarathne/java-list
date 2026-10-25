@@ -65,4 +65,4 @@ C3: Earlier epics may stub hooks; this epic makes Ops / Attention / Audit comple
 - Decision: 2026-10-25 — Audit must cover R35 Campaign status changes (Stop/Requeue/Finished/list-add).
 - Assumption: Retention defaults 90d ops / 365d audit match Parameters seeds from catalogs epic.
 
-- Decision: 2026-10-25 � Stories planned. Tracer: 9.1 Ops Logs complete with retention. Refactor sweep included. Closing e2e suite after sweep.
+- Decision: 2026-10-25 — Stories planned. Tracer: 9.1 Ops Logs complete with retention. Refactor sweep included. Closing e2e suite after sweep.
