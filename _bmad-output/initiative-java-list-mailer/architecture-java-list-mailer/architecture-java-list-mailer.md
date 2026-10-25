@@ -78,7 +78,7 @@ flowchart TB
 
 - **Binds:** R1, R14, R15, R24, R34
 - **Prevents:** JWT on pixel/unsub/consent; HMAC-as-session for operators
-- **Rule:** Operator API: JWT Bearer (stateless). Member/public links: opaque tokens (AD-18), distinct mechanism.
+- **Rule:** Operator API: JWT Bearer (stateless) after email + password, and TOTP when the user is enrolled **or** Parameters “MFA mandatory” is on. TOTP (authenticator apps) with hashed backup codes; MFA secrets never in Parameters. Member/public links: opaque tokens (AD-18), distinct mechanism. No SMS/WebAuthn/SSO in V1.
 
 ### AD-7 — Compose topology [ADOPTED]
 
@@ -132,7 +132,7 @@ flowchart TB
 
 - **Binds:** R7, R25, R28, C6
 - **Prevents:** per-slice settings tables; secrets in Parameters
-- **Rule:** Kernel publishes Parameters port. **parameters** slice owns persistence + Admin `/api/parameters`. Other slices declare keys (constant + default + type) and read/write only via the port. Secrets never in Parameters. Seed defaults (product-locked): ops log retention 90d; audit retention 365d; consent link expiry 14d; bounce mailbox poll default 15m; VERP off.
+- **Rule:** Kernel publishes Parameters port. **parameters** slice owns persistence + Admin `/api/parameters`. Other slices declare keys (constant + default + type) and read/write only via the port. Secrets never in Parameters. Seed defaults (product-locked): ops log retention 90d; audit retention 365d; consent link expiry 14d; bounce mailbox poll default 15m; VERP off; **operator MFA mandatory = off**.
 
 ### AD-16 — Slice inventory [ADOPTED]
 
@@ -222,6 +222,7 @@ flowchart TB
 | Operator lists | `page`, `size` → `items`, `page`, `size`, `total` |
 | Auth | `/api/**` JWT Bearer; public paths listed in AD-17 |
 | Operator login id | **Email** (not free-form username); initiative R1 |
+| Operator MFA | Optional TOTP; mandatory when Parameters flag on (default off) |
 | Logging | No raw secrets/credentials in logs or Audit (C6) |
 | Config secrets | Env/secret file; Parameters = non-credential tunables only |
 | Utility slices | Adaptors only — no durable domain tables (`mailbox-query`, `smtp-adapter`) |

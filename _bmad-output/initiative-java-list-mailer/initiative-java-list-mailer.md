@@ -24,7 +24,7 @@ Operators can leave PHP list software and run campaigns, lists, bounce handling,
 
 ## Requirements
 
-R1 (prd FR-1, FR-34): Install yields an initial Admin; Admins create/disable Users with local email + password (email is the login id / username); roles Admin / List manager / List sender enforce scoped access.
+R1 (prd FR-1, FR-34): Install yields an initial Admin; Admins create/disable Users with local email + password (email is the login id); optional TOTP authenticator-app MFA (enroll + backup codes); Admin may set a Parameter to make MFA mandatory for all operators; roles Admin / List manager / List sender enforce scoped access.
 
 R2 (prd FR-2, FR-34): Per-List manage and/or send grants are edited on User detail; removing a grant takes effect immediately; Admin needs no list grants.
 
@@ -36,7 +36,7 @@ R5 (prd FR-5, FR-37): Footers are catalogued; detail shows Used By (Lists, mappi
 
 R6 (prd FR-6): One Notice sending path for system/consent/admin mail; bypasses bounce-disable; Campaign queue never does.
 
-R7 (prd FR-7): Admin-only Parameters hold non-credential tunables (including ops log retention default 90 days); credentials on paths/mailboxes; signing secrets not in Parameters.
+R7 (prd FR-7): Admin-only Parameters hold non-credential tunables (including ops log retention default 90 days, and whether operator MFA is mandatory); credentials on paths/mailboxes; signing secrets and MFA secrets/backup codes not in Parameters.
 
 R8 (prd FR-8, FR-39): Attention inbox for human action; Admin sees all including highlighted ops errors; List managers see only their Lists/Members; List senders have no Attention inbox.
 
@@ -143,4 +143,5 @@ C8 (ux / prd IA): Detail pages for List, Member, Campaign, inbox, bounce mailbox
 - Decision: 2026-10-25 — SPEC self-validate Pass 1 (coherence) and Pass 2 (preservation) recorded in memlog.
 - Decision: 2026-10-25 — Initiative sliced into 9 epics (platform → users → catalogs → lists/members → campaigns/send → unsub/consent → bounce → MTS → ops/Attention/audit). First product demo after campaigns epic; MTS after bounce for mailbox-query; thin Compose demo after platform/users.
 - Decision: 2026-10-25 — Operator username/login id is email (R1).
+- Decision: 2026-10-25 — Operator TOTP MFA optional by default; Admin can make MFA mandatory via Parameters (R1/R7).
 
