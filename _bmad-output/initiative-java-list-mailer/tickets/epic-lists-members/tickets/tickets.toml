@@ -1,0 +1,67 @@
+# Epic 4 — Lists & members. Tracer: List CRUD + path/footer.
+
+[[entry]]
+id = 1
+type = "story"
+title = "List CRUD with path and footer"
+description = "Authorized users CRUD Lists; one Sending path; optional footer/overrides; no public/private flag; detail not sidebar."
+verify = "List manager creates List with path; detail opens from index only."
+covers = ["R1"]
+after = ["epic-catalogs-parameters"]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "Bulk-paste add members"
+description = "List page bulk-paste adds Members with skip counts; List senders cannot."
+verify = "Paste adds valid new addresses; skips invalid/dupes/unsubscribed with counts; sender role blocked."
+covers = ["R2"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Members index searchable scoped"
+description = "Sidebar Members index searchable; Admin all / LM scoped; opens Member detail."
+verify = "LM sees only their Lists’ Members; search finds an address."
+covers = ["R5"]
+after = [2]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Member enable disable and detail"
+description = "Member detail: lists on/unsubscribed, global Enabled/Disabled + disable_reason, timeline hook; bounce disable ≠ unsubscribe."
+verify = "Disable shows reason; Disabled skipped by campaign queue contract; unsub state separate."
+covers = ["R3", "R6"]
+after = [3]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 5
+type = "story"
+title = "Re-enable rules with confirm"
+description = "Manual re-enable or re-add-to-list with confirm clears streaks unless unsubscribed on that List; opens never auto re-enable."
+verify = "Re-add with confirm re-enables; unsubscribed re-add ignored; open does not re-enable."
+covers = ["R4"]
+after = [4]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 6
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "List + Member smoke still pass."
+covers = []
+after = [1, 2, 3, 4, 5]
+hitl = false
+risk = "low"

@@ -537,7 +537,7 @@
         <div class="toolbar">
           <a class="btn" href="#campaign-compose">Compose Campaign</a>
           <div class="spacer"></div>
-          <select><option>All Statuses</option><option>Queued</option><option>Sending</option><option>Finished</option></select>
+          <select><option>All Statuses</option><option>Draft</option><option>Queued</option><option>Sending</option><option>Finished</option><option>Stopped</option></select>
         </div>
         <div class="card" style="padding:0">
           <div class="table-scroll"><table>
@@ -557,7 +557,15 @@
                 <td><span class="badge info">Sending</span></td>
                 <td>40 / 86</td>
                 <td>—</td>
-                <td><a href="#campaign-detail">View</a></td>
+                <td><a href="#campaign-detail">View</a> · <button class="btn secondary sm" type="button">Stop</button></td>
+              </tr>
+              <tr>
+                <td><a href="#campaign-detail">Weekend promo</a></td>
+                <td>Newsletter</td>
+                <td><span class="badge warn">Queued</span></td>
+                <td>0 / 2,400</td>
+                <td>—</td>
+                <td><a href="#campaign-detail">View</a> · <button class="btn secondary sm" type="button">Stop</button></td>
               </tr>
               <tr>
                 <td>Draft · Black Friday</td>
@@ -565,7 +573,15 @@
                 <td><span class="badge muted">Draft</span></td>
                 <td>—</td>
                 <td>—</td>
-                <td><a href="#campaign-compose">Edit</a></td>
+                <td><a href="#campaign-compose">Edit</a> · <button class="btn secondary sm" type="button">Stop</button></td>
+              </tr>
+              <tr>
+                <td><a href="#campaign-detail">Flash sale (halted)</a></td>
+                <td>Product updates</td>
+                <td><span class="badge bad">Stopped</span></td>
+                <td>312 / 8,900</td>
+                <td>—</td>
+                <td><a href="#campaign-detail">View</a> · <button class="btn secondary sm" type="button">Requeue</button></td>
               </tr>
             </tbody>
           </table></div>
@@ -596,6 +612,7 @@ Thanks for reading.</textarea>
             <div class="toolbar" style="margin-top:14px">
               <button class="btn">Queue Send</button>
               <button class="btn secondary">Save Draft</button>
+              <button class="btn secondary">Stop</button>
             </div>
             <h3>Test Send</h3>
             <p class="hint">phpList-like troubleshooting. Uses first selected list’s sending path. Does not count toward Campaign sent stats. Ignores bounce-disable (may reach Disabled addresses). Failures → Ops Logs + Admin Attention.</p>
@@ -708,6 +725,13 @@ poll_interval_min=15</textarea>
       <!-- CAMPAIGN DETAIL -->
       <section class="page" id="page-campaign-detail" data-title="Campaign · October Tips">
         <div class="crumb"><a href="#campaigns">Campaigns</a> / October tips</div>
+        <div class="toolbar">
+          <span class="badge ok">Finished</span>
+          <span class="muted" style="font-size:13px">Requeue after adding a List · new-list addresses only, skip already-sent</span>
+          <div class="spacer"></div>
+          <button class="btn secondary" type="button">Add List…</button>
+          <button class="btn" type="button" title="Enabled after a new List is added">Requeue</button>
+        </div>
         <div class="row">
           <div class="card"><div class="stat">14,102</div><div class="stat-label">Sent</div></div>
           <div class="card"><div class="stat">29.9%</div><div class="stat-label">Unique opens (headline)</div></div>

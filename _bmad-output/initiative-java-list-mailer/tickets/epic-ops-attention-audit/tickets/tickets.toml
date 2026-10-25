@@ -1,0 +1,67 @@
+# Epic 9 — Ops, Attention & audit. Tracer: Ops log + Admin Attention highlight.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Ops Logs complete with retention tracer"
+description = "Ops Logs cover send, bounce poll, MTS poll; retention via Parameters default 90d; errors hook Admin Attention."
+verify = "Error from send/bounce/MTS poll appears in Ops Logs and Admin Attention."
+covers = ["R2"]
+after = ["epic-unsubscribe-consent", "epic-bounce-processing", "epic-mail-to-send"]
+hitl = true
+risk = "medium"
+
+[[entry]]
+id = 2
+type = "story"
+title = "Attention inbox by role"
+description = "Attention: Admin all + highlighted ops errors; LM scoped to Lists/Members; List senders have none."
+verify = "LM cannot see other Lists’ Attention; sender has no Attention nav; Admin sees ops highlights."
+covers = ["R1"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Append-only Audit with Campaign status events"
+description = "Single Audit log; no raw secrets; Admin all / LM member-scoped; retention 365d; includes Queue/Stop/Requeue/Finished/list-add."
+verify = "Stop/Requeue audited; secrets absent; LM scoped; retention Parameter honored."
+covers = ["R3"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 4
+type = "story"
+title = "C8 detail-not-nav IA verification"
+description = "Verify sidebar IA: detail pages via index/deep link only (Clearwater UX); Compose and Ops Logs index as specified."
+verify = "Walk Clearwater mock/app: no detail pages as primary sidebar destinations."
+covers = ["R4"]
+after = [2, 3]
+hitl = true
+risk = "low"
+
+[[entry]]
+id = 5
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Ops + Attention + Audit smoke still pass."
+covers = []
+after = [1, 2, 3, 4]
+hitl = false
+risk = "low"
+
+[[entry]]
+id = 6
+type = "story"
+title = "Initiative observability end-to-end suite"
+description = "Closing suite: ops error → Attention; audit has campaign status + unsub/bounce events; retention jobs dry-run."
+verify = "Suite green on test profile."
+covers = ["R1", "R2", "R3"]
+after = [5]
+hitl = false
+risk = "medium"

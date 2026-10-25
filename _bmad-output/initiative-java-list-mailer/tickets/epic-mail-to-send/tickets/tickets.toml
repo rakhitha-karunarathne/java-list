@@ -1,0 +1,67 @@
+# Epic 8 — Mail-to-send. Tracer: authorized mail → Queued Campaign.
+
+[[entry]]
+id = 1
+type = "story"
+title = "MTS inbox mappings create Queued campaign tracer"
+description = "IMAP MTS inbox + mappings; authorized sender mail creates Campaign in Queued via campaigns ports; substitute From + footer override."
+verify = "Authorized message in GreenMail IMAP becomes Queued Campaign for mapped Lists."
+covers = ["R1", "R7"]
+after = ["epic-campaigns-send", "epic-bounce-processing"]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "From-domain Issues hold or notify"
+description = "From-domain Issues (not Drop log); all-or-nothing; hold or delete-and-notify."
+verify = "Bad From-domain opens Issue; no partial Campaign; hold or delete-and-notify path works."
+covers = ["R2"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Auth spam DMARC outcome matrix"
+description = "Auth then spam-header-if-present; DMARC fail = reject treatment; silent/notify/auto-block matrix."
+verify = "Matrix outcomes match for auth fail, spam header, DMARC fail fixtures."
+covers = ["R3"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Drop log and global blocks"
+description = "Drop log + global blocks; auto-block sender-only after N/day; no stranger courtesy reject."
+verify = "Stranger path silent/logged; after N drops sender auto-blocked; Drop log lists reasons."
+covers = ["R4"]
+after = [3]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 5
+type = "story"
+title = "MTS Used By on catalog references"
+description = "Catalog Used By includes MTS mappings; delete blocked while mapped."
+verify = "Sending path/footer referenced by mapping cannot delete; Used By links to inbox/mapping."
+covers = ["R6"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 6
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Authorized MTS→Campaign and stranger silent paths still pass."
+covers = []
+after = [1, 2, 3, 4, 5]
+hitl = false
+risk = "low"

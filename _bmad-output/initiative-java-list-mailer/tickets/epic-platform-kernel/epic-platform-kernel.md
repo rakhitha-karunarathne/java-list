@@ -3,10 +3,8 @@ type: epic
 title: "Platform & kernel"
 parent: initiative-java-list-mailer
 covers: [R34]
-sources:
-  - _bmad-output/initiative-java-list-mailer/initiative-java-list-mailer.md
-companions:
-  - _bmad-output/initiative-java-list-mailer/architecture-java-list-mailer/architecture-java-list-mailer.md
+sources: [_bmad-output/initiative-java-list-mailer/initiative-java-list-mailer.md]
+companions: [_bmad-output/initiative-java-list-mailer/architecture-java-list-mailer/architecture-java-list-mailer.md]
 after: []
 refined: true
 risk: high
@@ -81,3 +79,5 @@ C6 (architecture AD-10, AD-13): V1 assumes one app instance; no ShedLock/file/DB
 - Assumption: Stack versions follow the architecture spine pin table until a story bumps them.
 - Decision: 2026-10-25 — Bootstrap JWT stub credentials use an **email** as login id (parent R1); full user store remains epic-users-access.
 - Decision: 2026-10-25 — Plugin filter-chain seams (AD-28) owned by this epic; plugin pack implementations stay out of V1.
+
+- Decision: 2026-10-25 � Stories planned. Tracer: 1.1 Compose MariaDB Boot Flyway. Refactor sweep included.

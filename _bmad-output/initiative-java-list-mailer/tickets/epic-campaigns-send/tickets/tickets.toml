@@ -1,0 +1,111 @@
+# Epic 5 — Campaigns & send. Tracer: Draft→queue→GreenMail one List.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Compose Draft queue GreenMail tracer"
+description = "Compose creates Draft Campaign; Queue → Queued→Sending→Finished for one List through smtp-adapter + GreenMail; first-list Sending path."
+verify = "Operator queues a one-list Campaign; GreenMail receives messages; status ends Finished."
+covers = ["R1", "R4", "R8"]
+after = ["epic-lists-members"]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "Multi-list dedupe and content compose"
+description = "Multi-list Campaign dedupes same address to one queue row; HTML/text/images/attachments; HTML/Text preview pane."
+verify = "Member on two Lists gets one message; preview tabs sync with editors."
+covers = ["R1", "R2"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Test send from compose"
+description = "Test send to pasted addresses; first List path; ignores bounce-disable; not campaign stats; failures → ops/Attention hooks."
+verify = "Test reaches GreenMail for a Disabled address; campaign sent count unchanged; failure logged."
+covers = ["R3"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Stop and Requeue lifecycle"
+description = "Stop from Draft/Queued/Sending → Stopped; Requeue from Stopped; Finished Requeue only after Add List; new-list addresses excluding already-sent."
+verify = "Stop mid-send holds unsent; Requeue continues; Finished+new List requeues only new addresses."
+covers = ["R8"]
+after = [2]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 5
+type = "story"
+title = "Blob storage and public dl"
+description = "Images as DB blobs; GET /dl/<campaignGuid>/…; cascade delete with campaign."
+verify = "Queued HTML rewritten image loads via /dl; deleting Campaign removes blobs."
+covers = ["R9"]
+after = [2]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 6
+type = "story"
+title = "Send-queue throttle and schedules"
+description = "System send-queue with system-wide throttle; schedules concurrent classes with in-process non-overlap; V1 one instance."
+verify = "Throttle limits observed under GreenMail load; overlapping same-job skipped."
+covers = ["R4", "R9"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 7
+type = "story"
+title = "Image-fetch modes SSRF and payload ceilings"
+description = "Image-fetch Off/Best Effort/Mandatory + SSRF guards; payload and stored-image hard uppers; per-List ≤ ceiling; multi-list strictest."
+verify = "SSRF to private IP refused; Mandatory fail blocks queue; multi-list uses strictest caps."
+covers = ["R5", "R6"]
+after = [5]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 8
+type = "story"
+title = "Open pixel reporting and opaque send tokens"
+description = "HTML pixel async; reporting sent/unique/total opens; per-member first open/count; opaque tokens + public URL shapes for later epics; bounce correlation fields on queue rows."
+verify = "Open recorded async after GIF; campaign detail shows unique opens; queue row has correlation fields."
+covers = ["R7", "R10"]
+after = [6]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 9
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Campaign tracer + Stop/Requeue + pixel smoke still pass."
+covers = []
+after = [1, 2, 3, 4, 5, 6, 7, 8]
+hitl = false
+risk = "low"
+
+[[entry]]
+id = 10
+type = "story"
+title = "Campaigns end-to-end suite"
+description = "Automated GreenMail suite: compose→queue→send→pixel→Stop/Requeue paths."
+verify = "Suite green in test profile Compose."
+covers = ["R1", "R8", "R7"]
+after = [9]
+hitl = false
+risk = "medium"

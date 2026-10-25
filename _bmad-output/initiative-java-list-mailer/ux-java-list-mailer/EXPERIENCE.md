@@ -26,9 +26,9 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 |---|---|---|---|
 | Sign in | — | Unauthenticated | Email + password; MFA step-up when required |
 | Attention | Yes (role) | Sidebar | Human-action inbox; Admin sees ops errors highlighted |
-| Campaigns | Yes | Sidebar | Campaign index |
-| Campaign detail | No | Campaigns row | Status, stats, deep links |
-| Compose | Yes | Sidebar | Create/edit campaign content + preview + test send |
+| Campaigns | Yes | Sidebar | Campaign index; filter Draft · Queued · Sending · Finished · Stopped |
+| Campaign detail | No | Campaigns row | Status badge, stats, Stop / Requeue / Add List, deep links |
+| Compose | Yes | Sidebar | Create/edit Draft; Queue Send; Save Draft; Stop; preview + test send |
 | Lists | Yes | Sidebar | List index |
 | List detail | No | Lists / deep links | Settings, bulk add members |
 | Members | Yes | Sidebar | Searchable member index |
@@ -68,6 +68,9 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Index → detail | Row click / Edit opens detail; detail not in sidebar |
 | Compose preview | HTML / Text tabs; live sync from editors |
 | Test send | Paste addresses; uses first list path; ignores bounce-disable; failures → Ops Logs / Admin Attention |
+| Campaign status badge | Exact label Draft / Queued / Sending / Finished / Stopped (text + color; never color alone) |
+| Stop | Available on Draft, Queued, Sending (index row and detail); not on Finished/Stopped |
+| Requeue | On Stopped always; on Finished only after Add List (control disabled until a new List is attached) |
 | Used By | Navigable links; blocks delete while in use |
 | Parameter field | Label → control → helper (purpose, supported values, range) always visible |
 | Attention error rows | Visually highlighted for Admin ops failures |
@@ -84,6 +87,8 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | MFA enrolled | After password, TOTP (or backup code) step on same login card flow |
 | Validation error | Field-level message; `{colors.danger}` |
 | Ops failure | Ops Log entry + Attention highlight for Admin |
+| Campaign Finished Requeue gated | Requeue disabled until operator adds ≥1 List; helper explains new-list-only, skip already-sent |
+| Campaign Stopped | Show Requeue; explain unsent held until Requeue |
 
 ## Interaction Primitives
 
@@ -125,12 +130,19 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 
 ### Flow 3 — Compose and test send (Sam, List sender)
 
-1. Sam opens **Compose**, writes HTML/text; preview tabs stay in sync.
+1. Sam opens **Compose**, writes HTML/text; preview tabs stay in sync (status **Draft**).
 2. Runs **Test send** to pasted addresses; bounce-disable ignored for test.
 3. Failure appears in Ops Logs and, for Admin, Attention highlight.
 4. **Climax:** successful test preview confidence before queue send.
 
-### Flow 4 — Detail-not-nav discipline (Ava)
+### Flow 4 — Campaign Stop and Requeue (Sam)
+
+1. Sam queues a Campaign (Draft → Queued → Sending). Mid-send he **Stops** → **Stopped**; unsent held.
+2. He **Requeues** → Queued; remaining unsent continue.
+3. After **Finished**, he **Add List…** then **Requeue**; only new-list addresses not already sent get mail.
+4. **Climax:** status badges and actions match Draft · Queued · Sending · Finished · Stopped rules.
+
+### Flow 5 — Detail-not-nav discipline (Ava)
 
 1. Ava opens **Lists**, clicks a row → List detail (bulk add).
 2. From a membership table she deep-links to **Member detail** — Members index stays the sidebar entry.

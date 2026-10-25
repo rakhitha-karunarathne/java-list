@@ -1,0 +1,56 @@
+# Epic 6 — Unsubscribe & consent. Tracer: /unsubscribe token remove lists.
+
+[[entry]]
+id = 1
+type = "story"
+title = "HTTPS unsubscribe opaque token tracer"
+description = "Public /unsubscribe/<token> removes member from all Lists on that campaign send; opaque AES-GCM token; HTTPS via Public base URL."
+verify = "Member clicks unsub link from a GreenMail message; removed from campaign Lists; bad token is safe."
+covers = ["R1", "R4"]
+after = ["epic-campaigns-send"]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "List-Unsubscribe-Post and scoped visibility"
+description = "List-Unsubscribe-Post one-click works; Admin/LM visibility of unsub state scoped."
+verify = "One-click Post unsubscribes; LM sees only their Lists’ Members."
+covers = ["R1"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Consent clear-unsub via notice-mail"
+description = "Clear unsub only via consent email on Notice path; /approve/<token>; expiry default 14d; audited; no unilateral clear."
+verify = "Consent mail arrives via Notice path; approve clears unsub; expired token no-ops; Audit row written."
+covers = ["R2", "R3"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Expired and already-unsubscribed paths"
+description = "Expired / already-unsubscribed surfaces are safe and understandable; no double-apply damage."
+verify = "Second unsub and expired consent show clear states without corrupting membership."
+covers = ["R1", "R2"]
+after = [2, 3]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 5
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Unsub + consent smoke still pass."
+covers = []
+after = [1, 2, 3, 4]
+hitl = false
+risk = "low"

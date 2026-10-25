@@ -1,0 +1,56 @@
+# Epic 7 — Bounce processing. Tracer: mailbox-query + one bounce poll.
+
+[[entry]]
+id = 1
+type = "story"
+title = "mailbox-query IMAP utility tracer"
+description = "Introduce mailbox-query for IMAP stream/process; one inbox at a time; low memory; reusable by MTS."
+verify = "Utility polls a GreenMail IMAP inbox incrementally; contract documented for epic 8."
+covers = ["R3"]
+after = ["epic-campaigns-send"]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "Bounce mailbox poll schedule"
+description = "Catalogued bounce mailboxes poll on schedule via mailbox-query."
+verify = "Bounce mailbox receives a message; poll picks it up within interval."
+covers = ["R3"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Bounce correlation ladder and safety"
+description = "Correlation VERP→token→Message-ID/headers→subject+email; uncorrelated never disable/streak; log + Attention hook; AD-25."
+verify = "Matched bounce correlates to queue row; uncorrelated bounce does not disable; Attention/ops hook fires."
+covers = ["R1", "R4"]
+after = [2]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Daily hard soft bounce process"
+description = "Daily hard/soft walks + holdback; either limit disables; soft independent after init; VERP when Parameter on."
+verify = "Hitting hard or soft limit disables Member with reason; VERP-on path preferred when seeded on."
+covers = ["R2", "R5"]
+after = [3]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 5
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Bounce poll + disable smoke still pass; mailbox-query API stable for MTS."
+covers = []
+after = [1, 2, 3, 4]
+hitl = false
+risk = "low"

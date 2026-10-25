@@ -66,7 +66,7 @@ R20 (prd FR-38): Test send from compose to pasted addresses; uses first List’s
 
 R21 (prd FR-18, FR-19): System send-queue processor; system-wide throttle only; Lists only enqueue.
 
-R22 (prd FR-20, FR-21): Image-fetch Off / Best Effort / Mandatory + SSRF guards; rewritten images CDN TTL after campaign finished.
+R22 (prd FR-20, FR-21): Image-fetch Off / Best Effort / Mandatory + SSRF guards; rewritten images CDN TTL after campaign’s most recent Finished (Requeue that finishes again restarts TTL; Stopped does not).
 
 R23 (prd FR-22, FR-23): Email payload and stored-image hard uppers; per-List ≤ ceiling; multi-list strictest (TTL longest wins).
 
@@ -88,9 +88,11 @@ R31 (prd FR-30): Auth then spam-header-if-present; DMARC fail = reject treatment
 
 R32 (prd FR-31): Drop log + global blocks; auto-block sender-only after N/day; no stranger courtesy reject.
 
-R33 (prd FR-32): Single append-only Audit log; no raw secrets; Admin all / LM member-scoped; retention default 365 days.
+R33 (prd FR-32): Single append-only Audit log; no raw secrets; Admin all / LM member-scoped; retention default 365 days; includes Campaign status changes (Queue, Stop, Requeue, Finished, list added for Finished Requeue).
 
 R34 (prd FR-33): HTTPS only for UI, unsub, pixel, rewritten images, List-Unsubscribe; Public base URL; origin TLS Full or Full Strict only.
+
+R35 (prd FR-40): Campaign status is exactly one of Draft · Queued · Sending · Finished · Stopped. Compose until queue → Draft. Queue action → Queued; when the send-queue processor starts work → Sending; after the final recipient email for the current send pass is sent → Finished. Operator may Stop while Draft, Queued, or Sending → Stopped (remaining unsent rows are not sent while Stopped). **Requeue:** Stopped → Queued (resume: remaining unsent rows, plus any newly added List members whose addresses were not already sent for this Campaign). Finished may be Requeued only after at least one additional List is added → Queued; that pass enqueues addresses on the newly added List(s) only, excluding any address already sent for this Campaign.
 
 ## Constraints
 
@@ -145,4 +147,8 @@ C8 (ux / prd IA): Detail pages for List, Member, Campaign, inbox, bounce mailbox
 - Decision: 2026-10-25 — Operator username/login id is email (R1).
 - Decision: 2026-10-25 — Operator TOTP MFA optional by default; Admin can make MFA mandatory via Parameters (R1/R7).
 - Decision: 2026-10-25 — Each Parameter on Admin page shows description: purpose, supported values, value range (R7).
+- Decision: 2026-10-25 — Campaign states: Draft · Queued · Sending · Finished · Stopped (R35 / FR-40). Draft until queue; Queued then Sending; Finished after last send; Stop from Draft/Queued/Sending.
+- Decision: 2026-10-25 — Stopped can Requeue → Queued. Finished can Requeue only after adding another List; new pass sends new-list addresses excluding already-sent (R35).
+- Assumption: 2026-10-25 — Mail-to-send–created Campaigns enter Queued (skip Draft compose). “Already sent” = address that received a production queue send for this Campaign (test sends do not count).
+- Decision: 2026-10-25 — Propagated R35 to architecture AD-16, UX EXPERIENCE Flow 4, PRD glossary/UJ-3/FR-21/FR-32, epics campaigns/MTS/ops/lists.
 

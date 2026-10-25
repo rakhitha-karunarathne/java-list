@@ -1,0 +1,78 @@
+# Epic 1 — Platform & kernel. Tracer: Compose + Boot + SPA shell + JWT stub ping.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Compose MariaDB Boot Flyway tracer"
+description = "Maven single-module Spring Boot app starts with Flyway against MariaDB in Docker Compose; ddl-auto validate/none; empty schema migrates."
+verify = "docker compose up brings app + MariaDB; Flyway runs; app health responds."
+covers = ["R2", "R4"]
+after = []
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "phpMyAdmin private and GreenMail test profile"
+description = "Default Compose includes phpMyAdmin on tools/private only; profile test adds GreenMail; app can point SMTP/IMAP stubs at it."
+verify = "phpMyAdmin not on public compose ports; compose --profile test starts GreenMail; app config documents pointing adaptors at it."
+covers = ["R3"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 3
+type = "story"
+title = "React-in-jar SPA and API fallback"
+description = "React SPA builds into Boot static resources; /api is JSON; non-API routes serve index.html."
+verify = "Jar serves SPA at /; /api/ping (or stub) is JSON; deep link refresh returns index.html."
+covers = ["R5"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Thin kernel ports GUID filter chains"
+description = "Kernel scaffold: GUID ids, Parameters/mailbox/SMTP/scheduler port stubs, empty filter chains + registration API on ports and HTTP endpoints."
+verify = "Protected package layout exists; filter-chain registration API compiles; no plugin packs."
+covers = ["R6"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 5
+type = "story"
+title = "JWT sessionStorage login stub"
+description = "Bearer JWT path with email+password env bootstrap stub; SPA stores JWT in sessionStorage; protected /api ping works."
+verify = "Builder opens SPA, signs in with env email/password, hits protected /api ping successfully."
+covers = ["R6"]
+after = [3, 4]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 6
+type = "story"
+title = "Parameters Public base URL seed and secrets placement"
+description = "Parameters port seeds Public base URL; signing secrets and mailbox credentials only in env/secret file; HTTPS-only / Flexible unsupported documented; prod Compose shape without GreenMail documented."
+verify = "Public base URL readable via Parameters port; docs state Flexible unsupported and secret placement; prod compose file/profile has no GreenMail."
+covers = ["R1", "R7"]
+after = [4]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 7
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only from plans/reviews deferred in this epic; no new scope."
+verify = "Build and compose smoke still pass; no new features."
+covers = []
+after = [1, 2, 3, 4, 5, 6]
+hitl = false
+risk = "low"

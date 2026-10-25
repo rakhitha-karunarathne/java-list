@@ -35,8 +35,8 @@ after = [{ epic = 3, needs = "sending paths and footers" }]
 id = 5
 slug = "epic-campaigns-send"
 title = "Campaigns & send path"
-description = "Multi-list campaign compose through send-queue with blobs and open pixel; test send and reporting work against GreenMail."
-covers = ["R18", "R19", "R20", "R21", "R22", "R23", "R24"]
+description = "Multi-list campaign compose through send-queue with Draft·Queued·Sending·Finished·Stopped (Stop/Requeue); blobs and open pixel; test send and reporting against GreenMail."
+covers = ["R18", "R19", "R20", "R21", "R22", "R23", "R24", "R35"]
 after = [{ epic = 4, needs = "lists and members" }]
 
 [[epic]]

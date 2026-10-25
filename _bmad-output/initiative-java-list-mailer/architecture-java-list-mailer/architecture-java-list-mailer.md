@@ -138,7 +138,7 @@ flowchart TB
 
 - **Binds:** all
 - **Prevents:** ambiguous package ownership
-- **Rule:** Domain slices: `users`, `parameters`, `sending-paths`, `bounce-mailboxes`, `footers`, `lists`, `members`, `campaigns`, `compose`, `send-queue`, `tracking`, `bounce`, `send-to-mail`, `attention`, `ops-log`, `audit`, `unsubscribe`, `consent`, `blob-storage`, `notice-mail`. Utility (no domain tables): `mailbox-query`, `smtp-adapter`. **campaigns** is sole owner of Campaign entity and campaign GUID; **compose** mutates drafts / test-send only through campaigns ports — no parallel campaign tables. notice-mail owns system/consent/admin notice sends (uses Notice sending path + smtp-adapter). Catalog **Used By / delete-blocked** (R9) must include send-to-mail mappings as referencers.
+- **Rule:** Domain slices: `users`, `parameters`, `sending-paths`, `bounce-mailboxes`, `footers`, `lists`, `members`, `campaigns`, `compose`, `send-queue`, `tracking`, `bounce`, `send-to-mail`, `attention`, `ops-log`, `audit`, `unsubscribe`, `consent`, `blob-storage`, `notice-mail`. Utility (no domain tables): `mailbox-query`, `smtp-adapter`. **campaigns** is sole owner of Campaign entity, campaign GUID, and **lifecycle status** (Draft · Queued · Sending · Finished · Stopped per R35): Queue/Stop/Requeue transitions, list-set on the Campaign, and “already sent” address set for Requeue eligibility. **compose** mutates drafts / test-send only through campaigns ports — no parallel campaign tables. **send-queue** executes Queued/Sending passes; does not invent status. notice-mail owns system/consent/admin notice sends (uses Notice sending path + smtp-adapter). Catalog **Used By / delete-blocked** (R9) must include send-to-mail mappings as referencers.
 
 ### AD-17 — Public URLs [ADOPTED]
 
@@ -308,6 +308,7 @@ flowchart LR
 | R14 Unsubscribe | unsubscribe | AD-17, AD-18 |
 | R15 Consent clear | consent + notice-mail | AD-17, AD-18 |
 | R18–R20, R22–R24 Campaigns / compose / reporting / pixel | campaigns, compose, tracking, blob-storage | AD-11, AD-16–AD-18, AD-20, AD-23 |
+| R35 Campaign lifecycle (Draft·Queued·Sending·Finished·Stopped; Stop/Requeue) | campaigns + send-queue | AD-13, AD-16 |
 | R21 Send queue | send-queue + smtp-adapter | AD-13, AD-16, AD-22 |
 | R25 Ops logs | ops-log | AD-15, AD-16 |
 | R26–R28 Bounce process | bounce + mailbox-query | AD-12, AD-16 |

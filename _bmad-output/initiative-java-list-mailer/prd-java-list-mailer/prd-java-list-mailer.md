@@ -43,7 +43,7 @@ Internal multi-role tool — light journeys; named operators for downstream UX.
 
 - **UJ-2. Mei (List manager) maintains membership and watches Attention.** Mei opens her lists, paste-adds a block of addresses (skips invalid/dupes/already-on-list), removes members, reviews bounce-disabled members with `disable_reason`, and acts only on Attention items for her lists/members. **Climax:** membership and status match reality; scoped Attention is clear.
 
-- **UJ-3. Sam (List sender) composes and queues a multi-list campaign.** Sam picks lists, composes HTML+text, passes payload/image gates, queues. Deduped recipients use the first selected list’s sending path. Queue processor sends under system throttle. **Climax:** campaign finishes; open stats show unique vs total opens.
+- **UJ-3. Sam (List sender) composes and queues a multi-list campaign.** Sam picks lists, composes HTML+text, passes payload/image gates, queues (Draft → Queued → Sending → Finished). He may Stop mid-send and later Requeue, or after Finished add another List and Requeue so only new-list addresses not already sent receive mail. Deduped recipients use the first selected list’s sending path. Queue processor sends under system throttle. **Climax:** campaign finishes; open stats show unique vs total opens.
 
 - **UJ-4. Sam sends via mail-to-send.** Sam’s authorized From hits the mapped inbox; auth/spam pass; campaign is created (or held/deleted-and-notified on From-issue). **Climax:** one inbox message → one campaign; wrong-mailbox gets a notice, strangers get silence.
 
@@ -60,8 +60,9 @@ Internal multi-role tool — light journeys; named operators for downstream UX.
 - **Notice sending path** — Single UI-configured path for rejections, issue notices, admin digests, consent emails, and other system mail. **Bypasses bounce-disable**; may reach an unsubscribed address **only** for consent/admin notices.
 - **Parameters** — Admin-only system-wide UI-tunable non-credential settings (limits, schedules, throttle, TTLs, modes, etc.). Credentials stay on Sending paths / mailboxes; signing secrets stay in env/secret file.
 - **Attention dashboard** — Inbox of items needing human action (links into bounce log, Issues, etc. — not a second store).
-- **Campaign** — Outbound send targeting one or more Lists; may be UI-composed or created from mail-to-send.
-- **Send queue** — Per-recipient rows for a Campaign (deduped by address across selected Lists).
+- **Campaign** — Outbound send targeting one or more Lists; may be UI-composed or created from mail-to-send. Status: Draft · Queued · Sending · Finished · Stopped (FR-40); Stop and Requeue as specified there.
+- **Send queue** — Per-recipient rows for a Campaign send pass (deduped by address across selected Lists for that pass; Requeue never re-sends an address already sent for that Campaign).
+- **Send pass** — One Queued→Sending→Finished (or Stopped) run of the send-queue for a Campaign; Finished Requeue after adding Lists starts a new pass for new-list addresses only.
 - **Mail-to-send** — IMAP inbox ingest that turns authorized messages into Campaigns via inbox→list mappings.
 - **Drop log** — Per-mailbox (and combined) log of rejected/dropped mail-to-send messages with reason and auto-block contribution flag.
 - **Issues** — Operator surface for From-domain / mapping problems (not the Drop log).
@@ -228,6 +229,29 @@ Member page shows Lists they are on, Lists they unsubscribed from, global status
 
 A Campaign may target multiple Lists. Same address on more than one selected List → one Send queue row. That row uses the first selected List’s Sending path (and that path’s From unless a mail-to-send substitute applies). UI-composed Campaigns have no substitute From.
 
+#### FR-40: Campaign lifecycle states
+
+A Campaign has exactly one status: **Draft**, **Queued**, **Sending**, **Finished**, or **Stopped**.
+
+- **Draft** — while composed and not yet queued (UI compose / save draft).
+- **Queued** — after Queue or Requeue; send-queue has work for this Campaign; processor has not started the current pass yet.
+- **Sending** — send-queue processor has started work on the current pass.
+- **Finished** — the final recipient email for the current send pass has been sent.
+- **Stopped** — operator stopped the Campaign from Draft, Queued, or Sending. Remaining unsent rows are not sent while Stopped. Already-sent rows stay sent.
+
+**Requeue**
+- **Stopped → Queued:** operator may Requeue. Resume remaining unsent rows; if Lists were added while Stopped, also enqueue members of those Lists whose addresses were not already sent for this Campaign.
+- **Finished → Queued:** only after the operator adds at least one additional List to the Campaign. The new pass enqueues addresses on the **newly added List(s) only**, excluding any address already sent for this Campaign (test sends do not count as sent).
+
+**UI:** Campaigns index filters/badges show these five statuses; Campaign detail shows status, Stop while Draft/Queued/Sending, Requeue while Stopped, and Requeue while Finished once a new List has been added.
+
+**Consequences (testable):**
+- A new UI-composed Campaign is Draft until Queue.
+- Queue/Requeue → Queued; processor start → Sending; last recipient of the current pass → Finished.
+- Stop from Draft, Queued, or Sending → Stopped; no further production sends until Requeue.
+- Stopped can Requeue → Queued and continue unsent / newly eligible addresses.
+- Finished cannot Requeue until another List is added; after Requeue, only new-list addresses not already sent receive mail.
+
 #### FR-17: Content types
 
 Campaigns support text and HTML, images, and attachments. HTML with CID/inline images is preserved. Real attachments stay attachments. Remote URL images follow Image-fetch mode (FR-19).
@@ -272,7 +296,7 @@ System-wide Off / Best Effort (default) / Mandatory. Off leaves remote URLs. Bes
 
 #### FR-21: Serving rewritten images and TTL
 
-Rewritten images are served with long-lived cache headers behind the Public base URL CDN. Campaign content and stored media expire after the Campaign finished sending: system default 180 days; hard max on Parameters default 365; per-List TTL ≤ hard max (empty → system default); multi-list → longer TTL wins, still capped. Scheduled job deletes expired content/media.
+Rewritten images are served with long-lived cache headers behind the Public base URL CDN. Campaign content and stored media expire after the Campaign’s **most recent** transition to Finished: system default 180 days; hard max on Parameters default 365; per-List TTL ≤ hard max (empty → system default); multi-list → longer TTL wins, still capped. A Requeue that reaches Finished again restarts that TTL clock. Scheduled job deletes expired content/media. Stopped does not start the Finished TTL clock.
 
 #### FR-22: Email payload limit
 
@@ -336,7 +360,7 @@ Drop log per mailbox + combined filterable view; mailbox config links open the D
 
 #### FR-32: Audit log
 
-Single append-only Audit log covers membership/unsubscribe/clear-unsubscribe/bounce disable/enable, Campaign send/open/bounce outcomes, consent lifecycle (including invite expired), notice emails, related member–list actions, and V1 config changes (Parameters and catalogs): who, when, what changed. Never write raw secrets — record credentials set/rotated only. Member self-unsubscribe audited (actor = member/system). Admin sees all (including config); List manager sees member-scoped entries only for Members on Lists they manage; config/Parameters rows Admin-only. Retention default 365 days on Parameters; purge by created_at via scheduled job.
+Single append-only Audit log covers membership/unsubscribe/clear-unsubscribe/bounce disable/enable, Campaign send/open/bounce outcomes, **Campaign status changes** (Queue, Stop, Requeue, Finished, list added for Finished Requeue), consent lifecycle (including invite expired), notice emails, related member–list actions, and V1 config changes (Parameters and catalogs): who, when, what changed. Never write raw secrets — record credentials set/rotated only. Member self-unsubscribe audited (actor = member/system). Admin sees all (including config); List manager sees member-scoped entries only for Members on Lists they manage; config/Parameters rows Admin-only. Retention default 365 days on Parameters; purge by created_at via scheduled job.
 
 #### FR-33: HTTPS and Public base URL
 

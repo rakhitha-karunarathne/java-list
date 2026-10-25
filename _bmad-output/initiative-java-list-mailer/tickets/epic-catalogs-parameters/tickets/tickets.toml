@@ -1,0 +1,67 @@
+# Epic 3 — Catalogs & Parameters. Tracer: sending path CRUD + Used By.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Sending paths catalog tracer"
+description = "Admin CRUD sending paths (SMTP + From); detail shows Used By; delete blocked while referenced."
+verify = "Admin creates a path; delete while referenced fails with Used By links."
+covers = ["R1", "R6"]
+after = ["epic-users-access"]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "Bounce mailboxes catalog"
+description = "Admin CRUD bounce mailboxes with per-mailbox poll default 15 min; edit from index → detail."
+verify = "Mailbox detail editable from index; poll interval defaults to 15."
+covers = ["R2"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Footers catalog"
+description = "Admin CRUD footers; Used By (Lists, mappings); delete blocked while referenced."
+verify = "Delete blocked while a List references the footer; Used By navigates."
+covers = ["R3", "R6"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Notice sending path"
+description = "Admin configures exactly one Notice sending path for system/consent/admin mail."
+verify = "One Notice path selectable; Campaign queue path remains separate."
+covers = ["R4"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 5
+type = "story"
+title = "Parameters Admin UI descriptions and seeds"
+description = "Admin Parameters page: each field shows description (purpose, values, range); seeds include ops log 90d, VERP off, MFA mandatory off, Public base URL, audit retention."
+verify = "Parameters page shows descriptions; MFA mandatory and VERP defaults off; Public base URL editable."
+covers = ["R5", "R7", "R8"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 6
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Catalog CRUD + Parameters smoke still pass."
+covers = []
+after = [1, 2, 3, 4, 5]
+hitl = false
+risk = "low"

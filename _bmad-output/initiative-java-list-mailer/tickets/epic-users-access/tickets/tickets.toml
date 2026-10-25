@@ -1,0 +1,67 @@
+# Epic 2 — Users & access. Tracer: install Admin + real JWT replaces stub.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Install Admin and real JWT auth"
+description = "Fresh install seeds initial Admin; user store with email+password; JWT Bearer replaces platform stub for /api."
+verify = "Fresh compose/install yields Admin; email login returns JWT; stub env-only path retired for operator API."
+covers = ["R1", "R3"]
+after = ["epic-platform-kernel"]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "Roles Admin List manager List sender"
+description = "Three roles enforce scoped operator API access."
+verify = "List sender cannot open Admin-only routes; List manager scoped as specified."
+covers = ["R1"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Per-list manage and send grants"
+description = "User detail edits per-List manage/send grants; remove takes effect immediately; Admin needs no list grants."
+verify = "Grant removal blocks that List’s API on next request; Admin accesses Lists without grants."
+covers = ["R2"]
+after = [2]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 4
+type = "story"
+title = "TOTP enroll unenroll and login challenge"
+description = "Operators enroll/unenroll authenticator MFA with backup codes; login challenges TOTP when enrolled."
+verify = "Enrolled user must pass TOTP (or one-time backup code) after password; unenroll stops challenge."
+covers = ["R1", "R3"]
+after = [1]
+hitl = false
+risk = "high"
+
+[[entry]]
+id = 5
+type = "story"
+title = "MFA mandatory Parameter enforcement"
+description = "Login reads Parameters MFA-mandatory (seed default off; Admin UI in catalogs epic). When on, require TOTP or force enroll; MFA secrets never in Parameters."
+verify = "Flipping the Parameter seed/value on forces enroll/challenge; secrets not in Parameters store."
+covers = ["R1", "R3"]
+after = [4]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 6
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Auth smoke (Admin login, grant check, MFA enroll) still passes."
+covers = []
+after = [1, 2, 3, 4, 5]
+hitl = false
+risk = "low"
