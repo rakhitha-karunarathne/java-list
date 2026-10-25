@@ -1,13 +1,9 @@
 package com.listmailer.kernel.config;
 
 import com.listmailer.kernel.ports.MailboxPort;
-import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SchedulerHost;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.kernel.token.OpaqueTokenHelper;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -17,22 +13,6 @@ import org.springframework.context.annotation.Configuration;
 /** In-memory / no-op stubs until feature slices and adaptors land. */
 @Configuration
 public class KernelStubConfig {
-
-  @Bean
-  ParametersPort parametersPort() {
-    Map<String, String> store = new ConcurrentHashMap<>();
-    return new ParametersPort() {
-      @Override
-      public Optional<String> get(String key) {
-        return Optional.ofNullable(store.get(key));
-      }
-
-      @Override
-      public void set(String key, String value) {
-        store.put(key, value);
-      }
-    };
-  }
 
   @Bean
   SmtpPort smtpPort() {
