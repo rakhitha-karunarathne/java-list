@@ -34,7 +34,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/actuator/health", "/actuator/info")
                     .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.svg", "/icons.svg")
+                    .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.svg")
                     .permitAll()
                     .requestMatchers("/t/**", "/dl/**", "/unsubscribe/**", "/approve/**")
                     .permitAll()
