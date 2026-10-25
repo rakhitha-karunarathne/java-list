@@ -1,4 +1,6 @@
 mailer/target/
+mailer/frontend/node_modules/
+mailer/src/main/resources/static/
 .idea/
 *.iml
 .classpath
