@@ -1,8 +1,11 @@
 package com.listmailer.kernel.security;
 
+import com.listmailer.users.UserEntity;
+import com.listmailer.users.UserRepository;
 import java.time.Instant;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -18,20 +21,29 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-  private final BootstrapAuthProperties bootstrap;
+  private final UserRepository users;
+  private final PasswordEncoder passwordEncoder;
   private final JwtEncoder jwtEncoder;
 
-  public AuthController(BootstrapAuthProperties bootstrap, JwtEncoder jwtEncoder) {
-    this.bootstrap = bootstrap;
+  public AuthController(
+      UserRepository users, PasswordEncoder passwordEncoder, JwtEncoder jwtEncoder) {
+    this.users = users;
+    this.passwordEncoder = passwordEncoder;
     this.jwtEncoder = jwtEncoder;
   }
 
   @PostMapping("/login")
   public Map<String, String> login(@RequestBody LoginRequest body) {
-    if (body.email() == null
-        || body.password() == null
-        || !body.email().equalsIgnoreCase(bootstrap.email())
-        || !body.password().equals(bootstrap.password())) {
+    if (body.email() == null || body.password() == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+    }
+    UserEntity user =
+        users
+            .findByEmailIgnoreCase(body.email().trim())
+            .filter(UserEntity::isEnabled)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+    if (!passwordEncoder.matches(body.password(), user.getPasswordHash())) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
     Instant now = Instant.now();
@@ -40,8 +52,9 @@ public class AuthController {
             .issuer("list-mailer")
             .issuedAt(now)
             .expiresAt(now.plusSeconds(8 * 3600))
-            .subject(bootstrap.email())
-            .claim("role", "ADMIN")
+            .subject(user.getId())
+            .claim("email", user.getEmail())
+            .claim("role", user.getRole().name())
             .build();
     String token =
         jwtEncoder

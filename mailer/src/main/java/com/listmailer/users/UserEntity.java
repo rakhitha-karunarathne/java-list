@@ -1,0 +1,70 @@
+package com.listmailer.users;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.Instant;
+
+@Entity
+@Table(name = "users")
+public class UserEntity {
+
+  @Id
+  @Column(length = 36, nullable = false)
+  private String id;
+
+  @Column(nullable = false, length = 320, unique = true)
+  private String email;
+
+  @Column(name = "password_hash", nullable = false, length = 100)
+  private String passwordHash;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 32)
+  private UserRole role;
+
+  @Column(nullable = false)
+  private boolean enabled;
+
+  @Column(name = "created_at", nullable = false)
+  private Instant createdAt;
+
+  protected UserEntity() {}
+
+  public UserEntity(
+      String id, String email, String passwordHash, UserRole role, boolean enabled, Instant createdAt) {
+    this.id = id;
+    this.email = email;
+    this.passwordHash = passwordHash;
+    this.role = role;
+    this.enabled = enabled;
+    this.createdAt = createdAt;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public String getPasswordHash() {
+    return passwordHash;
+  }
+
+  public UserRole getRole() {
+    return role;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+}

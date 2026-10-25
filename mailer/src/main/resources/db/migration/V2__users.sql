@@ -1,0 +1,9 @@
+CREATE TABLE users (
+  id CHAR(36) NOT NULL PRIMARY KEY,
+  email VARCHAR(320) NOT NULL,
+  password_hash VARCHAR(100) NOT NULL,
+  role VARCHAR(32) NOT NULL,
+  enabled TINYINT(1) NOT NULL,
+  created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  CONSTRAINT uq_users_email UNIQUE (email)
+);

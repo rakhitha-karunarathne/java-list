@@ -27,6 +27,7 @@ management:
 
 mailer:
   public-base-url: ${MAILER_PUBLIC_BASE_URL:https://lists.example.com}
+  # Used only to seed the first Admin when users table is empty (install).
   bootstrap:
     email: ${MAILER_BOOTSTRAP_EMAIL:admin@example.com}
     password: ${MAILER_BOOTSTRAP_PASSWORD:changeme}
