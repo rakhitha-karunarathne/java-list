@@ -1,0 +1,81 @@
+package com.listmailer.kernel.config;
+
+import com.listmailer.kernel.ports.MailboxPort;
+import com.listmailer.kernel.ports.ParametersPort;
+import com.listmailer.kernel.ports.SchedulerHost;
+import com.listmailer.kernel.ports.SmtpPort;
+import com.listmailer.kernel.token.OpaqueTokenHelper;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/** In-memory / no-op stubs until feature slices and adaptors land. */
+@Configuration
+public class KernelStubConfig {
+
+  @Bean
+  ParametersPort parametersPort() {
+    Map<String, String> store = new ConcurrentHashMap<>();
+    return new ParametersPort() {
+      @Override
+      public Optional<String> get(String key) {
+        return Optional.ofNullable(store.get(key));
+      }
+
+      @Override
+      public void set(String key, String value) {
+        store.put(key, value);
+      }
+    };
+  }
+
+  @Bean
+  SmtpPort smtpPort() {
+    return message -> {
+      /* stub: smtp-adapter wires GreenMail later */
+    };
+  }
+
+  @Bean
+  MailboxPort mailboxPort() {
+    return (mailboxId, handler) -> {
+      /* stub: mailbox-query wires GreenMail later */
+    };
+  }
+
+  @Bean(destroyMethod = "shutdown")
+  ScheduledExecutorService kernelScheduler() {
+    // Per-job executors come later; host stub keeps a tiny dedicated pool (not a global app pool).
+    return Executors.newScheduledThreadPool(2, r -> {
+      Thread t = new Thread(r, "kernel-scheduler");
+      t.setDaemon(true);
+      return t;
+    });
+  }
+
+  @Bean
+  SchedulerHost schedulerHost(ScheduledExecutorService kernelScheduler) {
+    return (jobName, job) ->
+        kernelScheduler.scheduleWithFixedDelay(job, 1, 60, TimeUnit.SECONDS);
+  }
+
+  @Bean
+  OpaqueTokenHelper opaqueTokenHelper() {
+    return new OpaqueTokenHelper() {
+      @Override
+      public String seal(byte[] payload) {
+        throw new UnsupportedOperationException("Opaque tokens land with campaigns/unsub");
+      }
+
+      @Override
+      public byte[] open(String token) {
+        throw new UnsupportedOperationException("Opaque tokens land with campaigns/unsub");
+      }
+    };
+  }
+}
