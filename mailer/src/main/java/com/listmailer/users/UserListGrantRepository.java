@@ -12,4 +12,6 @@ public interface UserListGrantRepository
   Optional<UserListGrantEntity> findByUserIdAndListId(String userId, String listId);
 
   void deleteByUserIdAndListId(String userId, String listId);
+
+  void deleteByListId(String listId);
 }
