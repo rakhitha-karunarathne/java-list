@@ -2,9 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { apiJson } from './api.js'
 import { DeleteBlocked, UsedByList } from './catalogUi.jsx'
 import { CREATE_ID, isCreatePage } from './createPage.js'
+import {
+  formatBooleanString,
+  isBooleanString,
+  parseBooleanString,
+} from './booleanValue.js'
 import { btnDirtyClass, dirtyControlProps, isFormDirty, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
+import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
 
@@ -216,13 +222,13 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
             />
           </label>
           <label className="field">
-            <input
-              type="checkbox"
-              checked={form.useTls}
-              onChange={(ev) => setForm({ ...form, useTls: ev.target.checked })}
-              {...dirtyControlProps(!valuesEqual(form.useTls, saved.useTls))}
-            />{' '}
             {fieldLabel('useTls')}
+            <Toggle
+              checked={!!form.useTls}
+              dirty={!valuesEqual(form.useTls, saved.useTls)}
+              aria-label={fieldLabel('useTls')}
+              onChange={(on) => setForm({ ...form, useTls: on })}
+            />
           </label>
           <p>
             <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
@@ -612,13 +618,13 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             />
           </label>
           <label className="field">
-            <input
-              type="checkbox"
-              checked={form.useSsl}
-              onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
-              {...dirtyControlProps(!valuesEqual(form.useSsl, blank.useSsl))}
-            />{' '}
             {fieldLabel('useSsl')}
+            <Toggle
+              checked={!!form.useSsl}
+              dirty={!valuesEqual(form.useSsl, blank.useSsl)}
+              aria-label={fieldLabel('useSsl')}
+              onChange={(on) => setForm({ ...form, useSsl: on })}
+            />
           </label>
           <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
             Create Bounce Mailbox
@@ -675,13 +681,13 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             />
           </label>
           <label className="field">
-            <input
-              type="checkbox"
-              checked={form.useSsl}
-              onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
-              {...dirtyControlProps(!valuesEqual(form.useSsl, saved.useSsl))}
-            />{' '}
             {fieldLabel('useSsl')}
+            <Toggle
+              checked={!!form.useSsl}
+              dirty={!valuesEqual(form.useSsl, saved.useSsl)}
+              aria-label={fieldLabel('useSsl')}
+              onChange={(on) => setForm({ ...form, useSsl: on })}
+            />
           </label>
           <p>
             <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
@@ -776,16 +782,28 @@ export function ParametersPage({ token, onError }) {
       <p className="hint">Admin runtime settings — no SMTP/IMAP passwords or signing secrets here.</p>
       {params.map((p) => {
         const dirty = !valuesEqual(drafts[p.key], p.value)
+        const asToggle = isBooleanString(p.value) || isBooleanString(drafts[p.key])
         return (
           <div key={p.key} style={{ marginBottom: '1.5rem' }}>
             <label className="field">
               {fieldLabel(p.key)}
               <div className="field-control-row">
-                <input
-                  value={drafts[p.key] ?? ''}
-                  onChange={(ev) => setDrafts((d) => ({ ...d, [p.key]: ev.target.value }))}
-                  {...dirtyControlProps(dirty)}
-                />
+                {asToggle ? (
+                  <Toggle
+                    checked={parseBooleanString(drafts[p.key])}
+                    dirty={dirty}
+                    aria-label={fieldLabel(p.key)}
+                    onChange={(on) =>
+                      setDrafts((d) => ({ ...d, [p.key]: formatBooleanString(on) }))
+                    }
+                  />
+                ) : (
+                  <input
+                    value={drafts[p.key] ?? ''}
+                    onChange={(ev) => setDrafts((d) => ({ ...d, [p.key]: ev.target.value }))}
+                    {...dirtyControlProps(dirty)}
+                  />
+                )}
                 <button
                   type="button"
                   className={btnDirtyClass(dirty, 'btn secondary')}

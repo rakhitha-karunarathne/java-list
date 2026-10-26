@@ -76,8 +76,9 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Requeue | On Stopped always; on Finished only after Add List (control disabled until a new List is attached) |
 | Used By | Navigable links; blocks delete while in use |
 | Form field | **Stacked:** Title Case label **above** the control (never inline beside it); SPA `label.field` CSS enforces this |
+| Boolean field | Scalar true/false (or on/off) settings use a **toggle** (switch + On/Off text), never a bare checkbox; multi-select / per-row permission checks may still use checkboxes |
 | Field label wording | Valid English with spaces between words (`From Email`, `HTML Body`, `Use TLS`); SPA `fieldLabel()` — never raw camelCase keys |
-| Parameter field | Label above; **control + Save on one row** (Save at the end of the field); helper under the row; on narrow widths the control shrinks until its min length, then Save wraps |
+| Parameter field | Label above; **control + Save on one row** (Save at the end of the field); boolean Parameters use a toggle in that row; helper under the row; on narrow widths the control shrinks until its min length, then Save wraps |
 | Unsaved edits | Changed controls + their Save/Create button use `{colors.warning}` treatment (not accent alone); title/hint “Unsaved changes” so color is not the only cue |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On User detail only: enroll QR, verify, backup codes, unenroll |

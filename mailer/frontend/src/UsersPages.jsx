@@ -5,6 +5,7 @@ import { CREATE_ID, isCreatePage } from './createPage.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
+import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
 
@@ -211,13 +212,13 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             </select>
           </label>
           <label className="field">
-            <input
-              type="checkbox"
-              checked={patch.enabled}
-              onChange={(ev) => setPatch({ ...patch, enabled: ev.target.checked })}
-              {...dirtyControlProps(!valuesEqual(patch.enabled, savedPatch.enabled))}
-            />{' '}
             {fieldLabel('enabled')}
+            <Toggle
+              checked={!!patch.enabled}
+              dirty={!valuesEqual(patch.enabled, savedPatch.enabled)}
+              aria-label={fieldLabel('enabled')}
+              onChange={(on) => setPatch({ ...patch, enabled: on })}
+            />
           </label>
           <button
             type="submit"

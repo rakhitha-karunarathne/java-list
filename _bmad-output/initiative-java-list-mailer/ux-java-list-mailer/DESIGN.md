@@ -169,7 +169,7 @@ Airy SaaS density: generous page padding (`{spacing.page}`), card gaps (`{spacin
 
 - Sidebar fixed ~`{spacing.sidebar}` on desktop; drawer on small viewports.
 - Main column fluid; tables scroll horizontally on narrow screens rather than crushing columns.
-- Forms (Parameters, settings, all operator inputs): **stacked fields** — Title Case label **above** the control (never beside it), then helper when present — with clear vertical rhythm (`{spacing.4}`–`{spacing.5}` between fields). SPA: `label.field` uses column flex; checkbox/radio rows stay horizontal.
+- Forms (Parameters, settings, all operator inputs): **stacked fields** — Title Case label **above** the control (never beside it), then helper when present — with clear vertical rhythm (`{spacing.4}`–`{spacing.5}` between fields). SPA: `label.field` uses column flex; scalar booleans use toggles; multi-select checkbox/radio rows stay horizontal.
 - Field labels are **valid English phrases** (words separated by spaces; never CamelCase or glued API identifiers). Use `fieldLabel()`; prefer natural wording and standard acronyms (HTML, TLS, MFA, URL).
 
 ## Elevation & Depth
@@ -194,9 +194,10 @@ Light only: cards use a single soft shadow (`{components.card.shadow}`). No stac
 - **Input** — `{components.input}`; focus ring `{colors.focus-ring}`.
 - **Badge** — `{components.badge}` for quiet status; danger/warning variants use those color tokens.
 - **Table** — header `{components.table-header}`; row separators `{colors.border}`; no zebra required.
-- **Form field** — stacked: `{typography.label}` above control (not inline); checkbox/radio may keep control + short text on one row.
+- **Form field** — stacked: `{typography.label}` above control (not inline); multi-select checkbox/radio may keep control + short text on one row.
+- **Boolean toggle** — scalar on/off fields use `.toggle` (`role="switch"`): track + knob; On = `{colors.accent}`, Off = muted track; always show On/Off text beside the track. Dirty uses `{colors.warning}` like other fields.
 - **Record index** — `{components.table}` / `.data-table` in a `.table-scroll`; primary identity is a text cell, not a button row. **Create is its own page** (index → Create action → create page → back / open detail) — never embedded on the index under the table.
-- **Parameter field** — `{typography.label}` above a **control + Save** row (Save at the trailing end); `{typography.helper}` under the row. Row uses flex wrap: control `flex: 1 1` with a min width so it shrinks first; Save wraps only after that min is hit.
+- **Parameter field** — `{typography.label}` above a **control + Save** row (Save at the trailing end); boolean values (`true`/`false`) render as a toggle in that row; `{typography.helper}` under the row. Row uses flex wrap: control `flex: 1 1` with a min width so it shrinks first; Save wraps only after that min is hit.
 - **Unsaved field / Save** — dirty control border + light warning wash (`{colors.warning}`); dirty primary Save/Create uses warning fill; dirty secondary Save uses warning border. Not purple/danger.
 
 ## Do's and Don'ts
