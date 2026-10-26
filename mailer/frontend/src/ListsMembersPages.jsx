@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
+import { membersSearchPath } from './membersSearch.js'
 
 export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenMember }) {
   const [rows, setRows] = useState([])
@@ -285,10 +286,7 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
 
   async function search(query) {
     try {
-      const path = query.trim()
-        ? `/api/members?q=${encodeURIComponent(query.trim())}`
-        : '/api/members'
-      setRows(await apiJson(token, path))
+      setRows(await apiJson(token, membersSearchPath(query)))
     } catch (e) {
       onError(e.message)
     }
