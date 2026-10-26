@@ -169,7 +169,7 @@ Airy SaaS density: generous page padding (`{spacing.page}`), card gaps (`{spacin
 
 - Sidebar fixed ~`{spacing.sidebar}` on desktop; drawer on small viewports.
 - Main column fluid; tables scroll horizontally on narrow screens rather than crushing columns.
-- Forms (Parameters, settings): **stacked fields** — label, control, helper — with clear vertical rhythm (`{spacing.4}`–`{spacing.5}` between fields).
+- Forms (Parameters, settings, all operator inputs): **stacked fields** — Title Case label **above** the control (never beside it), then helper when present — with clear vertical rhythm (`{spacing.4}`–`{spacing.5}` between fields). SPA: `label.field` uses column flex; checkbox/radio rows stay horizontal.
 
 ## Elevation & Depth
 
@@ -193,6 +193,7 @@ Light only: cards use a single soft shadow (`{components.card.shadow}`). No stac
 - **Input** — `{components.input}`; focus ring `{colors.focus-ring}`.
 - **Badge** — `{components.badge}` for quiet status; danger/warning variants use those color tokens.
 - **Table** — header `{components.table-header}`; row separators `{colors.border}`; no zebra required.
+- **Form field** — stacked: `{typography.label}` above control (not inline); checkbox/radio may keep control + short text on one row.
 - **Parameter field** — stacked: `{typography.label}` → control → `{typography.helper}` description (purpose, supported values, range).
 
 ## Do's and Don'ts

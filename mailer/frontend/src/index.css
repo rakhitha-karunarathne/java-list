@@ -67,11 +67,37 @@ textarea:focus {
   border-color: transparent;
 }
 
+/* Clearwater form field: Title Case label stacked ABOVE the control (never beside it). */
 label.field {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   font-size: 13px;
   font-weight: 600;
   margin: 14px 0 6px;
+  max-width: 480px;
+  color: var(--ink);
+}
+
+label.field:first-child {
+  margin-top: 0;
+}
+
+/* Checkbox / radio: control stays beside its short label text. */
+label.field:has(> input[type='checkbox']),
+label.field:has(> input[type='radio']) {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  max-width: none;
+}
+
+label.field > input[type='checkbox'],
+label.field > input[type='radio'] {
+  width: auto;
+  max-width: none;
+  padding: 0;
 }
 
 .btn {

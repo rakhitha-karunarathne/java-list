@@ -72,6 +72,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Stop | Available on Draft, Queued, Sending (index row and detail); not on Finished/Stopped |
 | Requeue | On Stopped always; on Finished only after Add List (control disabled until a new List is attached) |
 | Used By | Navigable links; blocks delete while in use |
+| Form field | **Stacked:** Title Case label **above** the control (never inline beside it); SPA `label.field` CSS enforces this |
 | Parameter field | Label → control → helper (purpose, supported values, range) always visible |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On User detail only: enroll QR, verify, backup codes, unenroll |
