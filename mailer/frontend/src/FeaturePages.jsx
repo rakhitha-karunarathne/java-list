@@ -10,6 +10,7 @@ import {
 } from './CatalogPages.jsx'
 import { CampaignsPage, StatusBadge } from './CampaignPages.jsx'
 import { ListsPage, MembersPage } from './ListsMembersPages.jsx'
+import { RecordTable } from './RecordTable.jsx'
 import {
   BounceLogPage,
   DropLogPage,
@@ -281,14 +282,20 @@ export function AuditLog({ token }) {
     <div className="card">
       <h2>Audit</h2>
       <p className="hint">Append-only history (read-only).</p>
-      <ul>
-        {rows.map((r) => (
-          <li key={r.id}>
-            <code>{r.action}</code> {r.detail}{' '}
-            <span className="hint">{r.actor}</span>
-          </li>
-        ))}
-      </ul>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        empty="No audit events."
+        columns={[
+          {
+            key: 'action',
+            label: 'Action',
+            render: (r) => <code>{r.action}</code>,
+          },
+          { key: 'detail', label: 'Detail' },
+          { key: 'actor', label: 'Actor' },
+        ]}
+      />
     </div>
   )
 }
@@ -336,24 +343,30 @@ export function AttentionInbox({ token, onError }) {
   return (
     <div className="card">
       <h2>Attention</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {rows.map((r) => (
-          <li
-            key={r.id}
-            style={{
-              background: r.opsHighlight ? '#fffbeb' : undefined,
-              borderLeft: r.opsHighlight ? '4px solid var(--warning)' : undefined,
-              padding: '0.35rem 0.5rem',
-              marginBottom: '0.35rem',
-            }}
-          >
-            <strong>{r.title}</strong> — {r.detail}{' '}
-            <button type="button" className="btn secondary" onClick={() => ack(r.id)}>
-              Ack
-            </button>
-          </li>
-        ))}
-      </ul>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        empty="Nothing needs attention."
+        columns={[
+          { key: 'title', label: 'Title' },
+          { key: 'detail', label: 'Detail' },
+          {
+            key: 'ops',
+            label: 'Ops',
+            render: (r) => (r.opsHighlight ? 'Highlight' : '—'),
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            stopRowClick: true,
+            render: (r) => (
+              <button type="button" className="btn secondary" onClick={() => ack(r.id)}>
+                Ack
+              </button>
+            ),
+          },
+        ]}
+      />
     </div>
   )
 }
@@ -382,19 +395,26 @@ export function OpsLogs({ token, onError }) {
     setDetail(await res.json())
   }
   return (
-    <div className="card">
-      <h2>Ops Logs</h2>
-      <p className="hint">Index — open a row for detail (C8).</p>
-      <ul>
-        {rows.map((r) => (
-          <li key={r.id}>
-            <button type="button" className="btn secondary" onClick={() => openRow(r.id)}>
-              [{r.severity}] {r.category}
-            </button>{' '}
-            {r.message?.slice(0, 80)}
-          </li>
-        ))}
-      </ul>
+    <>
+      <div className="card">
+        <h2>Ops Logs</h2>
+        <p className="hint">Index — open a row for detail (C8).</p>
+        <RecordTable
+          rows={rows}
+          rowKey={(r) => r.id}
+          onOpen={(r) => openRow(r.id)}
+          empty="No ops log entries."
+          columns={[
+            { key: 'severity', label: 'Severity' },
+            { key: 'category', label: 'Category' },
+            {
+              key: 'message',
+              label: 'Message',
+              render: (r) => (r.message || '').slice(0, 80),
+            },
+          ]}
+        />
+      </div>
       {detail ? (
         <div className="card">
           <h2>{detail.category}</h2>
@@ -405,7 +425,7 @@ export function OpsLogs({ token, onError }) {
           </button>
         </div>
       ) : null}
-    </div>
+    </>
   )
 }
 

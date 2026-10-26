@@ -6,6 +6,7 @@ import {
   canStopCampaign,
   filterCampaigns,
 } from './campaignStatus.js'
+import { RecordTable } from './RecordTable.jsx'
 
 const BADGE = {
   DRAFT: { bg: '#e2e8f0', fg: '#0f172a' },
@@ -172,21 +173,37 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail 
           ))}
         </select>
       </label>
-      <ul>
-        {visible.map((r) => (
-          <li key={r.id}>
-            <button type="button" className="btn secondary" onClick={() => onOpen(r.id)}>
-              {r.subject || '(no subject)'}
-            </button>{' '}
-            <StatusBadge status={r.status} />{' '}
-            {canStopCampaign(r.status) ? (
-              <button type="button" className="btn secondary" onClick={() => stop(r.id)}>
-                Stop
-              </button>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <RecordTable
+        rows={visible}
+        rowKey={(r) => r.id}
+        onOpen={(r) => onOpen(r.id)}
+        empty="No campaigns match this filter."
+        columns={[
+          {
+            key: 'subject',
+            label: 'Subject',
+            render: (r) => r.subject || '(no subject)',
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (r) => <StatusBadge status={r.status} />,
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            stopRowClick: true,
+            render: (r) =>
+              canStopCampaign(r.status) ? (
+                <button type="button" className="btn secondary" onClick={() => stop(r.id)}>
+                  Stop
+                </button>
+              ) : (
+                '—'
+              ),
+          },
+        ]}
+      />
     </div>
   )
 }

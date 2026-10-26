@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { fieldLabel } from './fieldLabel.js'
+import { RecordTable } from './RecordTable.jsx'
 
 export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [inboxes, setInboxes] = useState([])
@@ -125,17 +126,29 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         <p className="hint">
           {detail.host}:{detail.port} · {detail.enabled ? 'enabled' : 'disabled'}
         </p>
-        <h3>Authorized senders</h3>
-        <ul>
-          {(detail.authorizedSenders || []).map((email) => (
-            <li key={email}>
-              {email}{' '}
-              <button type="button" className="btn secondary" onClick={() => removeSender(email)}>
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
+        <h3>Authorized Senders</h3>
+        <RecordTable
+          rows={(detail.authorizedSenders || []).map((email) => ({ email }))}
+          rowKey={(r) => r.email}
+          empty="No authorized senders."
+          columns={[
+            { key: 'email', label: 'Email' },
+            {
+              key: 'actions',
+              label: 'Actions',
+              stopRowClick: true,
+              render: (r) => (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => removeSender(r.email)}
+                >
+                  Remove
+                </button>
+              ),
+            },
+          ]}
+        />
         <form onSubmit={addSender}>
           <label className="field">
             {fieldLabel('sender email')}
@@ -146,19 +159,29 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             />
           </label>
           <button type="submit" className="btn secondary">
-            Add sender
+            Add Sender
           </button>
         </form>
 
         <h3>Mappings</h3>
-        <ul>
-          {inboxMaps.map((m) => (
-            <li key={m.id}>
-              {m.name} → lists {(m.listIds || []).join(', ')}
-              {m.substituteFrom ? ` · from ${m.substituteFrom}` : ''}
-            </li>
-          ))}
-        </ul>
+        <RecordTable
+          rows={inboxMaps}
+          rowKey={(m) => m.id}
+          empty="No mappings for this inbox."
+          columns={[
+            { key: 'name', label: 'Name' },
+            {
+              key: 'listIds',
+              label: 'Lists',
+              render: (m) => (m.listIds || []).join(', ') || '—',
+            },
+            {
+              key: 'substituteFrom',
+              label: 'Substitute From',
+              render: (m) => m.substituteFrom || '—',
+            },
+          ]}
+        />
         <form onSubmit={addMapping}>
           <label className="field">
             {fieldLabel('mapping name')}
@@ -218,47 +241,68 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   }
 
   return (
-    <div className="card">
-      <h2>Inboxes &amp; Mappings</h2>
-      <ul>
-        {inboxes.map((i) => (
-          <li key={i.id}>
-            <button type="button" className="btn secondary" onClick={() => onOpen(i.id)}>
-              {i.name}
-            </button>{' '}
-            {i.enabled ? '' : '(disabled)'} poll {i.pollIntervalMinutes}m
-          </li>
-        ))}
-      </ul>
-      <h3>All mappings</h3>
-      <ul>
-        {mappings.map((m) => (
-          <li key={m.id}>
-            {m.name}{' '}
-            <button type="button" className="btn secondary" onClick={() => onOpen(m.inboxId)}>
-              inbox
-            </button>
-          </li>
-        ))}
-      </ul>
-      <h3>Create inbox</h3>
-      <form onSubmit={createInbox}>
-        {['name', 'host', 'username', 'password'].map((k) => (
-          <label className="field" key={k}>
-            {fieldLabel(k)}
-            <input
-              type={k === 'password' ? 'password' : 'text'}
-              value={inboxForm[k]}
-              onChange={(ev) => setInboxForm({ ...inboxForm, [k]: ev.target.value })}
-              required
-            />
-          </label>
-        ))}
-        <button type="submit" className="btn">
-          Create
-        </button>
-      </form>
-    </div>
+    <>
+      <div className="card">
+        <h2>Inboxes &amp; Mappings</h2>
+        <RecordTable
+          rows={inboxes}
+          rowKey={(i) => i.id}
+          onOpen={(i) => onOpen(i.id)}
+          empty="No inboxes yet."
+          columns={[
+            { key: 'name', label: 'Name' },
+            {
+              key: 'enabled',
+              label: 'Enabled',
+              render: (i) => (i.enabled ? 'Yes' : 'No'),
+            },
+            {
+              key: 'pollIntervalMinutes',
+              label: 'Poll Minutes',
+            },
+          ]}
+        />
+        <h3>All Mappings</h3>
+        <RecordTable
+          rows={mappings}
+          rowKey={(m) => m.id}
+          onOpen={(m) => onOpen(m.inboxId)}
+          empty="No mappings yet."
+          columns={[
+            { key: 'name', label: 'Name' },
+            {
+              key: 'listIds',
+              label: 'Lists',
+              render: (m) => (m.listIds || []).join(', ') || '—',
+            },
+            {
+              key: 'substituteFrom',
+              label: 'Substitute From',
+              render: (m) => m.substituteFrom || '—',
+            },
+          ]}
+        />
+      </div>
+      <div className="card create-card">
+        <h2>Create Inbox</h2>
+        <form onSubmit={createInbox}>
+          {['name', 'host', 'username', 'password'].map((k) => (
+            <label className="field" key={k}>
+              {fieldLabel(k)}
+              <input
+                type={k === 'password' ? 'password' : 'text'}
+                value={inboxForm[k]}
+                onChange={(ev) => setInboxForm({ ...inboxForm, [k]: ev.target.value })}
+                required
+              />
+            </label>
+          ))}
+          <button type="submit" className="btn">
+            Create Inbox
+          </button>
+        </form>
+      </div>
+    </>
   )
 }
 
@@ -293,20 +337,38 @@ export function IssuesPage({ token, onError }) {
         Held mail for From-domain policy — not Drop log entries. Clearing is not the same as resolving
         a drop.
       </p>
-      <ul>
-        {rows.map((r) => (
-          <li key={r.id}>
-            <strong>{r.subject || '(no subject)'}</strong> from {r.senderEmail} · {r.status}
-            <p className="hint">{r.detail}</p>
-            {r.status !== 'CLEARED' ? (
-              <button type="button" className="btn secondary" onClick={() => clear(r.id)}>
-                Clear issue
-              </button>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-      {!rows.length ? <p className="hint">No open From-domain issues.</p> : null}
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        empty="No open From-domain issues."
+        columns={[
+          {
+            key: 'subject',
+            label: 'Subject',
+            render: (r) => r.subject || '(no subject)',
+          },
+          { key: 'senderEmail', label: 'Sender' },
+          { key: 'status', label: 'Status' },
+          {
+            key: 'detail',
+            label: 'Detail',
+            render: (r) => r.detail || '—',
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            stopRowClick: true,
+            render: (r) =>
+              r.status !== 'CLEARED' ? (
+                <button type="button" className="btn secondary" onClick={() => clear(r.id)}>
+                  Clear Issue
+                </button>
+              ) : (
+                '—'
+              ),
+          },
+        ]}
+      />
     </div>
   )
 }
@@ -336,15 +398,6 @@ export function DropLogPage({ token, onError, inboxFilter, onFilterInbox }) {
     }
   }
 
-  async function unblock(id) {
-    try {
-      await apiJson(token, `/api/mts/blocks/${id}`, { method: 'DELETE' })
-      await load()
-    } catch (e) {
-      onError(e.message)
-    }
-  }
-
   return (
     <div className="card">
       <h2>Drop Log</h2>
@@ -353,31 +406,50 @@ export function DropLogPage({ token, onError, inboxFilter, onFilterInbox }) {
         <p>
           Filtered inbox <code>{inboxFilter}</code>{' '}
           <button type="button" className="btn secondary" onClick={() => onFilterInbox?.(null)}>
-            Clear filter
+            Clear Filter
           </button>
         </p>
       ) : null}
-      <ul>
-        {rows.map((r) => (
-          <li key={r.id}>
-            {r.senderEmail} · {r.reason}
-            {r.countedForAutoBlock ? ' · auto-block counted' : ''}
-            {r.resolved ? ' · resolved' : ''}{' '}
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={() => onFilterInbox?.(r.inboxId)}
-            >
-              inbox
-            </button>{' '}
-            {!r.resolved ? (
-              <button type="button" className="btn secondary" onClick={() => resolve(r.id)}>
-                Resolve
-              </button>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        empty="No drop log entries."
+        columns={[
+          { key: 'senderEmail', label: 'Sender' },
+          { key: 'reason', label: 'Reason' },
+          {
+            key: 'countedForAutoBlock',
+            label: 'Auto-Block',
+            render: (r) => (r.countedForAutoBlock ? 'Yes' : 'No'),
+          },
+          {
+            key: 'resolved',
+            label: 'Resolved',
+            render: (r) => (r.resolved ? 'Yes' : 'No'),
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            stopRowClick: true,
+            render: (r) => (
+              <>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => onFilterInbox?.(r.inboxId)}
+                >
+                  Inbox
+                </button>{' '}
+                {!r.resolved ? (
+                  <button type="button" className="btn secondary" onClick={() => resolve(r.id)}>
+                    Resolve
+                  </button>
+                ) : null}
+              </>
+            ),
+          },
+        ]}
+      />
     </div>
   )
 }
@@ -409,65 +481,84 @@ export function GlobalBlocksPage({ token, onError }) {
   }
 
   return (
-    <div className="card">
-      <h2>Global Blocks</h2>
-      <ul>
-        {blocks.map((b) => (
-          <li key={b.id}>
-            {b.kind}: {b.value} <span className="hint">({b.source})</span>{' '}
-            <button type="button" className="btn secondary" onClick={() => unblock(b.id)}>
-              Unblock
-            </button>
-          </li>
-        ))}
-      </ul>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault()
-          try {
-            await apiJson(token, '/api/mts/blocks/sender', {
-              method: 'POST',
-              body: JSON.stringify({ email: blockEmail }),
-            })
-            setBlockEmail('')
-            await load()
-          } catch (err) {
-            onError(err.message)
-          }
-        }}
-      >
-        <label className="field">
-          Block Sender
-          <input value={blockEmail} onChange={(ev) => setBlockEmail(ev.target.value)} required />
-        </label>
-        <button type="submit" className="btn secondary">
-          Block Sender
-        </button>
-      </form>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault()
-          try {
-            await apiJson(token, '/api/mts/blocks/domain', {
-              method: 'POST',
-              body: JSON.stringify({ domain: blockDomain }),
-            })
-            setBlockDomain('')
-            await load()
-          } catch (err) {
-            onError(err.message)
-          }
-        }}
-      >
-        <label className="field">
-          Block Domain
-          <input value={blockDomain} onChange={(ev) => setBlockDomain(ev.target.value)} required />
-        </label>
-        <button type="submit" className="btn secondary">
-          Block Domain
-        </button>
-      </form>
-    </div>
+    <>
+      <div className="card">
+        <h2>Global Blocks</h2>
+        <RecordTable
+          rows={blocks}
+          rowKey={(b) => b.id}
+          empty="No global blocks."
+          columns={[
+            { key: 'kind', label: 'Kind' },
+            { key: 'value', label: 'Value' },
+            { key: 'source', label: 'Source' },
+            {
+              key: 'actions',
+              label: 'Actions',
+              stopRowClick: true,
+              render: (b) => (
+                <button type="button" className="btn secondary" onClick={() => unblock(b.id)}>
+                  Unblock
+                </button>
+              ),
+            },
+          ]}
+        />
+      </div>
+      <div className="card create-card">
+        <h2>Add Block</h2>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            try {
+              await apiJson(token, '/api/mts/blocks/sender', {
+                method: 'POST',
+                body: JSON.stringify({ email: blockEmail }),
+              })
+              setBlockEmail('')
+              await load()
+            } catch (err) {
+              onError(err.message)
+            }
+          }}
+        >
+          <label className="field">
+            Block Sender
+            <input value={blockEmail} onChange={(ev) => setBlockEmail(ev.target.value)} required />
+          </label>
+          <button type="submit" className="btn secondary">
+            Block Sender
+          </button>
+        </form>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            try {
+              await apiJson(token, '/api/mts/blocks/domain', {
+                method: 'POST',
+                body: JSON.stringify({ domain: blockDomain }),
+              })
+              setBlockDomain('')
+              await load()
+            } catch (err) {
+              onError(err.message)
+            }
+          }}
+        >
+          <label className="field">
+            Block Domain
+            <input
+              value={blockDomain}
+              onChange={(ev) => setBlockDomain(ev.target.value)}
+              required
+            />
+          </label>
+          <button type="submit" className="btn secondary">
+            Block Domain
+          </button>
+        </form>
+      </div>
+    </>
   )
 }
 

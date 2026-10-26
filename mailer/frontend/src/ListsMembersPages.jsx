@@ -4,6 +4,7 @@ import { CONSENT_REQUEST_HINT } from './consentCopy.js'
 import { emptyHint } from './emptyHint.js'
 import { fieldLabel } from './fieldLabel.js'
 import { membersSearchPath } from './membersSearch.js'
+import { RecordTable } from './RecordTable.jsx'
 
 export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenMember }) {
   const [rows, setRows] = useState([])
@@ -186,21 +187,26 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
           <p className="hint">View only (no manage grant).</p>
         )}
 
-        <h3>Members on this list</h3>
-        <ul>
-          {listMembers.map((m) => (
-            <li key={m.id}>
-              {onOpenMember ? (
-                <button type="button" className="btn secondary" onClick={() => onOpenMember(m.id)}>
-                  {m.email}
-                </button>
-              ) : (
-                m.email
-              )}{' '}
-              {m.enabled ? '' : '(disabled)'} {m.unsubscribed ? '(unsubscribed)' : ''}
-            </li>
-          ))}
-        </ul>
+        <h3>Members On This List</h3>
+        <RecordTable
+          rows={listMembers}
+          rowKey={(m) => m.id}
+          onOpen={onOpenMember ? (m) => onOpenMember(m.id) : undefined}
+          empty="No members on this list."
+          columns={[
+            { key: 'email', label: 'Email' },
+            {
+              key: 'enabled',
+              label: 'Enabled',
+              render: (m) => (m.enabled ? 'Yes' : 'No'),
+            },
+            {
+              key: 'unsubscribed',
+              label: 'Unsubscribed',
+              render: (m) => (m.unsubscribed ? 'Yes' : 'No'),
+            },
+          ]}
+        />
 
         {detail.canManage ? (
           <>
@@ -235,47 +241,56 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
   }
 
   return (
-    <div className="card">
-      <h2>Lists</h2>
-      <ul>
-        {rows.map((r) => (
-          <li key={r.id}>
-            <button type="button" className="btn secondary" onClick={() => onOpen(r.id)}>
-              {r.name}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <h3>Create</h3>
-      <form onSubmit={create}>
-        <label className="field">
-          {fieldLabel('name')}
-          <input
-            value={form.name}
-            onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-            required
-          />
-        </label>
-        <label className="field">
-          {fieldLabel('sending path')}
-          <select
-            value={form.sendingPathId}
-            onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
-            required
-          >
-            <option value="">— Select —</option>
-            {paths.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className="btn">
-          Create
-        </button>
-      </form>
-    </div>
+    <>
+      <div className="card">
+        <h2>Lists</h2>
+        <RecordTable
+          rows={rows}
+          rowKey={(r) => r.id}
+          onOpen={(r) => onOpen(r.id)}
+          empty="No lists yet."
+          columns={[
+            { key: 'name', label: 'Name' },
+            {
+              key: 'sendingPathId',
+              label: 'Sending Path',
+              render: (r) => paths.find((p) => p.id === r.sendingPathId)?.name || r.sendingPathId,
+            },
+          ]}
+        />
+      </div>
+      <div className="card create-card">
+        <h2>Create List</h2>
+        <form onSubmit={create}>
+          <label className="field">
+            {fieldLabel('name')}
+            <input
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              required
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('sending path')}
+            <select
+              value={form.sendingPathId}
+              onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
+              required
+            >
+              <option value="">— Select —</option>
+              {paths.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit" className="btn">
+            Create List
+          </button>
+        </form>
+      </div>
+    </>
   )
 }
 
@@ -445,20 +460,20 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
           placeholder="Email Contains…"
         />
       </label>
-      {!rows.length ? (
-        <p className="hint">{emptyHint('members')}</p>
-      ) : (
-        <ul>
-          {rows.map((r) => (
-            <li key={r.id}>
-              <button type="button" className="btn secondary" onClick={() => onOpen(r.id)}>
-                {r.email}
-              </button>{' '}
-              {r.enabled ? '' : '(disabled)'}
-            </li>
-          ))}
-        </ul>
-      )}
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        onOpen={(r) => onOpen(r.id)}
+        empty={emptyHint('members')}
+        columns={[
+          { key: 'email', label: 'Email' },
+          {
+            key: 'enabled',
+            label: 'Enabled',
+            render: (r) => (r.enabled ? 'Yes' : 'No'),
+          },
+        ]}
+      />
     </div>
   )
 }
