@@ -95,3 +95,15 @@ after = [4]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 9
+type = "story"
+title = "Page sections: title cards, Used By, MTS inbox, Compose"
+description = "Title own card; Used By own card; MTS inbox 4 sections; Compose content/preview/lists/actions."
+verify = "User title card; Path/Footer Used By card; MTS sections; Compose lists before buttons."
+covers = ["R1", "R6"]
+after = [8]
+hitl = false
+risk = "medium"
+refine = true

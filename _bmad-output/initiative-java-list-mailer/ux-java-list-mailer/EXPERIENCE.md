@@ -89,7 +89,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Unsaved edits | Changed controls + their Save/Create button use `{colors.warning}` treatment (not accent alone); title/hint “Unsaved changes” so color is not the only cue |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On User detail only: enroll QR, verify, backup codes, unenroll |
-| Page sections | When a detail page has more than one job, **break the white box**: each job is its own `.card` (surface, rounded, shadow) stacked in `.page-sections` with gap on the canvas — never nest major sections inside one card. Back + entity title sit in `.page-sections-head` above the stack. Exemplar: User detail (Account · List Grants · Security) |
+| Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title (back + name/email). Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants · Security); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Preview · Lists · Actions) |
 
 ## State Patterns
 

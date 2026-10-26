@@ -190,7 +190,7 @@ Light only: cards use a single soft shadow (`{components.card.shadow}`). No stac
 - **Primary button** — `{components.button-primary}`; hover `{components.button-primary-hover}`.
 - **Ghost / secondary** — `{components.button-ghost}`.
 - **Card** — white surface, 1px border, `{rounded.lg}`, light shadow.
-- **Page sections** — multi-job detail pages use `.page-sections`: a vertical stack of separate cards (gap ≈ `{spacing}` / 14px). One job per card; do not continue a long form inside a single card when the page has distinct save/scope boundaries. Page head (back + title) stays outside the cards on the canvas (`.page-sections-head`).
+- **Page sections** — multi-job pages use `.page-sections`: vertical stack of separate cards (gap ≈ 14px). One job per card. Record title (back + name) is its own card. Catalog **Used By** is its own card. Do not place page content outside cards on the canvas.
 - **Sidebar** — white; active item `{components.nav-active}`.
 - **Input** — `{components.input}`; focus ring `{colors.focus-ring}`.
 - **Badge** — `{components.badge}` for quiet status; danger/warning variants use those color tokens.

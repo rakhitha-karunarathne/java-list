@@ -417,7 +417,7 @@ body.nav-open .backdrop {
   box-shadow: var(--shadow);
 }
 
-/* Multi-job detail pages: one white card per section, stacked on canvas. */
+/* Multi-job pages: one white card per section (incl. title); stacked on canvas. */
 .page-sections {
   display: flex;
   flex-direction: column;
@@ -428,17 +428,16 @@ body.nav-open .backdrop {
   margin-bottom: 0;
 }
 
-.page-sections-head {
-  margin-bottom: 0;
-}
-
-.page-sections-head .btn {
+.page-sections .card > .btn.secondary:first-child {
   margin-bottom: 8px;
 }
 
-.page-sections-head h2 {
-  margin: 0;
-  font-size: 16px;
+.compose-preview {
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--canvas);
+  padding: 12px 14px;
+  min-height: 80px;
 }
 
 .card h2 {

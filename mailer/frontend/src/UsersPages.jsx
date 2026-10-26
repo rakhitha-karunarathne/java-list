@@ -209,12 +209,12 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   if (detailId && detail && savedPatch) {
     return (
       <div className="page-sections">
-        <div className="page-sections-head">
+        <section className="card">
           <button type="button" className="btn secondary" onClick={onCloseDetail}>
             ← Users & Grants
           </button>
           <h2>{detail.email}</h2>
-        </div>
+        </section>
 
         <section className="card">
           <h3>Account</h3>
