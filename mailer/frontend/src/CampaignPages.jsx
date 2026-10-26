@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import {
   CAMPAIGN_STATUSES,
+  campaignStatusLabel,
   canStopCampaign,
   filterCampaigns,
 } from './campaignStatus.js'
@@ -29,7 +30,7 @@ export function StatusBadge({ status }) {
         fontWeight: 600,
       }}
     >
-      {s || 'UNKNOWN'}
+      {campaignStatusLabel(status)}
     </span>
   )
 }
@@ -166,7 +167,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail 
           <option value="">All</option>
           {CAMPAIGN_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {campaignStatusLabel(s)}
             </option>
           ))}
         </select>
