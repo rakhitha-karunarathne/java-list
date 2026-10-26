@@ -1,6 +1,5 @@
 package com.listmailer.kernel.config;
 
-import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.SchedulerHost;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -11,13 +10,6 @@ import org.springframework.context.annotation.Configuration;
 /** In-memory / no-op stubs until feature slices and adaptors land. */
 @Configuration
 public class KernelStubConfig {
-
-  @Bean
-  MailboxPort mailboxPort() {
-    return (mailboxId, handler) -> {
-      /* stub: mailbox-query wires GreenMail later */
-    };
-  }
 
   @Bean(destroyMethod = "shutdown")
   ScheduledExecutorService kernelScheduler() {
