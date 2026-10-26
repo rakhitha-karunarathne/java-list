@@ -2,20 +2,43 @@ import { useEffect, useMemo, useState } from 'react'
 import { apiJson } from './api.js'
 import { decodeJwtPayload } from './auth.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
+import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useRegisterUnsaved } from './Unsaved.jsx'
+import { useDirtyForm } from './useDirtyForm.js'
 
 const ROLES = ['ADMIN', 'LIST_MANAGER', 'LIST_SENDER']
 
+function grantsSig(gs) {
+  return JSON.stringify(
+    [...(gs || [])]
+      .map((g) => ({ listId: g.listId, manage: !!g.manage, send: !!g.send }))
+      .sort((a, b) => String(a.listId).localeCompare(String(b.listId))),
+  )
+}
+
 export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const creating = isCreatePage(detailId)
+  const { form, setForm, dirty: createDirty, blank, resetToBlank } = useDirtyForm(
+    { email: '', password: '', role: 'LIST_MANAGER' },
+    creating ? 'user-create' : 'user-create-idle',
+    creating,
+  )
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
   const [grants, setGrants] = useState([])
+  const [savedGrants, setSavedGrants] = useState([])
   const [lists, setLists] = useState([])
-  const [form, setForm] = useState({ email: '', password: '', role: 'LIST_MANAGER' })
   const [patch, setPatch] = useState({ role: 'LIST_MANAGER', enabled: true })
+  const [savedPatch, setSavedPatch] = useState(null)
   const me = useMemo(() => decodeJwtPayload(token), [token])
   const isSelf = detail && me?.sub === detail.id
+  const patchDirty = !!(savedPatch && !valuesEqual(patch.role, savedPatch.role)) ||
+    !!(savedPatch && !valuesEqual(patch.enabled, savedPatch.enabled))
+  const grantsDirty = grantsSig(grants) !== grantsSig(savedGrants)
+  useRegisterUnsaved(patchDirty, `user-patch-${detailId || 'x'}`)
+  useRegisterUnsaved(grantsDirty, `user-grants-${detailId || 'x'}`)
 
   async function load() {
     try {
@@ -32,6 +55,8 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   useEffect(() => {
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
+      setSavedPatch(null)
+      if (isCreatePage(detailId)) resetToBlank()
       return
     }
     Promise.all([
@@ -42,8 +67,11 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       .then(([u, g, ls]) => {
         if (!u) throw new Error('user not found')
         setDetail(u)
-        setPatch({ role: u.role, enabled: u.enabled })
+        const p = { role: u.role, enabled: u.enabled }
+        setPatch(p)
+        setSavedPatch(p)
         setGrants(g)
+        setSavedGrants(g)
         setLists(ls)
       })
       .catch((e) => onError(e.message))
@@ -57,7 +85,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         body: JSON.stringify(form),
       })
       await load()
-      setForm({ email: '', password: '', role: 'LIST_MANAGER' })
+      resetToBlank()
       onOpen(created.id)
     } catch (err) {
       onError(err.message)
@@ -72,6 +100,9 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         body: JSON.stringify(patch),
       })
       setDetail(updated)
+      const p = { role: updated.role, enabled: updated.enabled }
+      setPatch(p)
+      setSavedPatch(p)
       await load()
     } catch (err) {
       onError(err.message)
@@ -86,6 +117,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         body: JSON.stringify(grants.filter((g) => g.listId && (g.manage || g.send))),
       })
       setGrants(next)
+      setSavedGrants(next)
     } catch (err) {
       onError(err.message)
     }
@@ -103,7 +135,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     })
   }
 
-  if (isCreatePage(detailId)) {
+  if (creating) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -117,6 +149,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               value={form.email}
               onChange={(ev) => setForm({ ...form, email: ev.target.value })}
               required
+              {...dirtyControlProps(!valuesEqual(form.email, blank.email))}
             />
           </label>
           <label className="field">
@@ -126,6 +159,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               value={form.password}
               onChange={(ev) => setForm({ ...form, password: ev.target.value })}
               required
+              {...dirtyControlProps(!valuesEqual(form.password, blank.password))}
             />
           </label>
           <label className="field">
@@ -133,6 +167,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             <select
               value={form.role}
               onChange={(ev) => setForm({ ...form, role: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.role, blank.role))}
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -141,7 +176,11 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               ))}
             </select>
           </label>
-          <button type="submit" className="btn">
+          <button
+            type="submit"
+            className={btnDirtyClass(createDirty)}
+            title={createDirty ? 'Unsaved changes' : undefined}
+          >
             Create User
           </button>
         </form>
@@ -149,7 +188,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     )
   }
 
-  if (detailId && detail) {
+  if (detailId && detail && savedPatch) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -162,6 +201,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             <select
               value={patch.role}
               onChange={(ev) => setPatch({ ...patch, role: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(patch.role, savedPatch.role))}
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -175,10 +215,15 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               type="checkbox"
               checked={patch.enabled}
               onChange={(ev) => setPatch({ ...patch, enabled: ev.target.checked })}
+              {...dirtyControlProps(!valuesEqual(patch.enabled, savedPatch.enabled))}
             />{' '}
             {fieldLabel('enabled')}
           </label>
-          <button type="submit" className="btn">
+          <button
+            type="submit"
+            className={btnDirtyClass(patchDirty)}
+            title={patchDirty ? 'Unsaved changes' : undefined}
+          >
             Save user
           </button>
         </form>
@@ -188,6 +233,9 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {lists.map((l) => {
               const g = grants.find((x) => x.listId === l.id) || { manage: false, send: false }
+              const sg = savedGrants.find((x) => x.listId === l.id) || { manage: false, send: false }
+              const rowDirty =
+                !!g.manage !== !!sg.manage || !!g.send !== !!sg.send
               return (
                 <li key={l.id}>
                   <strong>{l.name}</strong>{' '}
@@ -196,6 +244,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                       type="checkbox"
                       checked={!!g.manage}
                       onChange={() => toggleGrant(l.id, 'manage')}
+                      {...dirtyControlProps(rowDirty && !!g.manage !== !!sg.manage)}
                     />{' '}
                     Manage
                   </label>{' '}
@@ -204,6 +253,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                       type="checkbox"
                       checked={!!g.send}
                       onChange={() => toggleGrant(l.id, 'send')}
+                      {...dirtyControlProps(rowDirty && !!g.send !== !!sg.send)}
                     />{' '}
                     Send
                   </label>
@@ -211,7 +261,11 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               )
             })}
           </ul>
-          <button type="submit" className="btn secondary">
+          <button
+            type="submit"
+            className={btnDirtyClass(grantsDirty, 'btn secondary')}
+            title={grantsDirty ? 'Unsaved changes' : undefined}
+          >
             Save Grants
           </button>
         </form>
@@ -253,6 +307,7 @@ function SecurityMfaPanel({ token, onError, self }) {
   const [code, setCode] = useState('')
   const [backupCodes, setBackupCodes] = useState(null)
   const [unenrollCode, setUnenrollCode] = useState('')
+  useRegisterUnsaved(!!code.trim() || !!unenrollCode.trim(), 'user-mfa')
 
   if (!self) {
     return (
@@ -320,9 +375,18 @@ function SecurityMfaPanel({ token, onError, self }) {
           <form onSubmit={confirm}>
             <label className="field">
               {fieldLabel('verification code')}
-              <input value={code} onChange={(ev) => setCode(ev.target.value)} required />
+              <input
+                value={code}
+                onChange={(ev) => setCode(ev.target.value)}
+                required
+                {...dirtyControlProps(!!code.trim())}
+              />
             </label>
-            <button type="submit" className="btn">
+            <button
+              type="submit"
+              className={btnDirtyClass(!!code.trim())}
+              title={code.trim() ? 'Unsaved changes' : undefined}
+            >
               Confirm MFA
             </button>
           </form>
@@ -349,9 +413,14 @@ function SecurityMfaPanel({ token, onError, self }) {
             value={unenrollCode}
             onChange={(ev) => setUnenrollCode(ev.target.value)}
             required
+            {...dirtyControlProps(!!unenrollCode.trim())}
           />
         </label>
-        <button type="submit" className="btn secondary">
+        <button
+          type="submit"
+          className={btnDirtyClass(!!unenrollCode.trim(), 'btn secondary')}
+          title={unenrollCode.trim() ? 'Unsaved changes' : undefined}
+        >
           Unenroll MFA
         </button>
       </form>

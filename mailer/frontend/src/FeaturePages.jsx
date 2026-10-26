@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { apiJson } from './api.js'
 import { authHeaders } from './auth.js'
+import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
+import { useRegisterUnsaved } from './Unsaved.jsx'
 import {
   BounceMailboxesPage,
   FootersPage,
@@ -34,6 +36,20 @@ export function Compose({ token, onError }) {
   const [testAddresses, setTestAddresses] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const saved = useRef({
+    subject: '',
+    htmlBody: '<p>Hello</p>',
+    textBody: 'Hello',
+    listIds: [],
+    hasFile: false,
+  })
+  const draftDirty =
+    !valuesEqual(subject, saved.current.subject) ||
+    !valuesEqual(htmlBody, saved.current.htmlBody) ||
+    !valuesEqual(textBody, saved.current.textBody) ||
+    !valuesEqual(selected, saved.current.listIds) ||
+    !!attachment !== saved.current.hasFile
+  useRegisterUnsaved(draftDirty, 'compose-draft')
 
   useEffect(() => {
     fetch('/api/lists', { headers: { Authorization: `Bearer ${token}` } })
@@ -95,10 +111,19 @@ export function Compose({ token, onError }) {
       const body = await res.json()
       setCampaignId(body.id)
       setStatus(body.status)
-      setSelected(body.listIds || [])
+      const listIds = body.listIds || []
+      setSelected(listIds)
       if (body.subject != null) setSubject(body.subject)
       if (body.htmlBody != null) setHtmlBody(body.htmlBody)
       if (body.textBody != null) setTextBody(body.textBody)
+      setAttachment(null)
+      saved.current = {
+        subject: body.subject ?? subject,
+        htmlBody: body.htmlBody ?? htmlBody,
+        textBody: body.textBody ?? textBody,
+        listIds,
+        hasFile: false,
+      }
       setMsg(`Saved Draft ${body.id}`)
     } catch (e) {
       onError(e.message || String(e))
@@ -140,7 +165,11 @@ export function Compose({ token, onError }) {
       ) : null}
       <label className="field">
         Subject
-        <input value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          {...dirtyControlProps(!valuesEqual(subject, saved.current.subject))}
+        />
       </label>
       <fieldset>
         <legend>Lists (Order = First Sending Path)</legend>
@@ -175,6 +204,7 @@ export function Compose({ token, onError }) {
             onChange={(e) => setHtmlBody(e.target.value)}
             rows={10}
             style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
+            {...dirtyControlProps(!valuesEqual(htmlBody, saved.current.htmlBody))}
           />
         </label>
         <label className="field">
@@ -184,6 +214,7 @@ export function Compose({ token, onError }) {
             onChange={(e) => setTextBody(e.target.value)}
             rows={10}
             style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
+            {...dirtyControlProps(!valuesEqual(textBody, saved.current.textBody))}
           />
         </label>
       </div>
@@ -205,7 +236,11 @@ export function Compose({ token, onError }) {
       </div>
       <label className="field">
         Attachment
-        <input type="file" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+        <input
+          type="file"
+          onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+          {...dirtyControlProps(!!attachment !== saved.current.hasFile)}
+        />
       </label>
       <label className="field">
         Test Send Addresses (Comma Or Newline)
@@ -218,7 +253,12 @@ export function Compose({ token, onError }) {
       </label>
       <p className="hint">Test Send Ignores Bounce-Disable.</p>
       <p>
-        <button type="button" className="btn" onClick={saveDraft}>
+        <button
+          type="button"
+          className={btnDirtyClass(draftDirty)}
+          title={draftDirty ? 'Unsaved changes' : undefined}
+          onClick={saveDraft}
+        >
           Save Draft
         </button>{' '}
         <button

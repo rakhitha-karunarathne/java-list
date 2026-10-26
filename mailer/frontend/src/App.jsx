@@ -3,12 +3,14 @@ import { TOKEN_KEY, decodeJwtPayload, roleFromToken } from './auth.js'
 import LoginCard from './LoginCard.jsx'
 import Shell from './Shell.jsx'
 import { MainView } from './FeaturePages.jsx'
+import { UnsavedProvider, useUnsavedGate } from './Unsaved.jsx'
 
-export default function App() {
+function AppInner() {
   const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY) || '')
   const [error, setError] = useState('')
   const [view, setView] = useState('attention')
   const [detailId, setDetailId] = useState(null)
+  const { confirmLeave } = useUnsavedGate()
 
   const role = useMemo(() => roleFromToken(token), [token])
   const email = useMemo(() => decodeJwtPayload(token)?.email || '', [token])
@@ -23,6 +25,7 @@ export default function App() {
   }
 
   function onLogout() {
+    if (!confirmLeave()) return
     sessionStorage.removeItem(TOKEN_KEY)
     setToken('')
     setView('attention')
@@ -32,12 +35,20 @@ export default function App() {
   }
 
   function onNavigate(id) {
+    if (id === view && !detailId) return
+    if (!confirmLeave()) return
     setView(id)
     setDetailId(null)
     setError('')
   }
 
+  function onCloseDetail() {
+    if (!confirmLeave()) return
+    setDetailId(null)
+  }
+
   function openInView(nextView, id) {
+    if (!confirmLeave()) return
     setView(nextView)
     setDetailId(id)
     setError('')
@@ -67,10 +78,18 @@ export default function App() {
           onError={setError}
           detailId={detailId}
           onOpenDetail={setDetailId}
-          onCloseDetail={() => setDetailId(null)}
+          onCloseDetail={onCloseDetail}
           openInView={openInView}
         />
       </Shell>
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <UnsavedProvider>
+      <AppInner />
+    </UnsavedProvider>
   )
 }

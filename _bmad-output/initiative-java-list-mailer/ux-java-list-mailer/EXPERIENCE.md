@@ -77,7 +77,8 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Used By | Navigable links; blocks delete while in use |
 | Form field | **Stacked:** Title Case label **above** the control (never inline beside it); SPA `label.field` CSS enforces this |
 | Field label wording | Valid English with spaces between words (`From Email`, `HTML Body`, `Use TLS`); SPA `fieldLabel()` — never raw camelCase keys |
-| Parameter field | Label → control → helper (purpose, supported values, range) always visible |
+| Parameter field | Label above; **control + Save on one row** (Save at the end of the field); helper under the row; on narrow widths the control shrinks until its min length, then Save wraps |
+| Unsaved edits | Changed controls + their Save/Create button use `{colors.warning}` treatment (not accent alone); title/hint “Unsaved changes” so color is not the only cue |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On User detail only: enroll QR, verify, backup codes, unenroll |
 
@@ -88,6 +89,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Loading indexes | Skeleton or quiet spinner in card — no blank flash |
 | Empty index | One sentence + primary create action |
 | Delete blocked | Explain Used By; do not navigate away |
+| Unsaved form | Dirty fields + Save/Create button warn-colored; leaving the page (sidebar, back, sign out, or closing the tab) asks confirm — do not discard silently |
 | MFA mandatory, not enrolled | After password, force enroll or block with path to Security (Admin configuring self must complete enroll) |
 | MFA enrolled | After password, TOTP (or backup code) step on same login card flow |
 | Validation error | Field-level message; `{colors.danger}` |

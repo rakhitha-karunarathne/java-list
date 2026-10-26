@@ -2,27 +2,37 @@ import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { CONSENT_REQUEST_HINT } from './consentCopy.js'
 import { emptyHint } from './emptyHint.js'
+import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { membersSearchPath } from './membersSearch.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useRegisterUnsaved } from './Unsaved.jsx'
+import { useDirtyForm } from './useDirtyForm.js'
 
 export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenMember }) {
+  const creating = isCreatePage(detailId)
+  const { form, setForm, saved, dirty, blank, adopt, resetToBlank } = useDirtyForm(
+    {
+      name: '',
+      sendingPathId: '',
+      footerId: '',
+      spamThreshold: '5.0',
+      payloadOverride: '',
+      imageTtlOverrideHours: '',
+    },
+    creating ? 'list-create' : `list-${detailId || 'x'}`,
+    creating,
+  )
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
   const [paths, setPaths] = useState([])
   const [footers, setFooters] = useState([])
   const [listMembers, setListMembers] = useState([])
-  const [form, setForm] = useState({
-    name: '',
-    sendingPathId: '',
-    footerId: '',
-    spamThreshold: '5.0',
-    payloadOverride: '',
-    imageTtlOverrideHours: '',
-  })
   const [bulkText, setBulkText] = useState('')
   const [bulkResult, setBulkResult] = useState(null)
+  const bulkDirty = !!bulkText.trim()
+  useRegisterUnsaved(bulkDirty, `list-bulk-${detailId || 'x'}`)
 
   async function load() {
     try {
@@ -46,6 +56,8 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       setBulkResult(null)
+      setBulkText('')
+      if (isCreatePage(detailId)) resetToBlank()
       return
     }
     Promise.all([
@@ -55,7 +67,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
       .then(([d, ms]) => {
         setDetail(d)
         setListMembers(ms)
-        setForm({
+        adopt({
           name: d.name,
           sendingPathId: d.sendingPathId,
           footerId: d.footerId || '',
@@ -86,6 +98,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
         body: JSON.stringify(body),
       })
       await load()
+      resetToBlank()
       onOpen(created.id)
     } catch (err) {
       onError(err.message)
@@ -110,6 +123,15 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
         body: JSON.stringify(body),
       })
       setDetail(d)
+      adopt({
+        name: d.name,
+        sendingPathId: d.sendingPathId,
+        footerId: d.footerId || '',
+        spamThreshold: d.spamThreshold != null ? String(d.spamThreshold) : '',
+        payloadOverride: d.payloadOverride || '',
+        imageTtlOverrideHours:
+          d.imageTtlOverrideHours != null ? String(d.imageTtlOverrideHours) : '',
+      })
     } catch (err) {
       onError(err.message)
     }
@@ -124,13 +146,14 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
         body: JSON.stringify({ text: bulkText }),
       })
       setBulkResult(result)
+      setBulkText('')
       setListMembers(await apiJson(token, `/api/lists/${detailId}/members`))
     } catch (err) {
       onError(err.message)
     }
   }
 
-  if (isCreatePage(detailId)) {
+  if (creating) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -144,6 +167,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               value={form.name}
               onChange={(ev) => setForm({ ...form, name: ev.target.value })}
               required
+              {...dirtyControlProps(!valuesEqual(form.name, blank.name))}
             />
           </label>
           <label className="field">
@@ -152,6 +176,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               value={form.sendingPathId}
               onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
               required
+              {...dirtyControlProps(!valuesEqual(form.sendingPathId, blank.sendingPathId))}
             >
               <option value="">— Select —</option>
               {paths.map((p) => (
@@ -161,7 +186,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               ))}
             </select>
           </label>
-          <button type="submit" className="btn">
+          <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
             Create List
           </button>
         </form>
@@ -169,7 +194,8 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
     )
   }
 
-  if (detailId && detail) {
+  if (detailId && detail && (saved || !detail.canManage)) {
+    const base = saved || form
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -183,6 +209,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               <input
                 value={form.name}
                 onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.name, base.name))}
               />
             </label>
             <label className="field">
@@ -190,6 +217,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               <select
                 value={form.sendingPathId}
                 onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.sendingPathId, base.sendingPathId))}
               >
                 {paths.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -203,6 +231,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               <select
                 value={form.footerId}
                 onChange={(ev) => setForm({ ...form, footerId: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.footerId, base.footerId))}
               >
                 <option value="">— None —</option>
                 {footers.map((f) => (
@@ -217,9 +246,10 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               <input
                 value={form.spamThreshold}
                 onChange={(ev) => setForm({ ...form, spamThreshold: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.spamThreshold, base.spamThreshold))}
               />
             </label>
-            <button type="submit" className="btn">
+            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Save
             </button>
           </form>
@@ -259,9 +289,14 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
                   style={{ maxWidth: '100%' }}
                   value={bulkText}
                   onChange={(ev) => setBulkText(ev.target.value)}
+                  {...dirtyControlProps(bulkDirty)}
                 />
               </label>
-              <button type="submit" className="btn">
+              <button
+                type="submit"
+                className={btnDirtyClass(bulkDirty)}
+                title={bulkDirty ? 'Unsaved changes' : undefined}
+              >
                 Add members
               </button>
             </form>

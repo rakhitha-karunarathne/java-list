@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { apiJson } from './api.js'
 import { DeleteBlocked, UsedByList } from './catalogUi.jsx'
 import { CREATE_ID, isCreatePage } from './createPage.js'
+import { btnDirtyClass, dirtyControlProps, isFormDirty, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useRegisterUnsaved } from './Unsaved.jsx'
+import { useDirtyForm } from './useDirtyForm.js'
 
 export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
-  const [rows, setRows] = useState([])
-  const [detail, setDetail] = useState(null)
-  const [form, setForm] = useState({
+  const blank = useRef({
     name: '',
     host: '127.0.0.1',
     port: 25,
@@ -18,7 +19,16 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     fromName: '',
     useTls: false,
   })
+  const [rows, setRows] = useState([])
+  const [detail, setDetail] = useState(null)
+  const [form, setForm] = useState(() => ({ ...blank.current }))
+  const [saved, setSaved] = useState(null)
   const [delErr, setDelErr] = useState(null)
+  const creating = isCreatePage(detailId)
+  const dirty = creating
+    ? isFormDirty(form, blank.current)
+    : !!(detailId && saved && isFormDirty(form, saved))
+  useRegisterUnsaved(dirty, creating ? 'sending-path-create' : `sending-path-${detailId || 'x'}`)
 
   async function load() {
     try {
@@ -35,12 +45,14 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
   useEffect(() => {
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
+      setSaved(null)
+      if (isCreatePage(detailId)) setForm({ ...blank.current })
       return
     }
     apiJson(token, `/api/sending-paths/${detailId}`)
       .then((d) => {
         setDetail(d)
-        setForm({
+        const next = {
           name: d.name,
           host: d.host,
           port: d.port,
@@ -49,7 +61,9 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
           fromEmail: d.fromEmail,
           fromName: d.fromName,
           useTls: d.useTls,
-        })
+        }
+        setForm(next)
+        setSaved(next)
       })
       .catch((e) => onError(e.message))
   }, [token, detailId])
@@ -63,6 +77,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         body: JSON.stringify(form),
       })
       await load()
+      setForm({ ...blank.current })
       onOpen(created.id)
     } catch (err) {
       onError(err.message)
@@ -81,6 +96,18 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
       })
       const d = await apiJson(token, `/api/sending-paths/${detailId}`)
       setDetail(d)
+      const next = {
+        name: d.name,
+        host: d.host,
+        port: d.port,
+        username: d.username,
+        password: '',
+        fromEmail: d.fromEmail,
+        fromName: d.fromName,
+        useTls: d.useTls,
+      }
+      setForm(next)
+      setSaved(next)
     } catch (err) {
       onError(err.message)
     }
@@ -112,7 +139,8 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     }
   }
 
-  if (isCreatePage(detailId)) {
+  if (creating) {
+    const base = blank.current
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -128,6 +156,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
                 value={form[k]}
                 onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
                 required={k !== 'fromName'}
+                {...dirtyControlProps(!valuesEqual(form[k], base[k]))}
               />
             </label>
           ))}
@@ -137,9 +166,10 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               type="number"
               value={form.port}
               onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+              {...dirtyControlProps(!valuesEqual(form.port, base.port))}
             />
           </label>
-          <button type="submit" className="btn">
+          <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
             Create Sending Path
           </button>
         </form>
@@ -147,7 +177,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     )
   }
 
-  if (detailId && detail) {
+  if (detailId && detail && saved) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -162,6 +192,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
                 value={form[k]}
                 onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
                 required={k !== 'fromName'}
+                {...dirtyControlProps(!valuesEqual(form[k], saved[k]))}
               />
             </label>
           ))}
@@ -171,6 +202,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               type="number"
               value={form.port}
               onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+              {...dirtyControlProps(!valuesEqual(form.port, saved.port))}
             />
           </label>
           <label className="field">
@@ -180,6 +212,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               value={form.password}
               onChange={(ev) => setForm({ ...form, password: ev.target.value })}
               autoComplete="new-password"
+              {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
             />
           </label>
           <label className="field">
@@ -187,11 +220,12 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               type="checkbox"
               checked={form.useTls}
               onChange={(ev) => setForm({ ...form, useTls: ev.target.checked })}
+              {...dirtyControlProps(!valuesEqual(form.useTls, saved.useTls))}
             />{' '}
             {fieldLabel('useTls')}
           </label>
           <p>
-            <button type="submit" className="btn">
+            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Save
             </button>{' '}
             <button type="button" className="btn secondary" onClick={remove}>
@@ -234,9 +268,14 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
 }
 
 export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const creating = isCreatePage(detailId)
+  const { form, setForm, saved, dirty, blank, adopt, resetToBlank } = useDirtyForm(
+    { name: '', htmlBody: '', textBody: '' },
+    creating ? 'footer-create' : `footer-${detailId || 'x'}`,
+    creating,
+  )
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
-  const [form, setForm] = useState({ name: '', htmlBody: '', textBody: '' })
   const [delErr, setDelErr] = useState(null)
 
   async function load() {
@@ -254,12 +293,13 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
   useEffect(() => {
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
+      if (isCreatePage(detailId)) resetToBlank()
       return
     }
     apiJson(token, `/api/footers/${detailId}`)
       .then((d) => {
         setDetail(d)
-        setForm({ name: d.name, htmlBody: d.htmlBody || '', textBody: d.textBody || '' })
+        adopt({ name: d.name, htmlBody: d.htmlBody || '', textBody: d.textBody || '' })
       })
       .catch((e) => onError(e.message))
   }, [token, detailId])
@@ -272,6 +312,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
         body: JSON.stringify(form),
       })
       await load()
+      resetToBlank()
       onOpen(created.id)
     } catch (err) {
       onError(err.message)
@@ -285,7 +326,9 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
         method: 'PUT',
         body: JSON.stringify(form),
       })
-      setDetail(await apiJson(token, `/api/footers/${detailId}`))
+      const d = await apiJson(token, `/api/footers/${detailId}`)
+      setDetail(d)
+      adopt({ name: d.name, htmlBody: d.htmlBody || '', textBody: d.textBody || '' })
     } catch (err) {
       onError(err.message)
     }
@@ -312,7 +355,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
     load()
   }
 
-  if (isCreatePage(detailId)) {
+  if (creating) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -326,6 +369,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
               value={form.name}
               onChange={(ev) => setForm({ ...form, name: ev.target.value })}
               required
+              {...dirtyControlProps(!valuesEqual(form.name, blank.name))}
             />
           </label>
           <label className="field">
@@ -335,6 +379,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
               style={{ maxWidth: '100%' }}
               value={form.htmlBody}
               onChange={(ev) => setForm({ ...form, htmlBody: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.htmlBody, blank.htmlBody))}
             />
           </label>
           <label className="field">
@@ -344,9 +389,10 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
               style={{ maxWidth: '100%' }}
               value={form.textBody}
               onChange={(ev) => setForm({ ...form, textBody: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.textBody, blank.textBody))}
             />
           </label>
-          <button type="submit" className="btn">
+          <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
             Create Footer
           </button>
         </form>
@@ -354,7 +400,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
     )
   }
 
-  if (detailId && detail) {
+  if (detailId && detail && saved) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -364,7 +410,11 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
         <form onSubmit={save}>
           <label className="field">
             {fieldLabel('name')}
-            <input value={form.name} onChange={(ev) => setForm({ ...form, name: ev.target.value })} />
+            <input
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
+            />
           </label>
           <label className="field">
             {fieldLabel('htmlBody')}
@@ -373,6 +423,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
               style={{ maxWidth: '100%' }}
               value={form.htmlBody}
               onChange={(ev) => setForm({ ...form, htmlBody: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.htmlBody, saved.htmlBody))}
             />
           </label>
           <label className="field">
@@ -382,10 +433,11 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
               style={{ maxWidth: '100%' }}
               value={form.textBody}
               onChange={(ev) => setForm({ ...form, textBody: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.textBody, saved.textBody))}
             />
           </label>
           <p>
-            <button type="submit" className="btn">
+            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Save
             </button>{' '}
             <button type="button" className="btn secondary" onClick={remove}>
@@ -420,17 +472,22 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
 }
 
 export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const creating = isCreatePage(detailId)
+  const { form, setForm, saved, dirty, blank, adopt, resetToBlank } = useDirtyForm(
+    {
+      name: '',
+      host: '127.0.0.1',
+      port: 143,
+      username: '',
+      password: '',
+      useSsl: false,
+      pollIntervalMinutes: 15,
+    },
+    creating ? 'bounce-create' : `bounce-${detailId || 'x'}`,
+    creating,
+  )
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
-  const [form, setForm] = useState({
-    name: '',
-    host: '127.0.0.1',
-    port: 143,
-    username: '',
-    password: '',
-    useSsl: false,
-    pollIntervalMinutes: 15,
-  })
 
   async function load() {
     try {
@@ -447,12 +504,13 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   useEffect(() => {
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
+      if (isCreatePage(detailId)) resetToBlank()
       return
     }
     apiJson(token, `/api/bounce-mailboxes/${detailId}`)
       .then((d) => {
         setDetail(d)
-        setForm({
+        adopt({
           name: d.name,
           host: d.host,
           port: d.port,
@@ -473,6 +531,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         body: JSON.stringify(form),
       })
       await load()
+      resetToBlank()
       onOpen(created.id)
     } catch (err) {
       onError(err.message)
@@ -488,8 +547,17 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         method: 'PUT',
         body: JSON.stringify(body),
       })
-      setDetail(await apiJson(token, `/api/bounce-mailboxes/${detailId}`))
-      setForm((f) => ({ ...f, password: '' }))
+      const d = await apiJson(token, `/api/bounce-mailboxes/${detailId}`)
+      setDetail(d)
+      adopt({
+        name: d.name,
+        host: d.host,
+        port: d.port,
+        username: d.username,
+        password: '',
+        useSsl: d.useSsl,
+        pollIntervalMinutes: d.pollIntervalMinutes,
+      })
     } catch (err) {
       onError(err.message)
     }
@@ -505,7 +573,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
     }
   }
 
-  if (isCreatePage(detailId)) {
+  if (creating) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -521,6 +589,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
                 value={form[k]}
                 onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
                 required
+                {...dirtyControlProps(!valuesEqual(form[k], blank[k]))}
               />
             </label>
           ))}
@@ -530,6 +599,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               type="number"
               value={form.port}
               onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+              {...dirtyControlProps(!valuesEqual(form.port, blank.port))}
             />
           </label>
           <label className="field">
@@ -538,6 +608,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               type="number"
               value={form.pollIntervalMinutes}
               onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
+              {...dirtyControlProps(!valuesEqual(form.pollIntervalMinutes, blank.pollIntervalMinutes))}
             />
           </label>
           <label className="field">
@@ -545,10 +616,11 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               type="checkbox"
               checked={form.useSsl}
               onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
+              {...dirtyControlProps(!valuesEqual(form.useSsl, blank.useSsl))}
             />{' '}
             {fieldLabel('useSsl')}
           </label>
-          <button type="submit" className="btn">
+          <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
             Create Bounce Mailbox
           </button>
         </form>
@@ -556,7 +628,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
     )
   }
 
-  if (detailId && detail) {
+  if (detailId && detail && saved) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -567,7 +639,11 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           {['name', 'host', 'username'].map((k) => (
             <label className="field" key={k}>
               {fieldLabel(k)}
-              <input value={form[k]} onChange={(ev) => setForm({ ...form, [k]: ev.target.value })} />
+              <input
+                value={form[k]}
+                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form[k], saved[k]))}
+              />
             </label>
           ))}
           <label className="field">
@@ -577,6 +653,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               value={form.password}
               onChange={(ev) => setForm({ ...form, password: ev.target.value })}
               autoComplete="new-password"
+              {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
             />
           </label>
           <label className="field">
@@ -585,6 +662,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               type="number"
               value={form.port}
               onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+              {...dirtyControlProps(!valuesEqual(form.port, saved.port))}
             />
           </label>
           <label className="field">
@@ -593,6 +671,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               type="number"
               value={form.pollIntervalMinutes}
               onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
+              {...dirtyControlProps(!valuesEqual(form.pollIntervalMinutes, saved.pollIntervalMinutes))}
             />
           </label>
           <label className="field">
@@ -600,11 +679,12 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               type="checkbox"
               checked={form.useSsl}
               onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
+              {...dirtyControlProps(!valuesEqual(form.useSsl, saved.useSsl))}
             />{' '}
             {fieldLabel('useSsl')}
           </label>
           <p>
-            <button type="submit" className="btn">
+            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Save
             </button>{' '}
             <button type="button" className="btn secondary" onClick={remove}>
@@ -647,6 +727,8 @@ export function ParametersPage({ token, onError }) {
   const [params, setParams] = useState([])
   const [drafts, setDrafts] = useState({})
   const [forbidden, setForbidden] = useState(false)
+  const anyDirty = params.some((p) => !valuesEqual(drafts[p.key], p.value))
+  useRegisterUnsaved(anyDirty, 'parameters')
 
   useEffect(() => {
     apiJson(token, '/api/parameters')
@@ -692,23 +774,34 @@ export function ParametersPage({ token, onError }) {
     <div className="card">
       <h2>Parameters</h2>
       <p className="hint">Admin runtime settings — no SMTP/IMAP passwords or signing secrets here.</p>
-      {params.map((p) => (
-        <div key={p.key} style={{ marginBottom: '1.5rem' }}>
-          <label className="field">
-            {fieldLabel(p.key)}
-            <input
-              value={drafts[p.key] ?? ''}
-              onChange={(ev) => setDrafts((d) => ({ ...d, [p.key]: ev.target.value }))}
-            />
-          </label>
-          <p className="hint" style={{ marginTop: 0 }}>
-            {p.description}
-          </p>
-          <button type="button" className="btn secondary" onClick={() => save(p.key)}>
-            Save
-          </button>
-        </div>
-      ))}
+      {params.map((p) => {
+        const dirty = !valuesEqual(drafts[p.key], p.value)
+        return (
+          <div key={p.key} style={{ marginBottom: '1.5rem' }}>
+            <label className="field">
+              {fieldLabel(p.key)}
+              <div className="field-control-row">
+                <input
+                  value={drafts[p.key] ?? ''}
+                  onChange={(ev) => setDrafts((d) => ({ ...d, [p.key]: ev.target.value }))}
+                  {...dirtyControlProps(dirty)}
+                />
+                <button
+                  type="button"
+                  className={btnDirtyClass(dirty, 'btn secondary')}
+                  title={dirty ? 'Unsaved changes' : undefined}
+                  onClick={() => save(p.key)}
+                >
+                  Save
+                </button>
+              </div>
+            </label>
+            <p className="hint" style={{ marginTop: 0 }}>
+              {p.description}
+            </p>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -716,7 +809,10 @@ export function ParametersPage({ token, onError }) {
 export function NoticePathPage({ token, onError }) {
   const [paths, setPaths] = useState([])
   const [pathId, setPathId] = useState('')
+  const [savedPathId, setSavedPathId] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const dirty = loaded && !valuesEqual(pathId, savedPathId)
+  useRegisterUnsaved(dirty, 'notice-path')
 
   useEffect(() => {
     Promise.all([
@@ -725,7 +821,9 @@ export function NoticePathPage({ token, onError }) {
     ])
       .then(([p, n]) => {
         setPaths(p)
-        setPathId(n.sendingPathId || '')
+        const id = n.sendingPathId || ''
+        setPathId(id)
+        setSavedPathId(id)
         setLoaded(true)
       })
       .catch((e) => onError(e.message))
@@ -738,7 +836,9 @@ export function NoticePathPage({ token, onError }) {
         method: 'PUT',
         body: JSON.stringify({ sendingPathId: pathId || null }),
       })
-      setPathId(out.sendingPathId || '')
+      const id = out.sendingPathId || ''
+      setPathId(id)
+      setSavedPathId(id)
     } catch (err) {
       onError(err.message)
     }
@@ -755,7 +855,11 @@ export function NoticePathPage({ token, onError }) {
       <form onSubmit={save}>
         <label className="field">
           Sending Path
-          <select value={pathId} onChange={(ev) => setPathId(ev.target.value)}>
+          <select
+            value={pathId}
+            onChange={(ev) => setPathId(ev.target.value)}
+            {...dirtyControlProps(dirty)}
+          >
             <option value="">— Unset (No Notice Mail) —</option>
             {paths.map((p) => (
               <option key={p.id} value={p.id}>
@@ -765,7 +869,7 @@ export function NoticePathPage({ token, onError }) {
           </select>
         </label>
         {!pathId ? <p className="hint">Notice path is unset.</p> : null}
-        <button type="submit" className="btn">
+        <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
           Save
         </button>
       </form>

@@ -1,32 +1,47 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
+import { btnDirtyClass, dirtyControlProps, isFormDirty, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useRegisterUnsaved } from './Unsaved.jsx'
+import { useDirtyForm } from './useDirtyForm.js'
+
+const MAP_BLANK = { name: '', listIds: [], substituteFrom: '', footerId: '' }
 
 export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const creating = isCreatePage(detailId)
+  const {
+    form: inboxForm,
+    setForm: setInboxForm,
+    dirty: inboxDirty,
+    blank: inboxBlank,
+    resetToBlank: resetInbox,
+  } = useDirtyForm(
+    {
+      name: '',
+      host: '127.0.0.1',
+      port: 143,
+      username: '',
+      password: '',
+      useSsl: false,
+      pollIntervalMinutes: 5,
+      enabled: true,
+    },
+    creating ? 'inbox-create' : 'inbox-create-idle',
+    creating,
+  )
   const [inboxes, setInboxes] = useState([])
   const [mappings, setMappings] = useState([])
   const [detail, setDetail] = useState(null)
   const [lists, setLists] = useState([])
   const [footers, setFooters] = useState([])
   const [senderEmail, setSenderEmail] = useState('')
-  const [mapForm, setMapForm] = useState({
-    name: '',
-    listIds: [],
-    substituteFrom: '',
-    footerId: '',
-  })
-  const [inboxForm, setInboxForm] = useState({
-    name: '',
-    host: '127.0.0.1',
-    port: 143,
-    username: '',
-    password: '',
-    useSsl: false,
-    pollIntervalMinutes: 5,
-    enabled: true,
-  })
+  const [mapForm, setMapForm] = useState({ ...MAP_BLANK })
+  const senderDirty = !!senderEmail.trim()
+  const mapDirty = isFormDirty(mapForm, MAP_BLANK)
+  useRegisterUnsaved(senderDirty, `mts-sender-${detailId || 'x'}`)
+  useRegisterUnsaved(mapDirty, `mts-map-${detailId || 'x'}`)
 
   async function load() {
     try {
@@ -50,6 +65,9 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   useEffect(() => {
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
+      setSenderEmail('')
+      setMapForm({ ...MAP_BLANK })
+      if (isCreatePage(detailId)) resetInbox()
       return
     }
     apiJson(token, `/api/mts/inboxes/${detailId}`)
@@ -65,6 +83,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         body: JSON.stringify(inboxForm),
       })
       await load()
+      resetInbox()
       onOpen(created.id)
     } catch (err) {
       onError(err.message)
@@ -116,7 +135,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     }
   }
 
-  if (isCreatePage(detailId)) {
+  if (creating) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -132,10 +151,15 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                 value={inboxForm[k]}
                 onChange={(ev) => setInboxForm({ ...inboxForm, [k]: ev.target.value })}
                 required
+                {...dirtyControlProps(!valuesEqual(inboxForm[k], inboxBlank[k]))}
               />
             </label>
           ))}
-          <button type="submit" className="btn">
+          <button
+            type="submit"
+            className={btnDirtyClass(inboxDirty)}
+            title={inboxDirty ? 'Unsaved changes' : undefined}
+          >
             Create Inbox
           </button>
         </form>
@@ -184,9 +208,14 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               value={senderEmail}
               onChange={(ev) => setSenderEmail(ev.target.value)}
               required
+              {...dirtyControlProps(senderDirty)}
             />
           </label>
-          <button type="submit" className="btn secondary">
+          <button
+            type="submit"
+            className={btnDirtyClass(senderDirty, 'btn secondary')}
+            title={senderDirty ? 'Unsaved changes' : undefined}
+          >
             Add Sender
           </button>
         </form>
@@ -217,6 +246,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               value={mapForm.name}
               onChange={(ev) => setMapForm({ ...mapForm, name: ev.target.value })}
               required
+              {...dirtyControlProps(!valuesEqual(mapForm.name, MAP_BLANK.name))}
             />
           </label>
           <fieldset>
@@ -244,6 +274,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             <input
               value={mapForm.substituteFrom}
               onChange={(ev) => setMapForm({ ...mapForm, substituteFrom: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(mapForm.substituteFrom, MAP_BLANK.substituteFrom))}
             />
           </label>
           <label className="field">
@@ -251,6 +282,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             <select
               value={mapForm.footerId}
               onChange={(ev) => setMapForm({ ...mapForm, footerId: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(mapForm.footerId, MAP_BLANK.footerId))}
             >
               <option value="">— None —</option>
               {footers.map((f) => (
@@ -260,7 +292,11 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               ))}
             </select>
           </label>
-          <button type="submit" className="btn">
+          <button
+            type="submit"
+            className={btnDirtyClass(mapDirty)}
+            title={mapDirty ? 'Unsaved changes' : undefined}
+          >
             Add mapping
           </button>
         </form>
@@ -470,6 +506,9 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
   const [blocks, setBlocks] = useState([])
   const [blockEmail, setBlockEmail] = useState('')
   const [blockDomain, setBlockDomain] = useState('')
+  const emailDirty = !!blockEmail.trim()
+  const domainDirty = !!blockDomain.trim()
+  useRegisterUnsaved(emailDirty || domainDirty, 'blocks-create')
 
   async function load() {
     try {
@@ -517,9 +556,18 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
         >
           <label className="field">
             Block Sender
-            <input value={blockEmail} onChange={(ev) => setBlockEmail(ev.target.value)} required />
+            <input
+              value={blockEmail}
+              onChange={(ev) => setBlockEmail(ev.target.value)}
+              required
+              {...dirtyControlProps(emailDirty)}
+            />
           </label>
-          <button type="submit" className="btn secondary">
+          <button
+            type="submit"
+            className={btnDirtyClass(emailDirty, 'btn secondary')}
+            title={emailDirty ? 'Unsaved changes' : undefined}
+          >
             Block Sender
           </button>
         </form>
@@ -545,9 +593,14 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
               value={blockDomain}
               onChange={(ev) => setBlockDomain(ev.target.value)}
               required
+              {...dirtyControlProps(domainDirty)}
             />
           </label>
-          <button type="submit" className="btn secondary">
+          <button
+            type="submit"
+            className={btnDirtyClass(domainDirty, 'btn secondary')}
+            title={domainDirty ? 'Unsaved changes' : undefined}
+          >
             Block Domain
           </button>
         </form>

@@ -67,6 +67,61 @@ textarea:focus {
   border-color: transparent;
 }
 
+/* Unsaved edits: warning treatment (color + title on controls). */
+input.is-dirty,
+select.is-dirty,
+textarea.is-dirty {
+  border-color: var(--warning);
+  background: #fffbeb;
+}
+
+.btn.is-dirty {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #fff;
+}
+
+.btn.is-dirty:hover {
+  background: #b45309;
+  border-color: #b45309;
+}
+
+.btn.secondary.is-dirty {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: var(--warning);
+}
+
+.btn.secondary.is-dirty:hover {
+  background: #fef3c7;
+}
+
+/* Parameter / inline Save: control shrinks first; wraps only at min width. */
+.field-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.field-control-row > input,
+.field-control-row > select,
+.field-control-row > textarea {
+  flex: 1 1 12rem;
+  min-width: 12rem;
+  max-width: none;
+  width: auto;
+}
+
+.field-control-row > .btn {
+  flex: 0 0 auto;
+}
+
+label.field:has(> .field-control-row) {
+  max-width: none;
+}
+
 /* Clearwater form field: Title Case label stacked ABOVE the control (never beside it). */
 label.field {
   display: flex;
