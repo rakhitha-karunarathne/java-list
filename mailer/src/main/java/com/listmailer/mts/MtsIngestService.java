@@ -26,6 +26,7 @@ public class MtsIngestService {
   private final MtsGateService gates;
   private final MtsCampaignFactory campaigns;
   private final MtsFromDomainService fromDomain;
+  private final MtsDropService drops;
   private final OpsHooksPort ops;
   private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -37,6 +38,7 @@ public class MtsIngestService {
       MtsGateService gates,
       MtsCampaignFactory campaigns,
       MtsFromDomainService fromDomain,
+      MtsDropService drops,
       OpsHooksPort ops) {
     this.inboxes = inboxes;
     this.mappings = mappings;
@@ -45,6 +47,7 @@ public class MtsIngestService {
     this.gates = gates;
     this.campaigns = campaigns;
     this.fromDomain = fromDomain;
+    this.drops = drops;
     this.ops = ops;
   }
 
@@ -92,13 +95,13 @@ public class MtsIngestService {
               box.isUseSsl(),
               "INBOX"),
           raw -> {
-            MtsGateResult gate = gates.evaluate(box.getId(), raw);
-            if (gate == MtsGateResult.ACCEPT) {
+            MtsGateService.Decision decision = gates.evaluate(box.getId(), box.getName(), raw);
+            String sender = MtsGateService.extractEmail(raw.from());
+            if (decision.result() == MtsGateResult.ACCEPT) {
               if (maps.isEmpty()) {
                 ops.opsLog("mts.ingest", "authorized but no mapping inbox=" + box.getId());
                 return true;
               }
-              // first mapping for tracer; multi-mapping selection is later polish
               MtsMappingEntity map = maps.get(0);
               List<String> listIds =
                   mappingLists.findByMappingIdOrderByPositionAsc(map.getId()).stream()
@@ -107,11 +110,9 @@ public class MtsIngestService {
               if (listIds.isEmpty()) {
                 return true;
               }
-              String sender = MtsGateService.extractEmail(raw.from());
               var issue =
                   fromDomain.validateOrOpenIssue(box, map, listIds, sender, raw.subject());
               if (issue != null) {
-                // no Campaign — Issues ≠ Drop log
                 return true;
               }
               String html = extractHtml(raw);
@@ -119,12 +120,15 @@ public class MtsIngestService {
               campaigns.createQueued(raw.subject(), html, text, map, listIds);
               created.incrementAndGet();
               ops.opsLog("mts.accept", "inbox=" + box.getName() + " mapping=" + map.getId());
-            } else {
-              ops.opsLog(
-                  "mts.drop",
-                  "inbox=" + box.getName() + " gate=" + gate + " from=" + raw.from());
+            } else if (decision.result() == MtsGateResult.NOTIFY_CROSS_INBOX) {
+              drops.record(box.getId(), sender, decision.reason(), false);
+              drops.notifyCrossInbox(sender, box.getName());
+            } else if (decision.result() == MtsGateResult.DROP_COUNTED
+                || decision.result() == MtsGateResult.DROP_SILENT) {
+              drops.record(
+                  box.getId(), sender, decision.reason(), decision.countAutoBlock());
             }
-            return true; // mark SEEN / consume
+            return true;
           });
       box.setLastPolledAt(now);
       inboxes.save(box);
