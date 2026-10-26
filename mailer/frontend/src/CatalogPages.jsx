@@ -279,105 +279,109 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
 
   if (detailId && detail && saved) {
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          {'←'} Sending Paths
-        </button>
-        <h2>{detail.name}</h2>
-        <form onSubmit={save}>
-          <label className="field">
-            {fieldLabel('name')}
-            <input
-              value={form.name}
-              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('host')}
-            <input
-              value={form.host}
-              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.host, saved.host))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('port')}
-            <input
-              type="number"
-              value={form.port}
-              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
-              {...dirtyControlProps(!valuesEqual(form.port, saved.port))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('username')}
-            <input
-              value={form.username}
-              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.username, saved.username))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('password')} (Blank = Keep)
-            <input
-              type="password"
-              value={form.password}
-              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
-              autoComplete="new-password"
-              {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('fromEmail')}
-            <input
-              value={form.fromEmail}
-              onChange={(ev) => setForm({ ...form, fromEmail: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.fromEmail, saved.fromEmail))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('fromName')}
-            <input
-              value={form.fromName}
-              onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.fromName, saved.fromName))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('useTls')}
-            <Toggle
-              checked={!!form.useTls}
-              dirty={!valuesEqual(form.useTls, saved.useTls)}
-              aria-label={fieldLabel('useTls')}
-              onChange={(on) => setForm({ ...form, useTls: on })}
-            />
-          </label>
-          <ConnectionTestBanner result={connTest} />
-          <p>
-            <button
-              type="button"
-              className="btn secondary"
-              disabled={testing}
-              onClick={runSmtpTest}
-            >
-              {testing ? 'Testing…' : 'Test Connection'}
-            </button>{' '}
-            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
-              Save
-            </button>{' '}
-            <button type="button" className="btn secondary" onClick={remove}>
-              Delete
-            </button>
-          </p>
-        </form>
-        <h3>Used By</h3>
-        <UsedByList usedBy={detail.usedBy} />
-        <DeleteBlocked err={delErr} onClose={() => setDelErr(null)} />
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            {'←'} Sending Paths
+          </button>
+          <h2>{detail.name}</h2>
+          <form onSubmit={save}>
+            <label className="field">
+              {fieldLabel('name')}
+              <input
+                value={form.name}
+                onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+                required
+                {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('host')}
+              <input
+                value={form.host}
+                onChange={(ev) => setForm({ ...form, host: ev.target.value })}
+                required
+                {...dirtyControlProps(!valuesEqual(form.host, saved.host))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('port')}
+              <input
+                type="number"
+                value={form.port}
+                onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+                {...dirtyControlProps(!valuesEqual(form.port, saved.port))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('username')}
+              <input
+                value={form.username}
+                onChange={(ev) => setForm({ ...form, username: ev.target.value })}
+                required
+                {...dirtyControlProps(!valuesEqual(form.username, saved.username))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('password')} (Blank = Keep)
+              <input
+                type="password"
+                value={form.password}
+                onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+                autoComplete="new-password"
+                {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('fromEmail')}
+              <input
+                value={form.fromEmail}
+                onChange={(ev) => setForm({ ...form, fromEmail: ev.target.value })}
+                required
+                {...dirtyControlProps(!valuesEqual(form.fromEmail, saved.fromEmail))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('fromName')}
+              <input
+                value={form.fromName}
+                onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.fromName, saved.fromName))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('useTls')}
+              <Toggle
+                checked={!!form.useTls}
+                dirty={!valuesEqual(form.useTls, saved.useTls)}
+                aria-label={fieldLabel('useTls')}
+                onChange={(on) => setForm({ ...form, useTls: on })}
+              />
+            </label>
+            <ConnectionTestBanner result={connTest} />
+            <p>
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={testing}
+                onClick={runSmtpTest}
+              >
+                {testing ? 'Testing…' : 'Test Connection'}
+              </button>{' '}
+              <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
+                Save
+              </button>{' '}
+              <button type="button" className="btn secondary" onClick={remove}>
+                Delete
+              </button>
+            </p>
+          </form>
+          <DeleteBlocked err={delErr} onClose={() => setDelErr(null)} />
+        </section>
+        <section className="card">
+          <h3>Used By</h3>
+          <UsedByList usedBy={detail.usedBy} />
+        </section>
       </div>
     )
   }
@@ -545,52 +549,56 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
 
   if (detailId && detail && saved) {
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Footers
-        </button>
-        <h2>{detail.name}</h2>
-        <form onSubmit={save}>
-          <label className="field">
-            {fieldLabel('name')}
-            <input
-              value={form.name}
-              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('htmlBody')}
-            <textarea
-              rows={6}
-              style={{ maxWidth: '100%' }}
-              value={form.htmlBody}
-              onChange={(ev) => setForm({ ...form, htmlBody: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.htmlBody, saved.htmlBody))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('textBody')}
-            <textarea
-              rows={4}
-              style={{ maxWidth: '100%' }}
-              value={form.textBody}
-              onChange={(ev) => setForm({ ...form, textBody: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.textBody, saved.textBody))}
-            />
-          </label>
-          <p>
-            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
-              Save
-            </button>{' '}
-            <button type="button" className="btn secondary" onClick={remove}>
-              Delete
-            </button>
-          </p>
-        </form>
-        <h3>Used By</h3>
-        <UsedByList usedBy={detail.usedBy} />
-        <DeleteBlocked err={delErr} onClose={() => setDelErr(null)} />
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Footers
+          </button>
+          <h2>{detail.name}</h2>
+          <form onSubmit={save}>
+            <label className="field">
+              {fieldLabel('name')}
+              <input
+                value={form.name}
+                onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('htmlBody')}
+              <textarea
+                rows={6}
+                style={{ maxWidth: '100%' }}
+                value={form.htmlBody}
+                onChange={(ev) => setForm({ ...form, htmlBody: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.htmlBody, saved.htmlBody))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('textBody')}
+              <textarea
+                rows={4}
+                style={{ maxWidth: '100%' }}
+                value={form.textBody}
+                onChange={(ev) => setForm({ ...form, textBody: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(form.textBody, saved.textBody))}
+              />
+            </label>
+            <p>
+              <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
+                Save
+              </button>{' '}
+              <button type="button" className="btn secondary" onClick={remove}>
+                Delete
+              </button>
+            </p>
+          </form>
+          <DeleteBlocked err={delErr} onClose={() => setDelErr(null)} />
+        </section>
+        <section className="card">
+          <h3>Used By</h3>
+          <UsedByList usedBy={detail.usedBy} />
+        </section>
       </div>
     )
   }
