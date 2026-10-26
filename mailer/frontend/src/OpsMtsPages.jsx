@@ -48,7 +48,6 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   } = useDirtyForm(INBOX_BLANK, creating ? 'inbox-create' : `inbox-edit-${nav.inboxId || 'x'}`, creating)
 
   const [inboxes, setInboxes] = useState([])
-  const [mappings, setMappings] = useState([])
   const [detail, setDetail] = useState(null)
   const [senderEmail, setSenderEmail] = useState('')
   const [senderDetail, setSenderDetail] = useState(null)
@@ -84,17 +83,16 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     }
   }
 
-  async function loadIndex() {
+  async function loadInboxes() {
     try {
       setInboxes(await apiJson(token, '/api/mts/inboxes'))
-      setMappings(await apiJson(token, '/api/mts/mappings'))
     } catch (e) {
       onError(e.message)
     }
   }
 
   useEffect(() => {
-    loadIndex()
+    loadInboxes()
     apiJson(token, '/api/footers')
       .then(setFooters)
       .catch(() => setFooters([]))
@@ -157,7 +155,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         method: 'POST',
         body: JSON.stringify(inboxForm),
       })
-      await loadIndex()
+      await loadInboxes()
       resetInbox()
       onOpen(created.id)
     } catch (err) {
@@ -186,7 +184,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         enabled: !!d.enabled,
       })
       setConnTest(null)
-      await loadIndex()
+      await loadInboxes()
     } catch (err) {
       onError(err.message)
     }
@@ -202,7 +200,6 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         }),
       )
       setSenderEmail('')
-      await loadIndex()
     } catch (err) {
       onError(err.message)
     }
@@ -210,11 +207,11 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
 
   async function removeSender(email) {
     try {
-      await apiJson(token, `/api/mts/inboxes/${nav.inboxId}/senders/${encodeURIComponent(email)}`, {
-        method: 'DELETE',
-      })
-      setDetail(await apiJson(token, `/api/mts/inboxes/${nav.inboxId}`))
-      await loadIndex()
+      setDetail(
+        await apiJson(token, `/api/mts/inboxes/${nav.inboxId}/senders/${encodeURIComponent(email)}`, {
+          method: 'DELETE',
+        }),
+      )
     } catch (err) {
       onError(err.message)
     }
@@ -248,7 +245,6 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       }))
       setGrants(rows)
       setSavedGrants(rows)
-      await loadIndex()
     } catch (err) {
       onError(err.message)
     }
@@ -330,7 +326,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Inboxes & Mappings
+          ← Inboxes
         </button>
         <h2>Add Mail Box</h2>
         <p className="hint">
@@ -473,17 +469,17 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       return (
         <div className="card">
           <button type="button" className="btn secondary" onClick={onCloseDetail}>
-            ← Inboxes & Mappings
+            ← Inboxes
           </button>
           <p className="hint">Loading inbox…</p>
         </div>
       )
     }
-    const inboxMaps = mappings.filter((m) => m.inboxId === nav.inboxId)
+    const inboxMaps = detail.mappings || []
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Inboxes & Mappings
+          ← Inboxes
         </button>
         <h2>{detail.name}</h2>
         <form onSubmit={saveInbox}>
@@ -570,7 +566,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   return (
     <div className="card">
       <div className="index-actions">
-        <h2>Inboxes &amp; Mappings</h2>
+        <h2>Inboxes</h2>
         <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
           Add Mail Box
         </button>
@@ -590,33 +586,6 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           {
             key: 'pollIntervalMinutes',
             label: 'Poll Minutes',
-          },
-        ]}
-      />
-      <h3>All Mappings</h3>
-      <RecordTable
-        rows={mappings}
-        rowKey={(m) => m.id}
-        onOpen={(m) => onOpen(mtsSenderDetailId(m.inboxId, m.senderEmail))}
-        empty="No mappings yet."
-        columns={[
-          {
-            key: 'inboxId',
-            label: 'Inbox',
-            render: (m) => inboxes.find((i) => i.id === m.inboxId)?.name || m.inboxId,
-          },
-          { key: 'senderEmail', label: 'Sender' },
-          { key: 'listName', label: 'List' },
-          {
-            key: 'substituteFrom',
-            label: 'Substitute From',
-            render: (m) => m.substituteFrom || '—',
-          },
-          {
-            key: 'footerId',
-            label: 'Footer',
-            render: (m) =>
-              footers.find((f) => f.id === m.footerId)?.name || m.footerId || '—',
           },
         ]}
       />

@@ -33,8 +33,8 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | List detail | No | Lists / deep links | Settings, bulk add members |
 | Members | Yes | Sidebar | Searchable member index |
 | Member detail | No | Members / deep links | Status, lists, timeline |
-| Mail-to-send | Yes | Sidebar | Inboxes index + mappings overview; **Add Mail Box** registers an existing server mailbox for polling (does not provision IMAP) |
-| MTS inbox detail | No | MTS inbox click | Mail box account edit, authorized senders, list-grant overview |
+| Inboxes (Mail-to-send) | Yes | Sidebar | Inboxes index only (no global mappings overview); **Add Mail Box** registers an existing server mailbox for polling (does not provision IMAP) |
+| MTS inbox detail | No | Inboxes row | Mail box account edit, authorized senders, list-grant overview |
 | MTS authorized sender | No | Sender email on inbox detail | Grant Lists (table); Substitute From + Footer per List |
 | Bounce mailboxes | Yes | Sidebar | Mailbox index; **Add Mail Box** registers an existing server mailbox for bounce polling (does not provision IMAP) |
 | Bounce mailbox detail | No | Index row | IMAP / poll / credentials |

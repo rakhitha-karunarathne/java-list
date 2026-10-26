@@ -26,7 +26,7 @@ export const NAV_SECTIONS = [
     id: 'mts',
     label: 'MAIL-TO-SEND',
     items: [
-      { id: 'mts', label: 'Inboxes & Mappings', adminOnly: true },
+      { id: 'mts', label: 'Inboxes', adminOnly: true },
       { id: 'drop-log', label: 'Drop Log', adminOnly: true },
       { id: 'blocks', label: 'Global Blocks', adminOnly: true },
       { id: 'issues', label: 'Issues', hideForSender: true },

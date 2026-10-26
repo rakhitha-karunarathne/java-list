@@ -8,7 +8,7 @@ const TITLES = {
   members: 'Members',
   campaigns: 'Campaigns',
   compose: 'Compose',
-  mts: 'Inboxes & Mappings',
+  mts: 'Inboxes',
   'drop-log': 'Drop Log',
   blocks: 'Global Blocks',
   issues: 'Issues',
