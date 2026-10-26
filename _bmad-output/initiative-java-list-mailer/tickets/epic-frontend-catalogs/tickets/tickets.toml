@@ -83,3 +83,15 @@ after = [6]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 8
+type = "story"
+title = "User detail page sections (Account, List Grants, Security)"
+description = "User detail = three white cards; document page-sections pattern for later pages."
+verify = "Three separate cards; Role/Enabled/Save; List Grants; MFA; pattern in EXPERIENCE/DESIGN."
+covers = ["R6"]
+after = [4]
+hitl = false
+risk = "low"
+refine = true

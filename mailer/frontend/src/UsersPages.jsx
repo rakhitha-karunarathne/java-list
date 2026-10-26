@@ -208,95 +208,105 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
 
   if (detailId && detail && savedPatch) {
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Users & Grants
-        </button>
-        <h2>{detail.email}</h2>
-        <form onSubmit={savePatch}>
-          <label className="field">
-            {fieldLabel('role')}
-            <select
-              value={patch.role}
-              onChange={(ev) => setPatch({ ...patch, role: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(patch.role, savedPatch.role))}
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            {fieldLabel('enabled')}
-            <Toggle
-              checked={!!patch.enabled}
-              dirty={!valuesEqual(patch.enabled, savedPatch.enabled)}
-              aria-label={fieldLabel('enabled')}
-              onChange={(on) => setPatch({ ...patch, enabled: on })}
-            />
-          </label>
-          <button
-            type="submit"
-            className={btnDirtyClass(patchDirty)}
-            title={patchDirty ? 'Unsaved changes' : undefined}
-          >
-            Save user
+      <div className="page-sections">
+        <div className="page-sections-head">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Users & Grants
           </button>
-        </form>
+          <h2>{detail.email}</h2>
+        </div>
 
-        {showListGrants ? (
-          <>
-            <h3>List Grants</h3>
-            <p className="hint">
-              {patch.role === 'LIST_MANAGER'
-                ? 'Granted lists: manage and send.'
-                : 'Granted lists: send only.'}
-            </p>
-            <form onSubmit={saveGrants}>
-              <RecordTable
-                rows={lists}
-                rowKey={(l) => l.id}
-                empty="No lists yet."
-                columns={[
-                  { key: 'name', label: 'List' },
-                  {
-                    key: 'granted',
-                    label: 'Granted',
-                    stopRowClick: true,
-                    render: (l) => {
-                      const granted = isGranted(grants.find((x) => x.listId === l.id))
-                      const saved = isGranted(savedGrants.find((x) => x.listId === l.id))
-                      return (
-                        <input
-                          type="checkbox"
-                          checked={granted}
-                          onChange={() => toggleGranted(l.id)}
-                          aria-label={`Grant ${l.name}`}
-                          {...dirtyControlProps(granted !== saved)}
-                        />
-                      )
-                    },
-                  },
-                ]}
+        <section className="card">
+          <h3>Account</h3>
+          <form onSubmit={savePatch}>
+            <label className="field">
+              {fieldLabel('role')}
+              <select
+                value={patch.role}
+                onChange={(ev) => setPatch({ ...patch, role: ev.target.value })}
+                {...dirtyControlProps(!valuesEqual(patch.role, savedPatch.role))}
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              {fieldLabel('enabled')}
+              <Toggle
+                checked={!!patch.enabled}
+                dirty={!valuesEqual(patch.enabled, savedPatch.enabled)}
+                aria-label={fieldLabel('enabled')}
+                onChange={(on) => setPatch({ ...patch, enabled: on })}
               />
-              <p>
-                <button
-                  type="submit"
-                  className={btnDirtyClass(grantsDirty, 'btn secondary')}
-                  title={grantsDirty ? 'Unsaved changes' : undefined}
-                >
-                  Save Grants
-                </button>
-              </p>
-            </form>
-          </>
-        ) : patch.role === 'ADMIN' ? (
-          <p className="hint">List grants do not apply to Admin — full access.</p>
-        ) : null}
+            </label>
+            <button
+              type="submit"
+              className={btnDirtyClass(patchDirty)}
+              title={patchDirty ? 'Unsaved changes' : undefined}
+            >
+              Save
+            </button>
+          </form>
+        </section>
 
-        <SecurityMfaPanel token={token} onError={onError} self={isSelf} />
+        <section className="card">
+          <h3>List Grants</h3>
+          {showListGrants ? (
+            <>
+              <p className="hint">
+                {patch.role === 'LIST_MANAGER'
+                  ? 'Granted lists: manage and send.'
+                  : 'Granted lists: send only.'}
+              </p>
+              <form onSubmit={saveGrants}>
+                <RecordTable
+                  rows={lists}
+                  rowKey={(l) => l.id}
+                  empty="No lists yet."
+                  columns={[
+                    { key: 'name', label: 'List' },
+                    {
+                      key: 'granted',
+                      label: 'Granted',
+                      stopRowClick: true,
+                      render: (l) => {
+                        const granted = isGranted(grants.find((x) => x.listId === l.id))
+                        const saved = isGranted(savedGrants.find((x) => x.listId === l.id))
+                        return (
+                          <input
+                            type="checkbox"
+                            checked={granted}
+                            onChange={() => toggleGranted(l.id)}
+                            aria-label={`Grant ${l.name}`}
+                            {...dirtyControlProps(granted !== saved)}
+                          />
+                        )
+                      },
+                    },
+                  ]}
+                />
+                <p>
+                  <button
+                    type="submit"
+                    className={btnDirtyClass(grantsDirty, 'btn secondary')}
+                    title={grantsDirty ? 'Unsaved changes' : undefined}
+                  >
+                    Save Grants
+                  </button>
+                </p>
+              </form>
+            </>
+          ) : (
+            <p className="hint">List grants do not apply to Admin — full access.</p>
+          )}
+        </section>
+
+        <section className="card">
+          <SecurityMfaPanel token={token} onError={onError} self={isSelf} />
+        </section>
       </div>
     )
   }
@@ -337,10 +347,10 @@ function SecurityMfaPanel({ token, onError, self }) {
 
   if (!self) {
     return (
-      <div style={{ marginTop: '1.5rem' }}>
+      <>
         <h3>Security</h3>
         <p className="hint">MFA enroll/unenroll is self-service via /api/me/mfa (open your own user).</p>
-      </div>
+      </>
     )
   }
 
@@ -387,7 +397,7 @@ function SecurityMfaPanel({ token, onError, self }) {
   }
 
   return (
-    <div style={{ marginTop: '1.5rem' }}>
+    <>
       <h3>Security</h3>
       <p className="hint">MFA lives on user detail only — not a sidebar destination (C8).</p>
       <p>
@@ -451,6 +461,6 @@ function SecurityMfaPanel({ token, onError, self }) {
           Unenroll MFA
         </button>
       </form>
-    </div>
+    </>
   )
 }

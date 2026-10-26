@@ -417,9 +417,39 @@ body.nav-open .backdrop {
   box-shadow: var(--shadow);
 }
 
+/* Multi-job detail pages: one white card per section, stacked on canvas. */
+.page-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.page-sections > .card {
+  margin-bottom: 0;
+}
+
+.page-sections-head {
+  margin-bottom: 0;
+}
+
+.page-sections-head .btn {
+  margin-bottom: 8px;
+}
+
+.page-sections-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
 .card h2 {
   margin: 0 0 12px;
   font-size: 16px;
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 650;
 }
 
 .hint {
