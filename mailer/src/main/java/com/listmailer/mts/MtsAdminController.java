@@ -32,6 +32,7 @@ public class MtsAdminController {
   private final MtsMappingListRepository mappingLists;
   private final ListRepository lists;
   private final MtsFromDomainService fromDomain;
+  private final MtsDropService drops;
 
   public MtsAdminController(
       MtsInboxRepository inboxes,
@@ -39,13 +40,62 @@ public class MtsAdminController {
       MtsMappingRepository mappings,
       MtsMappingListRepository mappingLists,
       ListRepository lists,
-      MtsFromDomainService fromDomain) {
+      MtsFromDomainService fromDomain,
+      MtsDropService drops) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.mappings = mappings;
     this.mappingLists = mappingLists;
     this.lists = lists;
     this.fromDomain = fromDomain;
+    this.drops = drops;
+  }
+
+  @GetMapping("/drop-log")
+  public List<DropView> dropLog(@org.springframework.web.bind.annotation.RequestParam(required = false) String inboxId) {
+    return drops.list(inboxId).stream()
+        .map(
+            d ->
+                new DropView(
+                    d.getId(),
+                    d.getInboxId(),
+                    d.getSenderEmail(),
+                    d.getReason(),
+                    d.isCountedForAutoBlock(),
+                    d.getCreatedAt().toString(),
+                    d.isResolved()))
+        .toList();
+  }
+
+  @GetMapping("/blocks")
+  public List<BlockView> blocks() {
+    return drops.allBlocks().stream()
+        .map(b -> new BlockView(b.getId(), b.getKind(), b.getValue(), b.getSource()))
+        .toList();
+  }
+
+  @PostMapping("/blocks/sender")
+  public Map<String, String> blockSender(@RequestBody SenderBody body) {
+    drops.blockSender(body.email(), "ADMIN");
+    return Map.of("status", "blocked");
+  }
+
+  @PostMapping("/blocks/domain")
+  public Map<String, String> blockDomain(@RequestBody Map<String, String> body) {
+    drops.blockDomain(body.get("domain"), "ADMIN");
+    return Map.of("status", "blocked");
+  }
+
+  @DeleteMapping("/blocks/{id}")
+  public Map<String, String> unblock(@PathVariable String id) {
+    drops.unblock(id);
+    return Map.of("status", "unblocked");
+  }
+
+  @PostMapping("/drop-log/{id}/resolve")
+  public Map<String, String> resolveDrop(@PathVariable String id) {
+    drops.resolve(id);
+    return Map.of("status", "resolved");
   }
 
   @GetMapping("/from-domain-issues")
@@ -276,4 +326,15 @@ public class MtsAdminController {
       String resolution,
       String detail,
       String createdAt) {}
+
+  public record DropView(
+      String id,
+      String inboxId,
+      String senderEmail,
+      String reason,
+      boolean countedForAutoBlock,
+      String createdAt,
+      boolean resolved) {}
+
+  public record BlockView(String id, String kind, String value, String source) {}
 }

@@ -60,6 +60,10 @@ public final class ParameterDefinitions {
         ParameterKeys.BOUNCE_HOLDBACK_MULTIPLIER,
         "2",
         "Holdback = multiplier × class limit newest sends when below limit. Integer >= 1. Default 2.");
+    put(
+        "mts.auto.block.per.day",
+        "10",
+        "Counted MTS Drop log rejects per sender per day before auto-block. Integer >= 1. Default 10.");
   }
 
   private ParameterDefinitions() {}
