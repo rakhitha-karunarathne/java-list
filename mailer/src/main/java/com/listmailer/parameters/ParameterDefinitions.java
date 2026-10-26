@@ -32,6 +32,10 @@ public final class ParameterDefinitions {
         ParameterKeys.AUDIT_RETENTION_DAYS,
         "365",
         "Days to retain audit records. Integer >= 1. Default 365.");
+    put(
+        ParameterKeys.SEND_THROTTLE_PER_MINUTE,
+        "120",
+        "System-wide max Campaign SMTP sends per minute. Integer >= 0 (0 = unlimited). Default 120.");
   }
 
   private ParameterDefinitions() {}

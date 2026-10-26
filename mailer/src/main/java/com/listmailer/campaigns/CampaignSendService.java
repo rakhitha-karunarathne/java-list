@@ -207,6 +207,15 @@ public class CampaignSendService {
     campaign.setStatus(CampaignStatus.QUEUED);
     campaigns.save(campaign);
     for (MemberEntity member : unique.values()) {
+      boolean already =
+          queue.findByCampaignId(campaignId).stream()
+              .anyMatch(
+                  r ->
+                      member.getId().equals(r.getMemberId())
+                          && ("SENT".equals(r.getStatus()) || "PENDING".equals(r.getStatus())));
+      if (already) {
+        continue;
+      }
       queue.save(
           new SendQueueEntity(
               Guids.newGuid(),
@@ -216,24 +225,47 @@ public class CampaignSendService {
               pathId,
               "PENDING"));
     }
-    List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaignId);
-    List<SmtpPort.Attachment> files =
-        blobs.stream()
-            .map(
-                a ->
-                    new SmtpPort.Attachment(
-                        a.getFilename(), a.getContentType(), a.getContent()))
-            .toList();
-    String html = rewriteHtml(campaignId, campaign.getHtmlBody(), blobs);
-    campaign.setStatus(CampaignStatus.SENDING);
-    campaigns.save(campaign);
-    for (SendQueueEntity row : queue.findByCampaignId(campaignId)) {
-      if (!"PENDING".equals(row.getStatus())) {
+    // Processor drains PENDING under throttle; leave Queued until first send.
+    return campaigns.save(campaign);
+  }
+
+  /**
+   * Drain up to {@code maxSends} PENDING queue rows system-wide. Returns how many SMTP sends
+   * completed. Idempotent for empty queue.
+   */
+  @Transactional
+  public int processPendingBatch(int maxSends) {
+    if (maxSends <= 0) {
+      return 0;
+    }
+    int sent = 0;
+    for (SendQueueEntity row : queue.findByStatus("PENDING")) {
+      if (sent >= maxSends) {
+        break;
+      }
+      CampaignEntity campaign =
+          campaigns.findById(row.getCampaignId()).orElse(null);
+      if (campaign == null
+          || campaign.getStatus() == CampaignStatus.STOPPED
+          || campaign.getStatus() == CampaignStatus.DRAFT) {
         continue;
       }
+      if (campaign.getStatus() == CampaignStatus.QUEUED) {
+        campaign.setStatus(CampaignStatus.SENDING);
+        campaigns.save(campaign);
+      }
+      List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaign.getId());
+      List<SmtpPort.Attachment> files =
+          blobs.stream()
+              .map(
+                  a ->
+                      new SmtpPort.Attachment(
+                          a.getFilename(), a.getContentType(), a.getContent()))
+              .toList();
+      String html = rewriteHtml(campaign.getId(), campaign.getHtmlBody(), blobs);
       smtp.send(
           new SmtpPort.SmtpMessage(
-              pathId,
+              row.getSendingPathId(),
               row.getEmail(),
               campaign.getSubject(),
               campaign.getTextBody(),
@@ -241,8 +273,15 @@ public class CampaignSendService {
               files));
       row.setStatus("SENT");
       queue.save(row);
+      sent++;
+      boolean morePending =
+          queue.findByCampaignId(campaign.getId()).stream()
+              .anyMatch(r -> "PENDING".equals(r.getStatus()));
+      if (!morePending && campaign.getStatus() == CampaignStatus.SENDING) {
+        campaign.setStatus(CampaignStatus.FINISHED);
+        campaigns.save(campaign);
+      }
     }
-    campaign.setStatus(CampaignStatus.FINISHED);
-    return campaigns.save(campaign);
+    return sent;
   }
 }

@@ -95,15 +95,23 @@ class CampaignSendServiceTest {
               return row;
             });
     when(queue.findByCampaignId("c1")).thenAnswer(inv -> List.copyOf(enqueued));
+    when(queue.findByStatus("PENDING"))
+        .thenAnswer(
+            inv ->
+                enqueued.stream().filter(r -> "PENDING".equals(r.getStatus())).toList());
 
     service.queueAndSend("c1");
-
     assertEquals(1, enqueued.size());
+    assertEquals(CampaignStatus.QUEUED, campaign.getStatus());
+
+    service.processPendingBatch(10);
+
     ArgumentCaptor<SmtpPort.SmtpMessage> cap = ArgumentCaptor.forClass(SmtpPort.SmtpMessage.class);
     verify(smtp, times(1)).send(cap.capture());
     assertEquals("Same@Example.com", cap.getValue().toEmail());
     assertEquals("path-1", cap.getValue().sendingPathId());
     assertEquals("<p>x</p>", cap.getValue().htmlBody());
+    assertEquals(CampaignStatus.FINISHED, campaign.getStatus());
   }
 
   @Test
@@ -135,8 +143,13 @@ class CampaignSendServiceTest {
               return inv.getArgument(0);
             });
     when(queue.findByCampaignId("c1")).thenAnswer(inv -> List.copyOf(enqueued));
+    when(queue.findByStatus("PENDING"))
+        .thenAnswer(
+            inv ->
+                enqueued.stream().filter(r -> "PENDING".equals(r.getStatus())).toList());
 
     service.queueAndSend("c1");
+    service.processPendingBatch(10);
 
     ArgumentCaptor<SmtpPort.SmtpMessage> cap = ArgumentCaptor.forClass(SmtpPort.SmtpMessage.class);
     verify(smtp).send(cap.capture());
@@ -244,8 +257,13 @@ class CampaignSendServiceTest {
               return inv.getArgument(0);
             });
     when(queue.findByCampaignId("c1")).thenAnswer(inv -> List.copyOf(enqueued));
+    when(queue.findByStatus("PENDING"))
+        .thenAnswer(
+            inv ->
+                enqueued.stream().filter(r -> "PENDING".equals(r.getStatus())).toList());
 
     service.queueAndSend("c1");
+    service.processPendingBatch(10);
 
     ArgumentCaptor<SmtpPort.SmtpMessage> cap = ArgumentCaptor.forClass(SmtpPort.SmtpMessage.class);
     verify(smtp).send(cap.capture());

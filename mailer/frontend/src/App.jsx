@@ -115,7 +115,9 @@ function Compose({ token, onError }) {
       }
       const body = await res.json()
       setStatus(body.status)
-      setMsg(`Queued → ${body.status}; sent ${body.sentCount}`)
+      setMsg(
+        `Queued (${body.status}); processor sends under throttle — sent so far ${body.sentCount}`,
+      )
     } catch (e) {
       onError(e.message || String(e))
     }
