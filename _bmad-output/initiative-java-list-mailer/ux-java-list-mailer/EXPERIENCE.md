@@ -70,6 +70,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Record index | **HTML table** (not a list of buttons); row click opens detail; optional action column for Stop/etc. |
 | Create form | **Own page** (not on the index): index shows table + Create action only; Create opens a dedicated page with back to index (not a second card under the table; not a sidebar item) |
 | Compose preview | HTML / Text tabs; live sync from editors |
+| Compose lists | **HTML table** (Include / Name / Order / Reorder) — not a stack of checkbox rows; first included list sets the sending path |
 | Test send | Paste addresses; uses first list path; ignores bounce-disable; failures → Ops Logs / Admin Attention |
 | Campaign status badge | Exact label Draft / Queued / Sending / Finished / Stopped (text + color; never color alone) |
 | Stop | Available on Draft, Queued, Sending (index row and detail); not on Finished/Stopped |

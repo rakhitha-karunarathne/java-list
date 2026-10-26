@@ -171,31 +171,65 @@ export function Compose({ token, onError }) {
           {...dirtyControlProps(!valuesEqual(subject, saved.current.subject))}
         />
       </label>
-      <fieldset>
-        <legend>Lists (Order = First Sending Path)</legend>
-        {lists.map((l) => (
-          <div key={l.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <label>
+      <h3>Lists</h3>
+      <p className="hint">Order = first sending path (first included list wins).</p>
+      <RecordTable
+        rows={lists}
+        rowKey={(l) => l.id}
+        empty="No lists yet."
+        columns={[
+          {
+            key: 'include',
+            label: 'Include',
+            stopRowClick: true,
+            render: (l) => (
               <input
                 type="checkbox"
                 checked={selected.includes(l.id)}
                 onChange={() => toggleList(l.id)}
-              />{' '}
-              {l.name}
-            </label>
-            {selected.includes(l.id) ? (
-              <>
-                <button type="button" className="btn secondary" onClick={() => moveList(l.id, -1)}>
-                  ↑
-                </button>
-                <button type="button" className="btn secondary" onClick={() => moveList(l.id, 1)}>
-                  ↓
-                </button>
-              </>
-            ) : null}
-          </div>
-        ))}
-      </fieldset>
+                aria-label={`Include ${l.name}`}
+              />
+            ),
+          },
+          { key: 'name', label: 'Name' },
+          {
+            key: 'order',
+            label: 'Order',
+            render: (l) => {
+              const i = selected.indexOf(l.id)
+              return i >= 0 ? String(i + 1) : '—'
+            },
+          },
+          {
+            key: 'actions',
+            label: 'Reorder',
+            stopRowClick: true,
+            render: (l) =>
+              selected.includes(l.id) ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => moveList(l.id, -1)}
+                    aria-label={`Move ${l.name} up`}
+                  >
+                    ↑
+                  </button>{' '}
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => moveList(l.id, 1)}
+                    aria-label={`Move ${l.name} down`}
+                  >
+                    ↓
+                  </button>
+                </>
+              ) : (
+                '—'
+              ),
+          },
+        ]}
+      />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
         <label className="field">
           HTML

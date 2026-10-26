@@ -197,6 +197,7 @@ Light only: cards use a single soft shadow (`{components.card.shadow}`). No stac
 - **Form field** — stacked: `{typography.label}` above control (not inline); multi-select checkbox/radio may keep control + short text on one row.
 - **Boolean toggle** — scalar on/off fields use `.toggle` (`role="switch"`): track + knob; On = `{colors.accent}`, Off = muted track; always show On/Off text beside the track. Dirty uses `{colors.warning}` like other fields.
 - **Record index** — `{components.table}` / `.data-table` in a `.table-scroll`; primary identity is a text cell, not a button row. **Create is its own page** (index → Create action → create page → back / open detail) — never embedded on the index under the table.
+- **Compose lists** — same `{components.table}` pattern: Include checkbox, Name, Order, Reorder actions — not a vertical checkbox list.
 - **Parameter field** — `{typography.label}` → `{typography.helper}` description **between label and control** → **control + Save** row (Save at the trailing end). Boolean values (`true`/`false`) render as a toggle in that row. Row uses flex wrap: control `flex: 1 1` with a min width so it shrinks first; Save wraps only after that min is hit.
 - **Unsaved field / Save** — dirty control border + light warning wash (`{colors.warning}`); dirty primary Save/Create uses warning fill; dirty secondary Save uses warning border. Not purple/danger.
 
