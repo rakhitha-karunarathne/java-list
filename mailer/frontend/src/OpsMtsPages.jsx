@@ -519,91 +519,100 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     }
     const inboxMaps = detail.mappings || []
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Inboxes
-        </button>
-        <h2>{detail.name}</h2>
-        <form onSubmit={saveInbox}>
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Inboxes
+          </button>
+          <h2>{detail.name}</h2>
+        </section>
+
+        <section className="card">
           <h3>Mail Box Account</h3>
-          {inboxAccountFields({ requirePassword: false })}
-          <button
-            type="submit"
-            className={btnDirtyClass(inboxDirty)}
-            title={inboxDirty ? 'Unsaved changes' : undefined}
-          >
-            Save Account
-          </button>{' '}
-          <button type="button" className="btn secondary" onClick={deleteInbox}>
-            Delete Inbox
-          </button>
-        </form>
+          <form onSubmit={saveInbox}>
+            {inboxAccountFields({ requirePassword: false })}
+            <button
+              type="submit"
+              className={btnDirtyClass(inboxDirty)}
+              title={inboxDirty ? 'Unsaved changes' : undefined}
+            >
+              Save Account
+            </button>{' '}
+            <button type="button" className="btn secondary" onClick={deleteInbox}>
+              Delete Inbox
+            </button>
+          </form>
+        </section>
 
-        <h3>Authorized Senders</h3>
-        <RecordTable
-          rows={(detail.authorizedSenders || []).map((email) => ({ email }))}
-          rowKey={(r) => r.email}
-          onOpen={(r) => onOpen(mtsSenderDetailId(nav.inboxId, r.email))}
-          empty="No authorized senders."
-          columns={[
-            { key: 'email', label: 'Email' },
-            {
-              key: 'actions',
-              label: 'Actions',
-              stopRowClick: true,
-              render: (r) => (
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() => removeSender(r.email)}
-                >
-                  Remove
-                </button>
-              ),
-            },
-          ]}
-        />
-        <form onSubmit={addSender}>
-          <label className="field">
-            {fieldLabel('sender email')}
-            <input
-              value={senderEmail}
-              onChange={(ev) => setSenderEmail(ev.target.value)}
-              required
-              {...dirtyControlProps(senderDirty)}
-            />
-          </label>
-          <button
-            type="submit"
-            className={btnDirtyClass(senderDirty, 'btn secondary')}
-            title={senderDirty ? 'Unsaved changes' : undefined}
-          >
-            Add Sender
-          </button>
-        </form>
+        <section className="card">
+          <h3>Authorized Senders</h3>
+          <RecordTable
+            rows={(detail.authorizedSenders || []).map((email) => ({ email }))}
+            rowKey={(r) => r.email}
+            onOpen={(r) => onOpen(mtsSenderDetailId(nav.inboxId, r.email))}
+            empty="No authorized senders."
+            columns={[
+              { key: 'email', label: 'Email' },
+              {
+                key: 'actions',
+                label: 'Actions',
+                stopRowClick: true,
+                render: (r) => (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => removeSender(r.email)}
+                  >
+                    Remove
+                  </button>
+                ),
+              },
+            ]}
+          />
+          <form onSubmit={addSender}>
+            <label className="field">
+              {fieldLabel('sender email')}
+              <input
+                value={senderEmail}
+                onChange={(ev) => setSenderEmail(ev.target.value)}
+                required
+                {...dirtyControlProps(senderDirty)}
+              />
+            </label>
+            <button
+              type="submit"
+              className={btnDirtyClass(senderDirty, 'btn secondary')}
+              title={senderDirty ? 'Unsaved changes' : undefined}
+            >
+              Add Sender
+            </button>
+          </form>
+        </section>
 
-        <h3>List Grants</h3>
-        <RecordTable
-          rows={inboxMaps}
-          rowKey={(m) => m.id}
-          onOpen={(m) => onOpen(mtsSenderDetailId(nav.inboxId, m.senderEmail))}
-          empty="No list grants yet — open a sender to grant Lists."
-          columns={[
-            { key: 'senderEmail', label: 'Sender' },
-            { key: 'listName', label: 'List' },
-            {
-              key: 'substituteFrom',
-              label: 'Substitute From',
-              render: (m) => m.substituteFrom || '—',
-            },
-            {
-              key: 'footerId',
-              label: 'Footer',
-              render: (m) =>
-                footers.find((f) => f.id === m.footerId)?.name || m.footerId || '—',
-            },
-          ]}
-        />
+        <section className="card">
+          <h3>List Grants</h3>
+          <RecordTable
+            rows={inboxMaps}
+            rowKey={(m) => m.id}
+            onOpen={(m) => onOpen(mtsSenderDetailId(nav.inboxId, m.senderEmail))}
+            empty="No list grants yet — open a sender to grant Lists."
+            columns={[
+              { key: 'senderEmail', label: 'Sender' },
+              { key: 'listName', label: 'List' },
+              {
+                key: 'substituteFrom',
+                label: 'Substitute From',
+                render: (m) => m.substituteFrom || '—',
+              },
+              {
+                key: 'footerId',
+                label: 'Footer',
+                render: (m) =>
+                  footers.find((f) => f.id === m.footerId)?.name || m.footerId || '—',
+              },
+            ]}
+          />
+        </section>
       </div>
     )
   }
