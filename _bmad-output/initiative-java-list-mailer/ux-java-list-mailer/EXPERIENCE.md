@@ -33,9 +33,9 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | List detail | No | Lists / deep links | Settings, bulk add members |
 | Members | Yes | Sidebar | Searchable member index |
 | Member detail | No | Members / deep links | Status, lists, timeline |
-| Mail-to-send | Yes | Sidebar | Inboxes index + mappings overview |
+| Mail-to-send | Yes | Sidebar | Inboxes index + mappings overview; **Add Mail Box** registers an existing server mailbox for polling (does not provision IMAP) |
 | MTS inbox detail | No | MTS inbox click | Settings, senders, mappings |
-| Bounce mailboxes | Yes | Sidebar | Mailbox index |
+| Bounce mailboxes | Yes | Sidebar | Mailbox index; **Add Mail Box** registers an existing server mailbox for bounce polling (does not provision IMAP) |
 | Bounce mailbox detail | No | Index row | IMAP / poll / credentials |
 | Sending paths | Yes | Sidebar | Path index |
 | Sending path detail | No | Index row | SMTP/From, Used By |
@@ -68,7 +68,8 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Sidebar nav | Title Case items; UPPERCASE categories; active = `{colors.accent-subtle}` treatment |
 | Index → detail | Row click / Edit opens detail; detail not in sidebar |
 | Record index | **HTML table** (not a list of buttons); row click opens detail; optional action column for Stop/etc. |
-| Create form | **Own page** (not on the index): index shows table + Create action only; Create opens a dedicated page with back to index (not a second card under the table; not a sidebar item) |
+| Create form | **Own page** (not on the index): index shows table + Create/Add action only; opens a dedicated page with back to index (not a second card under the table; not a sidebar item) |
+| Add Mail Box | Mail-to-Send and Bounce: label is **Add Mail Box** (not Create) — mailbox already exists on the mail server; we only add it to the polling list |
 | Compose preview | HTML / Text tabs; live sync from editors |
 | Compose lists | **HTML table** (Include / Name / Order / Reorder) — not a stack of checkbox rows; first included list sets the sending path |
 | Test send | Paste addresses; uses first list path; ignores bounce-disable; failures → Ops Logs / Admin Attention |

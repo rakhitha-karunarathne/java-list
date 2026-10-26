@@ -141,7 +141,10 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
           ← Inboxes & Mappings
         </button>
-        <h2>Create Inbox</h2>
+        <h2>Add Mail Box</h2>
+        <p className="hint">
+          The mailbox is created on the mail server. This only adds it to the Mail-to-Send polling list.
+        </p>
         <form onSubmit={createInbox}>
           {['name', 'host', 'username', 'password'].map((k) => (
             <label className="field" key={k}>
@@ -160,7 +163,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             className={btnDirtyClass(inboxDirty)}
             title={inboxDirty ? 'Unsaved changes' : undefined}
           >
-            Create Inbox
+            Add Mail Box
           </button>
         </form>
       </div>
@@ -309,7 +312,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       <div className="index-actions">
         <h2>Inboxes &amp; Mappings</h2>
         <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
-          Create Inbox
+          Add Mail Box
         </button>
       </div>
       <RecordTable

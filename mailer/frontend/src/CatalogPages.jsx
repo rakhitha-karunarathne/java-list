@@ -585,7 +585,10 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
           ← Bounce Mailboxes
         </button>
-        <h2>Create Bounce Mailbox</h2>
+        <h2>Add Mail Box</h2>
+        <p className="hint">
+          The mailbox is created on the mail server. This only adds it to the Bounce polling list.
+        </p>
         <form onSubmit={create}>
           {['name', 'host', 'username', 'password'].map((k) => (
             <label className="field" key={k}>
@@ -627,7 +630,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             />
           </label>
           <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
-            Create Bounce Mailbox
+            Add Mail Box
           </button>
         </form>
       </div>
@@ -707,7 +710,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
       <div className="index-actions">
         <h2>Bounce Mailboxes</h2>
         <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
-          Create Bounce Mailbox
+          Add Mail Box
         </button>
       </div>
       <RecordTable

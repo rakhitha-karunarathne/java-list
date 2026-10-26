@@ -198,6 +198,7 @@ Light only: cards use a single soft shadow (`{components.card.shadow}`). No stac
 - **Boolean toggle** — scalar on/off fields use `.toggle` (`role="switch"`): track + knob; On = `{colors.accent}`, Off = muted track; always show On/Off text beside the track. Dirty uses `{colors.warning}` like other fields.
 - **Record index** — `{components.table}` / `.data-table` in a `.table-scroll`; primary identity is a text cell, not a button row. **Create is its own page** (index → Create action → create page → back / open detail) — never embedded on the index under the table.
 - **Compose lists** — same `{components.table}` pattern: Include checkbox, Name, Order, Reorder actions — not a vertical checkbox list.
+- **Add Mail Box** — Mail-to-Send / Bounce index primary action and form title say **Add Mail Box** (not Create Inbox / Create Bounce Mailbox); page hint: mailbox is provisioned on the mail server; this app only polls it.
 - **Parameter field** — `{typography.label}` → `{typography.helper}` description **between label and control** → **control + Save** row (Save at the trailing end). Boolean values (`true`/`false`) render as a toggle in that row. Row uses flex wrap: control `flex: 1 1` with a min width so it shrinks first; Save wraps only after that min is hit.
 - **Unsaved field / Save** — dirty control border + light warning wash (`{colors.warning}`); dirty primary Save/Create uses warning fill; dirty secondary Save uses warning border. Not purple/danger.
 
