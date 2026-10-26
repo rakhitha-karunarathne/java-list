@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { apiJson } from './api.js'
 import { authHeaders } from './auth.js'
 import {
   BounceMailboxesPage,
@@ -7,7 +8,15 @@ import {
   ParametersPage,
   SendingPathsPage,
 } from './CatalogPages.jsx'
+import { CampaignsPage, StatusBadge } from './CampaignPages.jsx'
 import { ListsPage, MembersPage } from './ListsMembersPages.jsx'
+import {
+  BounceLogPage,
+  DropLogPage,
+  GlobalBlocksPage,
+  IssuesPage,
+  MtsPage,
+} from './OpsMtsPages.jsx'
 import Placeholder from './Placeholder.jsx'
 import { UsersPage } from './UsersPages.jsx'
 
@@ -125,7 +134,7 @@ export function Compose({ token, onError }) {
       {msg ? <p>{msg}</p> : null}
       {status ? (
         <p>
-          Campaign <code>{campaignId}</code> — <strong>{status}</strong>
+          Campaign <code>{campaignId}</code> — <StatusBadge status={status} />
         </p>
       ) : null}
       <label className="field">
@@ -284,22 +293,38 @@ export function AuditLog({ token }) {
   )
 }
 
-export function AttentionInbox({ token }) {
+export function AttentionInbox({ token, onError }) {
   const [rows, setRows] = useState([])
   const [forbidden, setForbidden] = useState(false)
+
+  async function load() {
+    try {
+      const res = await fetch('/api/attention', { headers: { Authorization: `Bearer ${token}` } })
+      if (res.status === 403) {
+        setForbidden(true)
+        setRows([])
+        return
+      }
+      if (!res.ok) throw new Error(`${res.status}`)
+      setRows(await res.json())
+    } catch {
+      setRows([])
+    }
+  }
+
   useEffect(() => {
-    fetch('/api/attention', { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (r) => {
-        if (r.status === 403) {
-          setForbidden(true)
-          return []
-        }
-        if (!r.ok) throw new Error(`${r.status}`)
-        return r.json()
-      })
-      .then(setRows)
-      .catch(() => setRows([]))
+    load()
   }, [token])
+
+  async function ack(id) {
+    try {
+      await apiJson(token, `/api/attention/${id}/ack`, { method: 'POST' })
+      await load()
+    } catch (e) {
+      onError?.(e.message)
+    }
+  }
+
   if (forbidden) {
     return (
       <div className="card">
@@ -322,7 +347,10 @@ export function AttentionInbox({ token }) {
               marginBottom: '0.35rem',
             }}
           >
-            <strong>{r.title}</strong> — {r.detail}
+            <strong>{r.title}</strong> — {r.detail}{' '}
+            <button type="button" className="btn secondary" onClick={() => ack(r.id)}>
+              Ack
+            </button>
           </li>
         ))}
       </ul>
@@ -381,78 +409,6 @@ export function OpsLogs({ token, onError }) {
   )
 }
 
-export function MtsInboxes({ token, onError }) {
-  const [inboxes, setInboxes] = useState([])
-  const [mappings, setMappings] = useState([])
-  const [detail, setDetail] = useState(null)
-  useEffect(() => {
-    fetch('/api/mts/inboxes', { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`${r.status}`)
-        return r.json()
-      })
-      .then(setInboxes)
-      .catch(() => setInboxes([]))
-    fetch('/api/mts/mappings', { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`${r.status}`)
-        return r.json()
-      })
-      .then(setMappings)
-      .catch(() => setMappings([]))
-  }, [token])
-  async function openInbox(id) {
-    onError('')
-    const res = await fetch(`/api/mts/inboxes/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) {
-      onError(`inbox ${res.status}`)
-      return
-    }
-    setDetail(await res.json())
-  }
-  return (
-    <div className="card">
-      <h2>Inboxes &amp; mappings</h2>
-      <p className="hint">Index only — open an inbox for senders and mappings (C8).</p>
-      <ul>
-        {inboxes.map((i) => (
-          <li key={i.id}>
-            <button type="button" className="btn secondary" onClick={() => openInbox(i.id)}>
-              {i.name}
-            </button>{' '}
-            {i.enabled ? '' : '(disabled)'} poll {i.pollIntervalMinutes}m
-          </li>
-        ))}
-      </ul>
-      <h3>All mappings</h3>
-      <ul>
-        {mappings.map((m) => (
-          <li key={m.id}>
-            {m.name} → lists {m.listIds?.join(', ')}{' '}
-            <button type="button" className="btn secondary" onClick={() => openInbox(m.inboxId)}>
-              inbox
-            </button>
-          </li>
-        ))}
-      </ul>
-      {detail ? (
-        <div className="card">
-          <h3>{detail.name}</h3>
-          <p>
-            {detail.host}:{detail.port} user {detail.username}
-          </p>
-          <p>Authorized: {detail.authorizedSenders?.join(', ') || '—'}</p>
-          <button type="button" className="btn secondary" onClick={() => setDetail(null)}>
-            Close detail
-          </button>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 export function MainView({
   view,
   token,
@@ -465,12 +421,45 @@ export function MainView({
   switch (view) {
     case 'compose':
       return <Compose token={token} onError={onError} />
+    case 'campaigns':
+      return (
+        <CampaignsPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
     case 'mts':
-      return <MtsInboxes token={token} onError={onError} />
+      return (
+        <MtsPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
+    case 'issues':
+      return <IssuesPage token={token} onError={onError} />
+    case 'drop-log':
+      return (
+        <DropLogPage
+          token={token}
+          onError={onError}
+          inboxFilter={detailId}
+          onFilterInbox={onOpenDetail}
+        />
+      )
+    case 'blocks':
+      return <GlobalBlocksPage token={token} onError={onError} />
+    case 'bounces':
+      return <BounceLogPage />
     case 'ops':
       return <OpsLogs token={token} onError={onError} />
     case 'attention':
-      return <AttentionInbox token={token} />
+      return <AttentionInbox token={token} onError={onError} />
     case 'audit':
       return <AuditLog token={token} />
     case 'parameters':
