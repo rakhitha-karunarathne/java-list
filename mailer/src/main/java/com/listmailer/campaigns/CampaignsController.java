@@ -1,13 +1,16 @@
 package com.listmailer.campaigns;
 
+import com.listmailer.bounce.BounceEventRepository;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,6 +37,7 @@ public class CampaignsController {
   private final CampaignSendService sendService;
   private final SendQueueRepository queue;
   private final CampaignOpenRepository opens;
+  private final BounceEventRepository bounces;
   private final OpsHooksPort ops;
 
   public CampaignsController(
@@ -45,6 +49,7 @@ public class CampaignsController {
       CampaignSendService sendService,
       SendQueueRepository queue,
       CampaignOpenRepository opens,
+      BounceEventRepository bounces,
       OpsHooksPort ops) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
@@ -55,6 +60,7 @@ public class CampaignsController {
     this.sendService = sendService;
     this.queue = queue;
     this.opens = opens;
+    this.bounces = bounces;
   }
 
   @GetMapping
@@ -283,15 +289,57 @@ public class CampaignsController {
   }
 
   private CampaignDetail detail(CampaignEntity c) {
-    List<String> listIds =
-        campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(c.getId()).stream()
-            .map(CampaignListEntity::getListId)
+    List<CampaignListEntity> linked =
+        campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(c.getId());
+    List<String> listIds = linked.stream().map(CampaignListEntity::getListId).toList();
+    List<CampaignListRef> listRefs =
+        linked.stream()
+            .map(
+                cl ->
+                    new CampaignListRef(
+                        cl.getListId(),
+                        lists.findById(cl.getListId()).map(l -> l.getName()).orElse("(missing)")))
             .toList();
-    long sent =
-        queue.findByCampaignId(c.getId()).stream().filter(r -> "SENT".equals(r.getStatus())).count();
+    List<SendQueueEntity> rows = queue.findByCampaignId(c.getId());
+    long sent = rows.stream().filter(r -> "SENT".equals(r.getStatus())).count();
+    long waiting = rows.stream().filter(r -> "PENDING".equals(r.getStatus())).count();
+    Instant sendStartedAt =
+        rows.stream().map(SendQueueEntity::getSentAt).filter(Objects::nonNull).min(Instant::compareTo).orElse(null);
+    Instant sendFinishedAt =
+        c.getStatus() == CampaignStatus.FINISHED
+            ? rows.stream()
+                .map(SendQueueEntity::getSentAt)
+                .filter(Objects::nonNull)
+                .max(Instant::compareTo)
+                .orElse(null)
+            : null;
+    List<String> queueIds = rows.stream().map(SendQueueEntity::getId).toList();
+    long bounceCount = queueIds.isEmpty() ? 0 : bounces.countBySendQueueIdIn(queueIds);
     List<CampaignOpenEntity> openRows = opens.findByCampaignId(c.getId());
     long totalOpens = openRows.size();
     long uniqueOpens = openRows.stream().map(CampaignOpenEntity::getMemberId).distinct().count();
+    var opensByQueue =
+        openRows.stream()
+            .collect(
+                java.util.stream.Collectors.groupingBy(
+                    CampaignOpenEntity::getSendQueueId,
+                    java.util.LinkedHashMap::new,
+                    java.util.stream.Collectors.toList()));
+    List<RecipientStat> recipients =
+        rows.stream()
+            .filter(r -> "SENT".equals(r.getStatus()))
+            .map(
+                r -> {
+                  List<CampaignOpenEntity> hits = opensByQueue.getOrDefault(r.getId(), List.of());
+                  Instant first =
+                      hits.stream()
+                          .map(CampaignOpenEntity::getOpenedAt)
+                          .min(Instant::compareTo)
+                          .orElse(null);
+                  return new RecipientStat(r.getEmail(), first, hits.size());
+                })
+            .sorted(Comparator.comparing(RecipientStat::email, String.CASE_INSENSITIVE_ORDER))
+            .toList();
     List<MemberOpenStat> memberOpens =
         openRows.stream()
             .collect(
@@ -307,7 +355,7 @@ public class CampaignsController {
                         e.getKey(),
                         e.getValue().stream()
                             .map(CampaignOpenEntity::getOpenedAt)
-                            .min(java.time.Instant::compareTo)
+                            .min(Instant::compareTo)
                             .orElse(null),
                         e.getValue().size()))
             .toList();
@@ -326,7 +374,15 @@ public class CampaignsController {
         uniqueOpens,
         totalOpens,
         memberOpens,
-        files);
+        files,
+        sendStartedAt,
+        sendFinishedAt,
+        waiting,
+        bounceCount,
+        uniqueOpens,
+        totalOpens,
+        listRefs,
+        recipients);
   }
 
   public record AddListBody(String listId) {}
@@ -354,6 +410,10 @@ public class CampaignsController {
 
   public record MemberOpenStat(String memberId, java.time.Instant firstOpenAt, long openCount) {}
 
+  public record CampaignListRef(String id, String name) {}
+
+  public record RecipientStat(String email, Instant firstOpenAt, long openCount) {}
+
   public record CampaignDetail(
       String id,
       String subject,
@@ -365,5 +425,13 @@ public class CampaignsController {
       long uniqueOpens,
       long totalOpens,
       List<MemberOpenStat> memberOpens,
-      List<AttachmentOut> attachments) {}
+      List<AttachmentOut> attachments,
+      Instant sendStartedAt,
+      Instant sendFinishedAt,
+      long waitingCount,
+      long bounceCount,
+      long uniqueViews,
+      long totalViews,
+      List<CampaignListRef> lists,
+      List<RecipientStat> recipients) {}
 }

@@ -59,3 +59,15 @@ after = [3]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 6
+type = "story"
+title = "Campaign detail lists, send stats, and recipients"
+description = "Lists table; sending stats section; recipient rows with first open and open count."
+verify = "Detail shows list names, start/finish/sent/waiting/bounces/views, and sent addresses only."
+covers = ["R2"]
+after = [2]
+hitl = false
+risk = "medium"
+refine = true

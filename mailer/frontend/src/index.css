@@ -469,6 +469,23 @@ body.nav-open .backdrop {
   font-weight: 650;
 }
 
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.stats dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stats dd {
+  margin: 0;
+  font-weight: 650;
+}
+
 .hint {
   font-size: 12px;
   color: var(--muted);

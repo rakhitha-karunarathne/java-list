@@ -36,6 +36,11 @@ export function StatusBadge({ status }) {
   )
 }
 
+function when(value) {
+  if (!value) return '—'
+  return String(value).replace('T', ' ').replace('Z', ' UTC')
+}
+
 export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [rows, setRows] = useState([])
   const [filter, setFilter] = useState('')
@@ -115,46 +120,109 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail 
 
   if (detailId && detail) {
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Campaigns
-        </button>
-        <h2>{detail.subject}</h2>
-        <p>
-          <StatusBadge status={detail.status} /> · sent {detail.sentCount ?? 0}
-        </p>
-        {msg ? <p>{msg}</p> : null}
-        <p className="hint">Lists: {(detail.listIds || []).join(', ') || '—'}</p>
-        {canStopCampaign(detail.status) ? (
-          <button type="button" className="btn secondary" onClick={() => stop(detailId)}>
-            Stop
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Campaigns
           </button>
-        ) : null}{' '}
-        {canRequeue(detail.status) ? (
-          <button type="button" className="btn" onClick={requeue}>
-            Requeue
-          </button>
-        ) : null}
-        {(detail.status || '').toUpperCase() === 'DRAFT' ||
-        (detail.status || '').toUpperCase() === 'STOPPED' ||
-        (detail.status || '').toUpperCase() === 'FINISHED' ? (
-          <form onSubmit={addList} style={{ marginTop: '1rem' }}>
-            <label className="field">
-              Add List
-              <select value={addListId} onChange={(ev) => setAddListId(ev.target.value)} required>
-                <option value="">— Select —</option>
-                {lists.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="submit" className="btn secondary">
-              Add list
+          <h2>{detail.subject}</h2>
+          <p>
+            <StatusBadge status={detail.status} />
+          </p>
+          {msg ? <p>{msg}</p> : null}
+          {canStopCampaign(detail.status) ? (
+            <button type="button" className="btn secondary" onClick={() => stop(detailId)}>
+              Stop
             </button>
-          </form>
-        ) : null}
+          ) : null}{' '}
+          {canRequeue(detail.status) ? (
+            <button type="button" className="btn" onClick={requeue}>
+              Requeue
+            </button>
+          ) : null}
+        </section>
+
+        <section className="card">
+          <h3>Lists</h3>
+          <RecordTable
+            rows={detail.lists || []}
+            rowKey={(l) => l.id}
+            empty="No lists."
+            columns={[{ key: 'name', label: 'List' }]}
+          />
+          {(detail.status || '').toUpperCase() === 'DRAFT' ||
+          (detail.status || '').toUpperCase() === 'STOPPED' ||
+          (detail.status || '').toUpperCase() === 'FINISHED' ? (
+            <form onSubmit={addList}>
+              <label className="field">
+                Add List
+                <select value={addListId} onChange={(ev) => setAddListId(ev.target.value)} required>
+                  <option value="">— Select —</option>
+                  {lists.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className="btn secondary">
+                Add list
+              </button>
+            </form>
+          ) : null}
+        </section>
+
+        <section className="card">
+          <h3>Sending</h3>
+          <dl className="stats">
+            <div>
+              <dt>Send Start</dt>
+              <dd>{when(detail.sendStartedAt)}</dd>
+            </div>
+            <div>
+              <dt>Send Finish</dt>
+              <dd>{when(detail.sendFinishedAt)}</dd>
+            </div>
+            <div>
+              <dt>Messages Sent</dt>
+              <dd>{detail.sentCount ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Waiting</dt>
+              <dd>{detail.waitingCount ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Bounces</dt>
+              <dd>{detail.bounceCount ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Unique Views</dt>
+              <dd>{detail.uniqueViews ?? 0}</dd>
+            </div>
+            <div>
+              <dt>Total Views</dt>
+              <dd>{detail.totalViews ?? 0}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section className="card">
+          <h3>Recipients</h3>
+          <RecordTable
+            rows={detail.recipients || []}
+            rowKey={(r) => r.email}
+            empty="No messages sent yet."
+            columns={[
+              { key: 'email', label: 'Email' },
+              {
+                key: 'firstOpenAt',
+                label: 'First Open',
+                render: (r) => when(r.firstOpenAt),
+              },
+              { key: 'openCount', label: 'Opens' },
+            ]}
+          />
+        </section>
       </div>
     )
   }

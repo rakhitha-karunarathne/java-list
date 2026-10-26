@@ -27,7 +27,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Sign in | — | Unauthenticated | Email + password; MFA step-up when required |
 | Attention | Yes (role) | Sidebar | Human-action inbox; Admin sees ops errors highlighted |
 | Campaigns | Yes | Sidebar | Campaign index; filter Draft · Queued · Sending · Finished · Stopped |
-| Campaign detail | No | Campaigns row | Status badge, stats, Stop / Requeue / Add List, deep links |
+| Campaign detail | No | Campaigns row | Page sections: title and actions · lists table · sending stats · recipients (email, first open, open count) |
 | Compose | Yes | Sidebar | Create/edit Draft; Queue Send; Save Draft; Stop; preview + test send |
 | Lists | Yes | Sidebar | List index |
 | List detail | No | Lists / deep links | Page sections: settings through Save · members table · bulk add |
@@ -95,7 +95,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On **My Account** only (every role): enroll, verify, backup codes, unenroll. Not on User detail |
 | My Account | Two cards: **Password** (current, new, confirm) then **MFA**. Open from the header user id (email) or the **My Account** item at the end of the scrollable sidebar |
-| Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title when that page asks for it. Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants); My Account (Password · MFA); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Attachments · Preview · Lists · Testing · Actions); List detail (Settings through Save · Members table · Bulk Add) |
+| Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title when that page asks for it. Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants); My Account (Password · MFA); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Attachments · Preview · Lists · Testing · Actions); List detail (Settings through Save · Members table · Bulk Add); Campaign detail (Title · Lists · Sending · Recipients) |
 
 ## State Patterns
 
