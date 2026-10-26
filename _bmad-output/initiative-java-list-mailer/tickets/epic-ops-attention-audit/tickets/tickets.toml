@@ -95,3 +95,15 @@ after = [7]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 9
+type = "story"
+title = "Mail-To-Send Processing Log"
+description = "Admin log of MTS poll: start/end, connect/disconnect, each message, campaign and lists. Retention default 90 days."
+verify = "Due inbox poll writes START/CONNECT/FETCH/CAMPAIGN/DISCONNECT/END; Admin page lists MTS rows."
+covers = ["R2"]
+after = [8]
+hitl = false
+risk = "medium"
+refine = true

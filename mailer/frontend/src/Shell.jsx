@@ -23,6 +23,7 @@ const TITLES = {
   ops: 'Ops Logs',
   'bounce-process-log': 'Bounce Processing Log',
   'queue-send-log': 'Queue Sending Log',
+  'mts-process-log': 'Mail-To-Send Processing Log',
   audit: 'Audit Log',
   home: 'Home',
 }

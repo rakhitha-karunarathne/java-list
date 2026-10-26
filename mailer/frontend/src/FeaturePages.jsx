@@ -599,6 +599,16 @@ export function MainView({
           hint="Process start and end, sending-path connect and disconnect, and each message sent. Newest 500. Retention: send.queue.log.retention.days (default 90 days)."
         />
       )
+    case 'mts-process-log':
+      return (
+        <ActivityLogPage
+          token={token}
+          onError={onError}
+          kind="MTS"
+          title="Mail-To-Send Processing Log"
+          hint="Process start and end, inbox connect and disconnect, each fetched message, and campaigns with their lists. Newest 500. Retention: mts.process.log.retention.days (default 90 days)."
+        />
+      )
     case 'attention':
       return <AttentionInbox token={token} onError={onError} />
     case 'audit':
