@@ -42,6 +42,18 @@ public class BounceEventEntity {
   @Column(nullable = false, length = 32)
   private String status;
 
+  @Column(name = "member_id", length = 36)
+  private String memberId;
+
+  @Column(name = "send_queue_id", length = 36)
+  private String sendQueueId;
+
+  @Column(length = 16)
+  private String classification;
+
+  @Column(name = "correlation_signal", length = 32)
+  private String correlationSignal;
+
   protected BounceEventEntity() {}
 
   public BounceEventEntity(
@@ -103,5 +115,37 @@ public class BounceEventEntity {
 
   public void setStatus(String status) {
     this.status = status;
+  }
+
+  public String getMemberId() {
+    return memberId;
+  }
+
+  public void setMemberId(String memberId) {
+    this.memberId = memberId;
+  }
+
+  public String getSendQueueId() {
+    return sendQueueId;
+  }
+
+  public void setSendQueueId(String sendQueueId) {
+    this.sendQueueId = sendQueueId;
+  }
+
+  public String getClassification() {
+    return classification;
+  }
+
+  public void setClassification(String classification) {
+    this.classification = classification;
+  }
+
+  public String getCorrelationSignal() {
+    return correlationSignal;
+  }
+
+  public void setCorrelationSignal(String correlationSignal) {
+    this.correlationSignal = correlationSignal;
   }
 }

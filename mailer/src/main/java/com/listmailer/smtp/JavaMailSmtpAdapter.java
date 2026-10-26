@@ -59,6 +59,13 @@ public class JavaMailSmtpAdapter implements SmtpPort {
         mime.setHeader("List-Unsubscribe", "<" + url + ">");
         mime.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
       }
+      if (message.extraHeaders() != null) {
+        for (var e : message.extraHeaders().entrySet()) {
+          if (StringUtils.hasText(e.getKey()) && e.getValue() != null) {
+            mime.setHeader(e.getKey(), e.getValue());
+          }
+        }
+      }
 
       boolean hasHtml = StringUtils.hasText(message.htmlBody());
       boolean hasText = StringUtils.hasText(message.textBody());

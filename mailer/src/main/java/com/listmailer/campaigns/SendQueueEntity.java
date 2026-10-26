@@ -37,6 +37,15 @@ public class SendQueueEntity {
   @Column(name = "smtp_message_id", length = 255)
   private String smtpMessageId;
 
+  @Column(name = "correlation_token", length = 36)
+  private String correlationToken;
+
+  @Column(name = "verp_rcpt", length = 320)
+  private String verpRcpt;
+
+  @Column(length = 255)
+  private String subject;
+
   protected SendQueueEntity() {}
 
   public SendQueueEntity(
@@ -104,5 +113,29 @@ public class SendQueueEntity {
 
   public void setSmtpMessageId(String smtpMessageId) {
     this.smtpMessageId = smtpMessageId;
+  }
+
+  public String getCorrelationToken() {
+    return correlationToken;
+  }
+
+  public void setCorrelationToken(String correlationToken) {
+    this.correlationToken = correlationToken;
+  }
+
+  public String getVerpRcpt() {
+    return verpRcpt;
+  }
+
+  public void setVerpRcpt(String verpRcpt) {
+    this.verpRcpt = verpRcpt;
+  }
+
+  public String getSubject() {
+    return subject;
+  }
+
+  public void setSubject(String subject) {
+    this.subject = subject;
   }
 }

@@ -11,4 +11,10 @@ public interface SendQueueRepository extends JpaRepository<SendQueueEntity, Stri
   List<SendQueueEntity> findByStatus(String status);
 
   Optional<SendQueueEntity> findByPixelToken(String pixelToken);
+
+  Optional<SendQueueEntity> findByCorrelationToken(String correlationToken);
+
+  Optional<SendQueueEntity> findBySmtpMessageId(String smtpMessageId);
+
+  List<SendQueueEntity> findByMemberIdAndStatus(String memberId, String status);
 }

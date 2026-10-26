@@ -12,6 +12,7 @@ import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SmtpPort;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.token.OpaqueTokenHelper;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
@@ -51,6 +52,7 @@ class CampaignSendServiceTest {
   @Mock CampaignHtmlRewriter htmlRewriter;
   @Mock RemoteImageFetchService imageFetch;
   @Mock OpaqueTokenHelper opaqueTokens;
+  @Mock SendingPathRepository sendingPaths;
   @InjectMocks CampaignSendService service;
 
   @BeforeEach

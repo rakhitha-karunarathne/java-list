@@ -6,6 +6,7 @@ import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.kernel.token.OpaqueTokenHelper;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.members.ListMemberEntity;
@@ -45,6 +46,7 @@ public class CampaignSendService {
   private final CampaignHtmlRewriter htmlRewriter;
   private final RemoteImageFetchService imageFetch;
   private final OpaqueTokenHelper opaqueTokens;
+  private final SendingPathRepository sendingPaths;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -59,7 +61,8 @@ public class CampaignSendService {
       ParametersPort parameters,
       CampaignHtmlRewriter htmlRewriter,
       RemoteImageFetchService imageFetch,
-      OpaqueTokenHelper opaqueTokens) {
+      OpaqueTokenHelper opaqueTokens,
+      SendingPathRepository sendingPaths) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -73,6 +76,7 @@ public class CampaignSendService {
     this.htmlRewriter = htmlRewriter;
     this.imageFetch = imageFetch;
     this.opaqueTokens = opaqueTokens;
+    this.sendingPaths = sendingPaths;
   }
 
   /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
@@ -177,6 +181,13 @@ public class CampaignSendService {
                     new ResponseStatusException(
                         HttpStatus.INTERNAL_SERVER_ERROR, "public.base.url missing"));
     return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+  }
+
+  private boolean verpEnabled() {
+    return parameters
+        .get(ParameterKeys.VERP_ENABLED)
+        .map(v -> "true".equalsIgnoreCase(v.trim()))
+        .orElse(false);
   }
 
   private static List<String> normalizeAddresses(List<String> raw) {
@@ -346,12 +357,31 @@ public class CampaignSendService {
               UnsubTokenCodec.encode(
                   new UnsubTokenCodec.Payload(
                       row.getMemberId(), campaign.getId(), listSnapshot, row.getId())));
+      String corrToken = Guids.newGuid();
       row.setPixelToken(pixelToken);
       row.setUnsubToken(unsubToken);
-      row.setSmtpMessageId("<" + Guids.newGuid() + "@listmailer>");
+      row.setCorrelationToken(corrToken);
+      row.setSubject(campaign.getSubject());
+      String smtpId = "<" + Guids.newGuid() + "@listmailer>";
+      row.setSmtpMessageId(smtpId);
+      if (verpEnabled()) {
+        sendingPaths
+            .findById(row.getSendingPathId())
+            .ifPresent(
+                path -> {
+                  String domain = path.getFromEmail();
+                  int at = domain.lastIndexOf('@');
+                  if (at > 0) {
+                    row.setVerpRcpt("bounce+" + corrToken + domain.substring(at));
+                  }
+                });
+      }
       String html = rewriteHtml(campaign.getId(), campaign.getHtmlBody(), blobs);
       html = injectTracking(html, campaign.getId(), pixelToken, unsubToken);
       String unsubUrl = publicBase() + "/unsubscribe/" + unsubToken;
+      java.util.Map<String, String> headers = new java.util.LinkedHashMap<>();
+      headers.put("X-JavaList-Token", corrToken);
+      headers.put("Message-ID", smtpId);
       smtp.send(
           new SmtpPort.SmtpMessage(
               row.getSendingPathId(),
@@ -360,7 +390,8 @@ public class CampaignSendService {
               campaign.getTextBody(),
               html,
               files,
-              unsubUrl));
+              unsubUrl,
+              headers));
       row.setStatus("SENT");
       queue.save(row);
       sent++;
