@@ -10,6 +10,7 @@ covers = ["R2"]
 after = ["epic-unsubscribe-consent", "epic-bounce-processing", "epic-mail-to-send"]
 hitl = true
 risk = "medium"
+refine = true
 
 [[entry]]
 id = 2
@@ -21,6 +22,7 @@ covers = ["R1"]
 after = [1]
 hitl = false
 risk = "high"
+refine = true
 
 [[entry]]
 id = 3
@@ -32,6 +34,7 @@ covers = ["R3"]
 after = [1]
 hitl = false
 risk = "high"
+refine = true
 
 [[entry]]
 id = 4
@@ -43,6 +46,7 @@ covers = ["R4"]
 after = [2, 3]
 hitl = true
 risk = "low"
+refine = true
 
 [[entry]]
 id = 5
@@ -54,6 +58,7 @@ covers = []
 after = [1, 2, 3, 4]
 hitl = false
 risk = "low"
+refine = true
 
 [[entry]]
 id = 6
@@ -65,3 +70,4 @@ covers = ["R1", "R2", "R3"]
 after = [5]
 hitl = false
 risk = "medium"
+refine = true

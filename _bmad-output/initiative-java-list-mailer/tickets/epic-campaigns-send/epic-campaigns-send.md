@@ -85,3 +85,6 @@ C5 (parent R35): Already-sent addresses are never re-sent on Requeue; test sends
 - Assumption: Mail-to-send–created Campaigns enter Queued (skip Draft).
 
 - Decision: 2026-10-25 — Stories planned. Tracer: 5.1 Compose Draft queue GreenMail; least-sure next: 5.4 Stop/Requeue. Refactor sweep included. Closing e2e suite after sweep.
+- Decision: 2026-10-26 — Pending stories pulled and refined with full acceptance criteria (ids 2,3,5–10); done stories 1 and 4 left as written.
+- Source conflict: R1 — epic requires same address → one queue row; current send path dedupes by Member id. Story 5.2 criteria keep address-level; implementer must align code (or a later Decision must change R1).
+- Decision: 2026-10-26 — Keep R1 as address-level dedupe; Member-id-only enqueue is incomplete until 5.2.

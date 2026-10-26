@@ -66,3 +66,4 @@ C3: Earlier epics may stub hooks; this epic makes Ops / Attention / Audit comple
 - Assumption: Retention defaults 90d ops / 365d audit match Parameters seeds from catalogs epic.
 
 - Decision: 2026-10-25 — Stories planned. Tracer: 9.1 Ops Logs complete with retention. Refactor sweep included. Closing e2e suite after sweep.
+- Decision: 2026-10-26 — All stories pulled and refined with full acceptance criteria.

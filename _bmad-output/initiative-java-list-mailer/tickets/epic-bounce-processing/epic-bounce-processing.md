@@ -66,3 +66,5 @@ C3: Bounce disable sets Member global Disabled with reason; must not mark list u
 - Decision: 2026-10-25 — Refine from parent R26–R27 + AD-12/25; mailbox-query introduced here for MTS reuse.
 
 - Decision: 2026-10-25 — Stories planned. Tracer: 7.1 mailbox-query IMAP utility. Refactor sweep included.
+
+- Decision: 2026-10-26 — All stories pulled and refined with full acceptance criteria.

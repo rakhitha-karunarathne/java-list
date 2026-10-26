@@ -10,6 +10,7 @@ covers = ["R1", "R4"]
 after = ["epic-campaigns-send"]
 hitl = true
 risk = "high"
+refine = true
 
 [[entry]]
 id = 2
@@ -21,6 +22,7 @@ covers = ["R1"]
 after = [1]
 hitl = false
 risk = "medium"
+refine = true
 
 [[entry]]
 id = 3
@@ -32,6 +34,7 @@ covers = ["R2", "R3"]
 after = [1]
 hitl = false
 risk = "high"
+refine = true
 
 [[entry]]
 id = 4
@@ -43,6 +46,7 @@ covers = ["R1", "R2"]
 after = [2, 3]
 hitl = false
 risk = "medium"
+refine = true
 
 [[entry]]
 id = 5
@@ -54,3 +58,4 @@ covers = []
 after = [1, 2, 3, 4]
 hitl = false
 risk = "low"
+refine = true
