@@ -54,6 +54,11 @@ public class JavaMailSmtpAdapter implements SmtpPort {
       mime.setFrom(new InternetAddress(path.getFromEmail(), path.getFromName()));
       mime.setRecipients(Message.RecipientType.TO, InternetAddress.parse(message.toEmail()));
       mime.setSubject(message.subject(), "UTF-8");
+      if (StringUtils.hasText(message.listUnsubscribeUrl())) {
+        String url = message.listUnsubscribeUrl();
+        mime.setHeader("List-Unsubscribe", "<" + url + ">");
+        mime.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+      }
 
       boolean hasHtml = StringUtils.hasText(message.htmlBody());
       boolean hasText = StringUtils.hasText(message.textBody());

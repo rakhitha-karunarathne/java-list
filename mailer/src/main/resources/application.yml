@@ -34,4 +34,7 @@ mailer:
   jwt:
     # Dev-only default (≥32 bytes). Override via env in real deploys. Never store in Parameters.
     secret: ${MAILER_JWT_SECRET:dev-only-change-me-32chars-minimum!!}
+  opaque-token:
+    # AES-GCM key material (≥32 bytes). Env only — never Parameters (AD-18 / C6).
+    secret: ${MAILER_OPAQUE_TOKEN_SECRET:dev-only-opaque-token-32chars-min!!}
 

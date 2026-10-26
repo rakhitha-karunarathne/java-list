@@ -1,0 +1,2 @@
+ALTER TABLE send_queue
+  MODIFY COLUMN unsub_token VARCHAR(512) NULL;

@@ -31,7 +31,7 @@ public class SendQueueEntity {
   @Column(name = "pixel_token", length = 36)
   private String pixelToken;
 
-  @Column(name = "unsub_token", length = 36)
+  @Column(name = "unsub_token", length = 512)
   private String unsubToken;
 
   @Column(name = "smtp_message_id", length = 255)

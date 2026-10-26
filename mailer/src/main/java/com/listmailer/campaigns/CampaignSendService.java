@@ -5,12 +5,14 @@ import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SmtpPort;
+import com.listmailer.kernel.token.OpaqueTokenHelper;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.members.ListMemberEntity;
 import com.listmailer.members.ListMemberRepository;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
+import com.listmailer.unsubscribe.UnsubTokenCodec;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -42,6 +44,7 @@ public class CampaignSendService {
   private final ParametersPort parameters;
   private final CampaignHtmlRewriter htmlRewriter;
   private final RemoteImageFetchService imageFetch;
+  private final OpaqueTokenHelper opaqueTokens;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -55,7 +58,8 @@ public class CampaignSendService {
       OpsHooksPort ops,
       ParametersPort parameters,
       CampaignHtmlRewriter htmlRewriter,
-      RemoteImageFetchService imageFetch) {
+      RemoteImageFetchService imageFetch,
+      OpaqueTokenHelper opaqueTokens) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -68,6 +72,7 @@ public class CampaignSendService {
     this.parameters = parameters;
     this.htmlRewriter = htmlRewriter;
     this.imageFetch = imageFetch;
+    this.opaqueTokens = opaqueTokens;
   }
 
   /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
@@ -332,12 +337,21 @@ public class CampaignSendService {
                           a.getFilename(), a.getContentType(), a.getContent()))
               .toList();
       String pixelToken = Guids.newGuid();
-      String unsubToken = Guids.newGuid();
+      List<String> listSnapshot =
+          campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(campaign.getId()).stream()
+              .map(CampaignListEntity::getListId)
+              .toList();
+      String unsubToken =
+          opaqueTokens.seal(
+              UnsubTokenCodec.encode(
+                  new UnsubTokenCodec.Payload(
+                      row.getMemberId(), campaign.getId(), listSnapshot, row.getId())));
       row.setPixelToken(pixelToken);
       row.setUnsubToken(unsubToken);
       row.setSmtpMessageId("<" + Guids.newGuid() + "@listmailer>");
       String html = rewriteHtml(campaign.getId(), campaign.getHtmlBody(), blobs);
       html = injectTracking(html, campaign.getId(), pixelToken, unsubToken);
+      String unsubUrl = publicBase() + "/unsubscribe/" + unsubToken;
       smtp.send(
           new SmtpPort.SmtpMessage(
               row.getSendingPathId(),
@@ -345,7 +359,8 @@ public class CampaignSendService {
               campaign.getSubject(),
               campaign.getTextBody(),
               html,
-              files));
+              files,
+              unsubUrl));
       row.setStatus("SENT");
       queue.save(row);
       sent++;

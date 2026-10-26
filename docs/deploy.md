@@ -14,8 +14,8 @@ Store in env or a secret file — **never** as Parameters:
 
 - `MAILER_JWT_SECRET`
 - `MAILER_BOOTSTRAP_PASSWORD` (seeds initial Admin once when `users` is empty; login uses the DB hash after that)
+- `MAILER_OPAQUE_TOKEN_SECRET` (≥32 bytes; AES-GCM for `/unsubscribe` and `/approve` tokens)
 - SMTP/IMAP mailbox credentials (catalog fields later; still not Parameters)
-- Opaque-token encryption keys (later)
 
 ## Compose shapes
 

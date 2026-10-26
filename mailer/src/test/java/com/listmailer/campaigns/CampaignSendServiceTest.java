@@ -12,6 +12,7 @@ import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SmtpPort;
+import com.listmailer.kernel.token.OpaqueTokenHelper;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.members.ListMemberEntity;
@@ -49,6 +50,7 @@ class CampaignSendServiceTest {
   @Mock ParametersPort parameters;
   @Mock CampaignHtmlRewriter htmlRewriter;
   @Mock RemoteImageFetchService imageFetch;
+  @Mock OpaqueTokenHelper opaqueTokens;
   @InjectMocks CampaignSendService service;
 
   @BeforeEach
@@ -65,6 +67,7 @@ class CampaignSendServiceTest {
     lenient()
         .when(imageFetch.ingest(anyString(), any(), any(), any()))
         .thenAnswer(inv -> inv.getArgument(1));
+    lenient().when(opaqueTokens.seal(any())).thenReturn("opaque-unsub-token");
   }
 
   @Test

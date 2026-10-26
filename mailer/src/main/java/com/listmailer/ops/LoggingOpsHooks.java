@@ -16,6 +16,7 @@ public class LoggingOpsHooks implements OpsHooksPort {
 
   private final List<String> opsEntries = Collections.synchronizedList(new ArrayList<>());
   private final List<String> attentionEntries = Collections.synchronizedList(new ArrayList<>());
+  private final List<String> auditEntries = Collections.synchronizedList(new ArrayList<>());
 
   private static final int CAP = 500;
 
@@ -35,6 +36,14 @@ public class LoggingOpsHooks implements OpsHooksPort {
     log.warn("ATTENTION {}", line);
   }
 
+  @Override
+  public void audit(String action, String detail) {
+    String line = action + ": " + detail;
+    auditEntries.add(line);
+    trim(auditEntries);
+    log.info("AUDIT {}", line);
+  }
+
   private static void trim(List<String> list) {
     while (list.size() > CAP) {
       list.remove(0);
@@ -48,5 +57,9 @@ public class LoggingOpsHooks implements OpsHooksPort {
 
   public List<String> attentionSnapshot() {
     return List.copyOf(attentionEntries);
+  }
+
+  public List<String> auditSnapshot() {
+    return List.copyOf(auditEntries);
   }
 }

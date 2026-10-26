@@ -72,6 +72,7 @@ class CampaignsE2ETest {
     registry.add("mailer.public-base-url", () -> "https://lists.example.com");
     registry.add("mailer.send-queue.tick-ms", () -> "3600000");
     registry.add("mailer.jwt.secret", () -> "dev-only-change-me-32chars-minimum!!");
+    registry.add("mailer.opaque-token.secret", () -> "dev-only-opaque-token-32chars-min!!");
     registry.add("mailer.bootstrap.email", () -> "admin@example.com");
     registry.add("mailer.bootstrap.password", () -> "changeme");
   }

@@ -2,7 +2,6 @@ package com.listmailer.kernel.config;
 
 import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.SchedulerHost;
-import com.listmailer.kernel.token.OpaqueTokenHelper;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,20 +33,5 @@ public class KernelStubConfig {
   SchedulerHost schedulerHost(ScheduledExecutorService kernelScheduler) {
     return (jobName, job) ->
         kernelScheduler.scheduleWithFixedDelay(job, 1, 60, TimeUnit.SECONDS);
-  }
-
-  @Bean
-  OpaqueTokenHelper opaqueTokenHelper() {
-    return new OpaqueTokenHelper() {
-      @Override
-      public String seal(byte[] payload) {
-        throw new UnsupportedOperationException("Opaque tokens land with campaigns/unsub");
-      }
-
-      @Override
-      public byte[] open(String token) {
-        throw new UnsupportedOperationException("Opaque tokens land with campaigns/unsub");
-      }
-    };
   }
 }

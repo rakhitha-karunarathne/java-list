@@ -15,9 +15,20 @@ public interface SmtpPort {
       String subject,
       String textBody,
       String htmlBody,
-      List<Attachment> attachments) {
+      List<Attachment> attachments,
+      String listUnsubscribeUrl) {
     public SmtpMessage {
       attachments = attachments == null ? List.of() : List.copyOf(attachments);
+    }
+
+    public SmtpMessage(
+        String sendingPathId,
+        String toEmail,
+        String subject,
+        String textBody,
+        String htmlBody,
+        List<Attachment> attachments) {
+      this(sendingPathId, toEmail, subject, textBody, htmlBody, attachments, null);
     }
   }
 }
