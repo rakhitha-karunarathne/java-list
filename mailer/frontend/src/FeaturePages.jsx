@@ -24,7 +24,7 @@ import {
 import Placeholder from './Placeholder.jsx'
 import { MyAccountPage, UsersPage } from './UsersPages.jsx'
 
-export function Compose({ token, onError }) {
+export function Compose({ token, onError, editId, onBack }) {
   const [lists, setLists] = useState([])
   const [selected, setSelected] = useState([])
   const [subject, setSubject] = useState('')
@@ -34,6 +34,9 @@ export function Compose({ token, onError }) {
   const [campaignId, setCampaignId] = useState('')
   const [status, setStatus] = useState('')
   const [attachment, setAttachment] = useState(null)
+  const [keptAttachments, setKeptAttachments] = useState([])
+  const [loaded, setLoaded] = useState(!editId)
+  const [blocked, setBlocked] = useState('')
   const [testAddresses, setTestAddresses] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
@@ -51,6 +54,43 @@ export function Compose({ token, onError }) {
     !valuesEqual(selected, saved.current.listIds) ||
     !!attachment !== saved.current.hasFile
   useRegisterUnsaved(draftDirty, 'compose-draft')
+
+  useEffect(() => {
+    if (!editId) return
+    let gone = false
+    apiJson(token, `/api/campaigns/${editId}`)
+      .then((body) => {
+        if (gone) return
+        if ((body.status || '').toUpperCase() !== 'DRAFT') {
+          setBlocked('Only a Draft can be edited')
+          return
+        }
+        setBlocked('')
+        const listIds = body.listIds || []
+        setCampaignId(body.id)
+        setStatus(body.status)
+        setSubject(body.subject || '')
+        setHtmlBody(body.htmlBody || '')
+        setTextBody(body.textBody || '')
+        setSelected(listIds)
+        setKeptAttachments(body.attachments || [])
+        setAttachment(null)
+        saved.current = {
+          subject: body.subject || '',
+          htmlBody: body.htmlBody || '',
+          textBody: body.textBody || '',
+          listIds,
+          hasFile: false,
+        }
+        setLoaded(true)
+      })
+      .catch((e) => {
+        if (!gone) onError(e.message)
+      })
+    return () => {
+      gone = true
+    }
+  }, [token, editId])
 
   useEffect(() => {
     fetch('/api/lists', { headers: { Authorization: `Bearer ${token}` } })
@@ -91,11 +131,13 @@ export function Compose({ token, onError }) {
   }
 
   async function bodyPayload() {
-    const attachments = attachment ? [await fileToAttachment(attachment)] : []
-    return { subject, htmlBody, textBody, listIds: selected, attachments }
+    const payload = { subject, htmlBody, textBody, listIds: selected }
+    if (attachment) payload.attachments = [await fileToAttachment(attachment)]
+    return payload
   }
 
   async function saveDraft() {
+    if (editId && !loaded) return
     onError('')
     setMsg('')
     try {
@@ -118,6 +160,7 @@ export function Compose({ token, onError }) {
       if (body.htmlBody != null) setHtmlBody(body.htmlBody)
       if (body.textBody != null) setTextBody(body.textBody)
       setAttachment(null)
+      setKeptAttachments(body.attachments || keptAttachments)
       saved.current = {
         subject: body.subject ?? subject,
         htmlBody: body.htmlBody ?? htmlBody,
@@ -155,10 +198,31 @@ export function Compose({ token, onError }) {
     }
   }
 
+  if (blocked) {
+    return (
+      <div className="page-sections">
+        <section className="card">
+          {onBack ? (
+            <button type="button" className="btn secondary" onClick={onBack}>
+              ← Campaign
+            </button>
+          ) : null}
+          <h2>Edit</h2>
+          <p>{blocked}</p>
+        </section>
+      </div>
+    )
+  }
+
   return (
     <div className="page-sections">
       <section className="card">
-        <h2>Compose</h2>
+        {onBack ? (
+          <button type="button" className="btn secondary" onClick={onBack}>
+            ← Campaign
+          </button>
+        ) : null}
+        <h2>{editId ? 'Edit' : 'Compose'}</h2>
         {msg ? <p>{msg}</p> : null}
         {status ? (
           <p>
@@ -205,6 +269,11 @@ export function Compose({ token, onError }) {
             {...dirtyControlProps(!!attachment !== saved.current.hasFile)}
           />
         </label>
+        {!attachment && keptAttachments.length > 0 ? (
+          <p className="hint">
+            Kept: {keptAttachments.map((a) => a.filename).join(', ')}. Choose a file to replace them.
+          </p>
+        ) : null}
       </section>
 
       <section className="card">
@@ -348,10 +417,11 @@ export function Compose({ token, onError }) {
             className={btnDirtyClass(draftDirty)}
             title={draftDirty ? 'Unsaved changes' : undefined}
             onClick={saveDraft}
+            disabled={!!editId && !loaded}
           >
             Save Draft
           </button>{' '}
-          <button type="button" className="btn" onClick={queueCampaign}>
+          <button type="button" className="btn" onClick={queueCampaign} disabled={!!editId && !loaded}>
             Queue
           </button>
         </p>
@@ -533,7 +603,15 @@ export function MainView({
 }) {
   switch (view) {
     case 'compose':
-      return <Compose token={token} onError={onError} />
+      return (
+        <Compose
+          key={detailId || 'new'}
+          token={token}
+          onError={onError}
+          editId={detailId}
+          onBack={detailId ? () => openInView('campaigns', detailId) : null}
+        />
+      )
     case 'campaigns':
       return (
         <CampaignsPage
@@ -542,6 +620,7 @@ export function MainView({
           detailId={detailId}
           onOpen={onOpenDetail}
           onCloseDetail={onCloseDetail}
+          onEdit={(id) => openInView('compose', id)}
         />
       )
     case 'mts':

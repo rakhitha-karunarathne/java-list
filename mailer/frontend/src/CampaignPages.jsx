@@ -41,7 +41,7 @@ function when(value) {
   return String(value).replace('T', ' ').replace('Z', ' UTC')
 }
 
-export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail, onEdit }) {
   const [rows, setRows] = useState([])
   const [filter, setFilter] = useState('')
   const [detail, setDetail] = useState(null)
@@ -133,6 +133,11 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail 
           {canStopCampaign(detail.status) ? (
             <button type="button" className="btn secondary" onClick={() => stop(detailId)}>
               Stop
+            </button>
+          ) : null}{' '}
+          {(detail.status || '').toUpperCase() === 'DRAFT' ? (
+            <button type="button" className="btn" onClick={() => onEdit(detailId)}>
+              Edit
             </button>
           ) : null}{' '}
           {canRequeue(detail.status) ? (
@@ -261,14 +266,25 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail 
             key: 'actions',
             label: 'Actions',
             stopRowClick: true,
-            render: (r) =>
-              canStopCampaign(r.status) ? (
-                <button type="button" className="btn secondary" onClick={() => stop(r.id)}>
-                  Stop
-                </button>
-              ) : (
-                '—'
-              ),
+            render: (r) => {
+              const draft = (r.status || '').toUpperCase() === 'DRAFT'
+              const showStop = canStopCampaign(r.status)
+              if (!draft && !showStop) return '—'
+              return (
+                <>
+                  {draft ? (
+                    <button type="button" className="btn secondary" onClick={() => onEdit(r.id)}>
+                      Edit
+                    </button>
+                  ) : null}{' '}
+                  {showStop ? (
+                    <button type="button" className="btn secondary" onClick={() => stop(r.id)}>
+                      Stop
+                    </button>
+                  ) : null}
+                </>
+              )
+            },
           },
         ]}
       />

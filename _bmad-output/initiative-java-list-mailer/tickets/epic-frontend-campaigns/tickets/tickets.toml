@@ -71,3 +71,15 @@ after = [2]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 7
+type = "story"
+title = "Edit a Draft campaign from Compose"
+description = "Draft campaigns have Edit on the index and detail. Edit reuses Compose and saves the same Draft."
+verify = "Edit a Draft, change subject and lists, Save; a Queued campaign has no Edit button."
+covers = ["R3"]
+after = [6]
+hitl = false
+risk = "low"
+refine = true
