@@ -38,8 +38,10 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const patchDirty = !!(savedPatch && !valuesEqual(patch.role, savedPatch.role)) ||
     !!(savedPatch && !valuesEqual(patch.enabled, savedPatch.enabled))
   const grantsDirty = grantsSig(grants) !== grantsSig(savedGrants)
+  const showListGrants =
+    patch.role === 'LIST_MANAGER' || patch.role === 'LIST_SENDER'
   useRegisterUnsaved(patchDirty, `user-patch-${detailId || 'x'}`)
-  useRegisterUnsaved(grantsDirty, `user-grants-${detailId || 'x'}`)
+  useRegisterUnsaved(showListGrants && grantsDirty, `user-grants-${detailId || 'x'}`)
 
   async function load() {
     try {
@@ -229,47 +231,70 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           </button>
         </form>
 
-        <h3>List grants</h3>
-        <form onSubmit={saveGrants}>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {lists.map((l) => {
-              const g = grants.find((x) => x.listId === l.id) || { manage: false, send: false }
-              const sg = savedGrants.find((x) => x.listId === l.id) || { manage: false, send: false }
-              const rowDirty =
-                !!g.manage !== !!sg.manage || !!g.send !== !!sg.send
-              return (
-                <li key={l.id}>
-                  <strong>{l.name}</strong>{' '}
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={!!g.manage}
-                      onChange={() => toggleGrant(l.id, 'manage')}
-                      {...dirtyControlProps(rowDirty && !!g.manage !== !!sg.manage)}
-                    />{' '}
-                    Manage
-                  </label>{' '}
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={!!g.send}
-                      onChange={() => toggleGrant(l.id, 'send')}
-                      {...dirtyControlProps(rowDirty && !!g.send !== !!sg.send)}
-                    />{' '}
-                    Send
-                  </label>
-                </li>
-              )
-            })}
-          </ul>
-          <button
-            type="submit"
-            className={btnDirtyClass(grantsDirty, 'btn secondary')}
-            title={grantsDirty ? 'Unsaved changes' : undefined}
-          >
-            Save Grants
-          </button>
-        </form>
+        {showListGrants ? (
+          <>
+            <h3>List Grants</h3>
+            <form onSubmit={saveGrants}>
+              <RecordTable
+                rows={lists}
+                rowKey={(l) => l.id}
+                empty="No lists yet."
+                columns={[
+                  { key: 'name', label: 'List' },
+                  {
+                    key: 'manage',
+                    label: 'Manage',
+                    stopRowClick: true,
+                    render: (l) => {
+                      const g = grants.find((x) => x.listId === l.id) || { manage: false, send: false }
+                      const sg =
+                        savedGrants.find((x) => x.listId === l.id) || { manage: false, send: false }
+                      return (
+                        <input
+                          type="checkbox"
+                          checked={!!g.manage}
+                          onChange={() => toggleGrant(l.id, 'manage')}
+                          aria-label={`Manage ${l.name}`}
+                          {...dirtyControlProps(!!g.manage !== !!sg.manage)}
+                        />
+                      )
+                    },
+                  },
+                  {
+                    key: 'send',
+                    label: 'Send',
+                    stopRowClick: true,
+                    render: (l) => {
+                      const g = grants.find((x) => x.listId === l.id) || { manage: false, send: false }
+                      const sg =
+                        savedGrants.find((x) => x.listId === l.id) || { manage: false, send: false }
+                      return (
+                        <input
+                          type="checkbox"
+                          checked={!!g.send}
+                          onChange={() => toggleGrant(l.id, 'send')}
+                          aria-label={`Send ${l.name}`}
+                          {...dirtyControlProps(!!g.send !== !!sg.send)}
+                        />
+                      )
+                    },
+                  },
+                ]}
+              />
+              <p>
+                <button
+                  type="submit"
+                  className={btnDirtyClass(grantsDirty, 'btn secondary')}
+                  title={grantsDirty ? 'Unsaved changes' : undefined}
+                >
+                  Save Grants
+                </button>
+              </p>
+            </form>
+          </>
+        ) : patch.role === 'ADMIN' ? (
+          <p className="hint">List grants do not apply to Admin — full access.</p>
+        ) : null}
 
         <SecurityMfaPanel token={token} onError={onError} self={isSelf} />
       </div>
