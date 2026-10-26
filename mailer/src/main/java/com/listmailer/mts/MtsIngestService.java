@@ -96,7 +96,7 @@ public class MtsIngestService {
               "INBOX"),
           raw -> {
             MtsGateService.Decision decision = gates.evaluate(box.getId(), box.getName(), raw);
-            String sender = MtsGateService.extractEmail(raw.from());
+            String sender = MtsEmails.extract(raw.from());
             if (decision.result() == MtsGateResult.ACCEPT) {
               if (maps.isEmpty()) {
                 ops.opsLog("mts.ingest", "authorized but no mapping inbox=" + box.getId());

@@ -69,7 +69,7 @@ public class MtsDropService {
     if (blocks.existsByKindAndValue("SENDER", email)) {
       return true;
     }
-    String domain = MtsFromDomainService.domainOf(email);
+    String domain = MtsEmails.domain(email);
     return blocks.existsByKindAndValue("DOMAIN", domain);
   }
 

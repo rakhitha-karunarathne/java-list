@@ -30,7 +30,7 @@ public class MtsGateService {
   public record Decision(MtsGateResult result, String reason, boolean countAutoBlock) {}
 
   public Decision evaluate(String inboxId, String inboxName, MailboxPort.RawMessage raw) {
-    String from = extractEmail(raw.from());
+    String from = MtsEmails.extract(raw.from());
     if (!StringUtils.hasText(from)) {
       return new Decision(MtsGateResult.DROP_SILENT, "missing_from", false);
     }
@@ -133,16 +133,8 @@ public class MtsGateService {
     return null;
   }
 
+  /** @deprecated use {@link MtsEmails#extract} */
   static String extractEmail(String from) {
-    if (!StringUtils.hasText(from)) {
-      return "";
-    }
-    String s = from.trim().toLowerCase(Locale.ROOT);
-    int lt = s.indexOf('<');
-    int gt = s.indexOf('>');
-    if (lt >= 0 && gt > lt) {
-      return s.substring(lt + 1, gt).trim();
-    }
-    return s;
+    return MtsEmails.extract(from);
   }
 }
