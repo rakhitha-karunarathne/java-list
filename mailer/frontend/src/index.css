@@ -312,15 +312,9 @@ body.nav-open .backdrop {
   margin-top: 6px;
 }
 
-.sidebar-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
 .nav {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 10px 10px 28px;
 }
@@ -343,8 +337,7 @@ body.nav-open .backdrop {
   cursor: default;
 }
 
-.nav-section button.nav-item,
-.nav-footer button.nav-item {
+.nav-section button.nav-item {
   display: block;
   width: 100%;
   text-align: left;
@@ -359,20 +352,13 @@ body.nav-open .backdrop {
   cursor: pointer;
 }
 
-.nav-section button.nav-item:hover,
-.nav-footer button.nav-item:hover {
+.nav-section button.nav-item:hover {
   background: #f1f5f9;
 }
 
-.nav-section button.nav-item.active,
-.nav-footer button.nav-item.active {
+.nav-section button.nav-item.active {
   background: var(--accent-subtle);
   color: var(--accent-hover);
-}
-
-.nav-footer {
-  border-top: 1px solid var(--border);
-  padding: 10px;
 }
 
 .user-chip {
@@ -387,7 +373,7 @@ body.nav-open .backdrop {
 }
 
 .user-chip:focus-visible,
-.nav-footer button.nav-item:focus-visible {
+.nav-section button.nav-item:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

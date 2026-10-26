@@ -50,27 +50,25 @@ export default function Shell({ role, view, onNavigate, onLogout, email, childre
           List Mailer
           <small>Operator UI · Clearwater</small>
         </div>
-        <nav className="sidebar-nav" aria-label="Primary">
-          <div className="nav">
-            {sections.map((section) => (
-              <div className="nav-section" key={section.id}>
-                <button type="button" className="cat">
-                  {section.label}
+        <nav className="nav" aria-label="Primary">
+          {sections.map((section) => (
+            <div className="nav-section" key={section.id}>
+              <button type="button" className="cat">
+                {section.label}
+              </button>
+              {section.items.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  className={`nav-item${view === item.id ? ' active' : ''}`}
+                  onClick={() => go(item.id)}
+                >
+                  {item.label}
                 </button>
-                {section.items.map((item) => (
-                  <button
-                    type="button"
-                    key={item.id}
-                    className={`nav-item${view === item.id ? ' active' : ''}`}
-                    onClick={() => go(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="nav-footer">
+              ))}
+            </div>
+          ))}
+          <div className="nav-section">
             <button
               type="button"
               className={`nav-item${view === 'account' ? ' active' : ''}`}

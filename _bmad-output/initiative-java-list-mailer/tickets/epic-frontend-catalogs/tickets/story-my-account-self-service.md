@@ -15,7 +15,7 @@ status: done
 
 ## Description
 
-Logged-in users manage their own account on **My Account**: change password in one card, MFA in the next. MFA leaves User detail. Users & Grants stays Admin-only. Reach My Account from the header user id and from a nav item pinned at the bottom of the sidebar (every role).
+Logged-in users manage their own account on **My Account**: change password in one card, MFA in the next. MFA leaves User detail. Users & Grants stays Admin-only. Reach My Account from the header user id and from a nav item at the end of the scrollable sidebar (every role).
 
 ## Requirements
 
@@ -36,12 +36,12 @@ Logged-in users manage their own account on **My Account**: change password in o
    **Given** any role
    **When** they use the shell
    **Then** the header user id (email) navigates to My Account
-   **And** **My Account** is a nav item at the bottom of the sidebar
+   **And** **My Account** is the last item in the scrollable sidebar (not fixed in the frame)
    **And** Users & Grants remains Admin-only
 
 ## Boundaries
 
-- In: `POST /api/me/password`, My Account page, header link, bottom nav, User detail without MFA, EXPERIENCE / DESIGN.
+- In: `POST /api/me/password`, My Account page, header link, scrollable sidebar item, User detail without MFA, EXPERIENCE / DESIGN.
 - Out: Admin resetting another user's password; revoking existing JWTs; changing email or role on My Account.
 
 ## References
@@ -59,7 +59,7 @@ Logged-in users manage their own account on **My Account**: change password in o
 
 - `POST /api/me/password` checks the current password, rejects a blank or unchanged new password, and saves a new hash. Any authenticated role (not Admin-only).
 - My Account = Password card then Security (MFA) card. User detail is Title · Account · List Grants.
-- Header email and the sidebar footer item both open My Account.
+- Header email and the last scrollable sidebar item both open My Account.
 
 ### Code Review (adversarial)
 

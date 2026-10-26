@@ -44,7 +44,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Parameters | Yes (Admin) | Sidebar | System tunables — stacked fields + descriptions |
 | Users | Yes (Admin) | Sidebar | User index; role and list grants only |
 | User detail | No | Users row | Page sections: **Title** · **Account** (Role, Enabled, Save) · **List Grants** — no MFA |
-| My Account | Yes (every role) | Header user id and bottom of sidebar | Self-service: **Password** then **MFA** |
+| My Account | Yes (every role) | Header user id and last item in the scrollable sidebar | Self-service: **Password** then **MFA** |
 | Ops Logs | Yes | Sidebar | Send / bounce poll / MTS poll logs |
 | Audit | As specified in mock/IA | Sidebar or Admin group | Append-only audit (scoped) |
 
@@ -91,7 +91,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Unsaved edits | Changed controls + their Save/Create button use `{colors.warning}` treatment (not accent alone); title/hint “Unsaved changes” so color is not the only cue |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On **My Account** only (every role): enroll, verify, backup codes, unenroll. Not on User detail |
-| My Account | Two cards: **Password** (current, new, confirm) then **MFA**. Open from the header user id (email) or the **My Account** item pinned at the bottom of the sidebar |
+| My Account | Two cards: **Password** (current, new, confirm) then **MFA**. Open from the header user id (email) or the **My Account** item at the end of the scrollable sidebar |
 | Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title when that page asks for it. Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants); My Account (Password · MFA); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Attachments · Preview · Lists · Testing · Actions); List detail (Settings through Save · Members table · Bulk Add) |
 
 ## State Patterns
@@ -144,7 +144,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 
 1. Jordan enters email + password.
 2. System challenges for authenticator code (enrolled).
-3. Jordan opens **My Account** (header email or the bottom nav item) to change password or rotate MFA — not from Users & Grants (Admin only).
+3. Jordan opens **My Account** (header email or the last sidebar item) to change password or rotate MFA — not from Users & Grants (Admin only).
 4. **Climax:** lands on Attention/Campaigns per role with session in sessionStorage.
 
 ### Flow 3 — Compose and test send (Sam, List sender)
