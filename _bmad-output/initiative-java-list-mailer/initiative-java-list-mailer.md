@@ -144,6 +144,8 @@ C8 (ux / prd IA): Detail pages for List, Member, Campaign, inbox, bounce mailbox
 - Decision: 2026-10-25 — SPEC self-validate Pass 1 (coherence) and Pass 2 (preservation) recorded in memlog.
 - Decision: 2026-10-25 — Plugin seam: filter chains on each kernel port attachment and each API endpoint (architecture AD-28). V1 ships hooks; plugin pack implementations remain out of V1 (Boundary).
 - Decision: 2026-10-25 — Initiative sliced into 9 epics (platform → users → catalogs → lists/members → campaigns/send → unsub/consent → bounce → MTS → ops/Attention/audit). First product demo after campaigns epic; MTS after bounce for mailbox-query; thin Compose demo after platform/users.
+- Decision: 2026-10-26 — Frontend Clearwater SPA sliced into 5 new epics after API epics 1–9: epic-frontend-shell → catalogs → lists-members → campaigns → ops-mts (stories refined; UX EXPERIENCE/DESIGN companions).
+- Decision: 2026-10-26 — Clearwater clickable mock approved (`ux-java-list-mailer/mockups/clickable/index.html`); build target for frontend epics; spines win on conflict.
 - Decision: 2026-10-25 — Operator username/login id is email (R1).
 - Decision: 2026-10-25 — Operator TOTP MFA optional by default; Admin can make MFA mandatory via Parameters (R1/R7).
 - Decision: 2026-10-25 — Each Parameter on Admin page shows description: purpose, supported values, value range (R7).

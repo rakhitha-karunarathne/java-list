@@ -48,7 +48,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 
 **Catalogs:** no delete while referenced; detail shows navigable **Used By**.
 
-→ Composition reference: `.working/clickable-mockup/index.html` and `mockups/clickable/index.html` (Clearwater + full page map). Theme swatch: `mockups/theme-clearwater.html`. Spines win on conflict.
+→ Composition reference (**mock approved 2026-10-26**): `mockups/clickable/index.html` (Clearwater + full page map; `.working/clickable-mockup/index.html` legacy). Theme swatch: `mockups/theme-clearwater.html`. Spines win on conflict.
 
 ## Voice and Tone
 

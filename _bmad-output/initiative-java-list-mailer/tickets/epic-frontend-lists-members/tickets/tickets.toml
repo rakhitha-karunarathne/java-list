@@ -1,0 +1,49 @@
+# Epic FE-3 — Lists & Members SPA.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Lists index detail and bulk add UI"
+description = "Lists index/detail; path/footer; bulk paste add with counts."
+verify = "Create list; bulk add shows skip counts; detail not in sidebar."
+covers = ["R1", "R4"]
+after = ["epic-frontend-shell"]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 2
+type = "story"
+title = "Members searchable index and detail UI"
+description = "Members index search; detail status/lists; LM scoped."
+verify = "Search finds member; LM cannot see other Lists’ members; detail via row."
+covers = ["R2", "R3", "R4"]
+after = [1]
+hitl = false
+risk = "high"
+refine = true
+
+[[entry]]
+id = 3
+type = "story"
+title = "Member enable disable and consent request UI"
+description = "Enable/disable confirms; consent clear-unsub request from detail."
+verify = "Disable confirm; consent request calls API; notice-path unset still UX-clear."
+covers = ["R3"]
+after = [2]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 4
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only."
+verify = "Lists/Members smokes still pass."
+covers = []
+after = [1, 2, 3]
+hitl = false
+risk = "low"
+refine = true

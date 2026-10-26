@@ -1,0 +1,49 @@
+# Epic FE-4 — Campaigns & Compose SPA.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Campaigns index and status filter UI"
+description = "Campaigns index; status badges; filter; row to detail."
+verify = "Filter by status; badge text+color; detail not in sidebar."
+covers = ["R1", "R4"]
+after = ["epic-frontend-shell"]
+hitl = false
+risk = "low"
+refine = true
+
+[[entry]]
+id = 2
+type = "story"
+title = "Campaign detail Stop Requeue Add List UI"
+description = "Detail actions Stop/Requeue/Add List; Finished requeue gate helper."
+verify = "Stop from Queued; Finished Requeue disabled until Add List; then Requeue."
+covers = ["R2"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 3
+type = "story"
+title = "Compose Clearwater polish and test send UI"
+description = "Compose Clearwater layout; preview tabs; multi-list; test send dialog copy."
+verify = "Test send reports counts; bounce-disable note visible; Queue from Draft."
+covers = ["R3"]
+after = [1]
+hitl = true
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 4
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only."
+verify = "Campaigns/Compose smokes still pass."
+covers = []
+after = [1, 2, 3]
+hitl = false
+risk = "low"
+refine = true

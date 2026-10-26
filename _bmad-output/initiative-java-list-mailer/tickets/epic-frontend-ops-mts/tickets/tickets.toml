@@ -1,0 +1,73 @@
+# Epic FE-5 — Ops, MTS, Attention polish.
+
+[[entry]]
+id = 1
+type = "story"
+title = "MTS inbox detail senders and mappings UI"
+description = "MTS index polish; inbox detail CRUD senders/mappings; substitute From/footer."
+verify = "Create inbox; add sender; mapping to Lists; detail not in sidebar."
+covers = ["R1"]
+after = ["epic-frontend-shell"]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 2
+type = "story"
+title = "From-domain Issues UI distinct from Drop"
+description = "Issues list/clear; copy never says drop; distinct surface from Drop log."
+verify = "Open Issue visible; clear works; not listed as Drop reason."
+covers = ["R2"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 3
+type = "story"
+title = "Drop log and global blocks UI"
+description = "Drop log filtered/combined; resolve/block sender/domain; blocks list."
+verify = "Inbox link opens filtered Drop; auto-block flag visible; unblock works."
+covers = ["R3"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 4
+type = "story"
+title = "Ops Attention Audit Clearwater polish"
+description = "Polish Ops/Attention/Audit; highlights; deep links; role nav."
+verify = "Admin sees ops highlight; LM scoped; sender 403/hidden; ops detail from index."
+covers = ["R4"]
+after = ["epic-frontend-shell"]
+hitl = true
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 5
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only."
+verify = "MTS/Drop/Issues/Ops smokes still pass."
+covers = []
+after = [1, 2, 3, 4]
+hitl = false
+risk = "low"
+refine = true
+
+[[entry]]
+id = 6
+type = "story"
+title = "Frontend Clearwater end-to-end walkthrough suite"
+description = "Closing FE suite: shell role nav; one catalog; one list/member; compose queue smoke; MTS index; Attention."
+verify = "Documented walkthrough or light e2e green against test profile."
+covers = ["R1", "R4"]
+after = [5]
+hitl = true
+risk = "medium"
+refine = true

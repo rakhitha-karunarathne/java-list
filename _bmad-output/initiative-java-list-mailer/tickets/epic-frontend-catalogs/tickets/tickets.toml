@@ -1,0 +1,61 @@
+# Epic FE-2 — Catalogs, Parameters, Users.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Sending paths and Footers index-detail UI"
+description = "Paths + Footers indexes; detail with Used By; delete blocked."
+verify = "Create/edit path and footer; Used By blocks delete; detail not in sidebar."
+covers = ["R1", "R3"]
+after = ["epic-frontend-shell"]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 2
+type = "story"
+title = "Bounce mailboxes and Notice path UI"
+description = "Bounce mailbox index/detail; designate Notice sending path."
+verify = "Save bounce mailbox; set Notice path; credentials write-only."
+covers = ["R2", "R4"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 3
+type = "story"
+title = "Parameters Admin page UI"
+description = "Stacked Parameter fields with descriptions; Admin-only."
+verify = "Admin edits retention/MFA/etc.; descriptions visible; non-Admin forbidden."
+covers = ["R5"]
+after = ["epic-frontend-shell"]
+hitl = false
+risk = "low"
+refine = true
+
+[[entry]]
+id = 4
+type = "story"
+title = "Users index detail and Security MFA panel"
+description = "Users index/detail; grants; Security enroll/backup/unenroll."
+verify = "Admin manages user; MFA Security only on User detail."
+covers = ["R6"]
+after = [3]
+hitl = true
+risk = "high"
+refine = true
+
+[[entry]]
+id = 5
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only."
+verify = "Catalog/Parameters/Users smokes still pass."
+covers = []
+after = [1, 2, 3, 4]
+hitl = false
+risk = "low"
+refine = true
