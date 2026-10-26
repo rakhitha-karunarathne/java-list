@@ -71,3 +71,15 @@ after = [1]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 7
+type = "story"
+title = "Connection field order and Bounce Test Connection"
+description = "Host then Port; Username then Password on path/bounce/MTS forms; Bounce Test Connection create+edit."
+verify = "Field order on path/bounce/MTS; Bounce Test Connection success/fail; blank password uses stored on edit."
+covers = ["R1", "R2"]
+after = [6]
+hitl = false
+risk = "low"
+refine = true

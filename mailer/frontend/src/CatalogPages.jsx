@@ -182,18 +182,24 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         </button>
         <h2>Create Sending Path</h2>
         <form onSubmit={create}>
-          {['name', 'host', 'username', 'password', 'fromEmail', 'fromName'].map((k) => (
-            <label className="field" key={k}>
-              {fieldLabel(k)}
-              <input
-                type={k === 'password' ? 'password' : 'text'}
-                value={form[k]}
-                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
-                required={k !== 'fromName'}
-                {...dirtyControlProps(!valuesEqual(form[k], base[k]))}
-              />
-            </label>
-          ))}
+          <label className="field">
+            {fieldLabel('name')}
+            <input
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.name, base.name))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('host')}
+            <input
+              value={form.host}
+              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.host, base.host))}
+            />
+          </label>
           <label className="field">
             {fieldLabel('port')}
             <input
@@ -201,6 +207,42 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               value={form.port}
               onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
               {...dirtyControlProps(!valuesEqual(form.port, base.port))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('username')}
+            <input
+              value={form.username}
+              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.username, base.username))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('password')}
+            <input
+              type="password"
+              value={form.password}
+              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.password, base.password))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('fromEmail')}
+            <input
+              value={form.fromEmail}
+              onChange={(ev) => setForm({ ...form, fromEmail: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.fromEmail, base.fromEmail))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('fromName')}
+            <input
+              value={form.fromName}
+              onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.fromName, base.fromName))}
             />
           </label>
           <label className="field">
@@ -239,17 +281,24 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         </button>
         <h2>{detail.name}</h2>
         <form onSubmit={save}>
-          {['name', 'host', 'username', 'fromEmail', 'fromName'].map((k) => (
-            <label className="field" key={k}>
-              {fieldLabel(k)}
-              <input
-                value={form[k]}
-                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
-                required={k !== 'fromName'}
-                {...dirtyControlProps(!valuesEqual(form[k], saved[k]))}
-              />
-            </label>
-          ))}
+          <label className="field">
+            {fieldLabel('name')}
+            <input
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('host')}
+            <input
+              value={form.host}
+              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.host, saved.host))}
+            />
+          </label>
           <label className="field">
             {fieldLabel('port')}
             <input
@@ -260,6 +309,15 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
             />
           </label>
           <label className="field">
+            {fieldLabel('username')}
+            <input
+              value={form.username}
+              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.username, saved.username))}
+            />
+          </label>
+          <label className="field">
             {fieldLabel('password')} (Blank = Keep)
             <input
               type="password"
@@ -267,6 +325,23 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               onChange={(ev) => setForm({ ...form, password: ev.target.value })}
               autoComplete="new-password"
               {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('fromEmail')}
+            <input
+              value={form.fromEmail}
+              onChange={(ev) => setForm({ ...form, fromEmail: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.fromEmail, saved.fromEmail))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('fromName')}
+            <input
+              value={form.fromName}
+              onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.fromName, saved.fromName))}
             />
           </label>
           <label className="field">
