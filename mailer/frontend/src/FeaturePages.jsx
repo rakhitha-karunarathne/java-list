@@ -155,186 +155,198 @@ export function Compose({ token, onError }) {
   }
 
   return (
-    <div className="card">
-      <h2>Compose</h2>
-      {msg ? <p>{msg}</p> : null}
-      {status ? (
+    <div className="page-sections">
+      <section className="card">
+        <h2>Compose</h2>
+        {msg ? <p>{msg}</p> : null}
+        {status ? (
+          <p>
+            Campaign <code>{campaignId}</code> — <StatusBadge status={status} />
+          </p>
+        ) : null}
+        <label className="field">
+          Subject
+          <input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            {...dirtyControlProps(!valuesEqual(subject, saved.current.subject))}
+          />
+        </label>
+        <label className="field">
+          HTML Body
+          <textarea
+            value={htmlBody}
+            onChange={(e) => setHtmlBody(e.target.value)}
+            rows={10}
+            style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
+            {...dirtyControlProps(!valuesEqual(htmlBody, saved.current.htmlBody))}
+          />
+        </label>
+        <label className="field">
+          Text Body
+          <textarea
+            value={textBody}
+            onChange={(e) => setTextBody(e.target.value)}
+            rows={10}
+            style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
+            {...dirtyControlProps(!valuesEqual(textBody, saved.current.textBody))}
+          />
+        </label>
+      </section>
+
+      <section className="card">
+        <h3>Preview</h3>
         <p>
-          Campaign <code>{campaignId}</code> — <StatusBadge status={status} />
+          <button type="button" className="btn secondary" onClick={() => setPreview('html')}>
+            HTML
+          </button>{' '}
+          <button type="button" className="btn secondary" onClick={() => setPreview('text')}>
+            Text
+          </button>
         </p>
-      ) : null}
-      <label className="field">
-        Subject
-        <input
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          {...dirtyControlProps(!valuesEqual(subject, saved.current.subject))}
-        />
-      </label>
-      <h3>Lists</h3>
-      <p className="hint">Order = first sending path (first included list wins).</p>
-      <RecordTable
-        rows={lists}
-        rowKey={(l) => l.id}
-        empty="No lists yet."
-        columns={[
-          {
-            key: 'include',
-            label: 'Include',
-            stopRowClick: true,
-            render: (l) => (
-              <input
-                type="checkbox"
-                checked={selected.includes(l.id)}
-                onChange={() => toggleList(l.id)}
-                aria-label={`Include ${l.name}`}
-              />
-            ),
-          },
-          { key: 'name', label: 'Name' },
-          {
-            key: 'order',
-            label: 'Order',
-            render: (l) => {
-              const i = selected.indexOf(l.id)
-              return i >= 0 ? String(i + 1) : '—'
-            },
-          },
-          {
-            key: 'actions',
-            label: 'Reorder',
-            stopRowClick: true,
-            render: (l) =>
-              selected.includes(l.id) ? (
-                <>
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => moveList(l.id, -1)}
-                    aria-label={`Move ${l.name} up`}
-                  >
-                    ↑
-                  </button>{' '}
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => moveList(l.id, 1)}
-                    aria-label={`Move ${l.name} down`}
-                  >
-                    ↓
-                  </button>
-                </>
-              ) : (
-                '—'
+        <div className="compose-preview">
+          {preview === 'html' ? (
+            <div dangerouslySetInnerHTML={{ __html: htmlBody }} />
+          ) : (
+            <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{textBody}</pre>
+          )}
+        </div>
+      </section>
+
+      <section className="card">
+        <h3>Lists</h3>
+        <p className="hint">Order = first sending path (first included list wins).</p>
+        <RecordTable
+          rows={lists}
+          rowKey={(l) => l.id}
+          empty="No lists yet."
+          columns={[
+            {
+              key: 'include',
+              label: 'Include',
+              stopRowClick: true,
+              render: (l) => (
+                <input
+                  type="checkbox"
+                  checked={selected.includes(l.id)}
+                  onChange={() => toggleList(l.id)}
+                  aria-label={`Include ${l.name}`}
+                />
               ),
-          },
-        ]}
-      />
-      <label className="field">
-        HTML Body
-        <textarea
-          value={htmlBody}
-          onChange={(e) => setHtmlBody(e.target.value)}
-          rows={10}
-          style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
-          {...dirtyControlProps(!valuesEqual(htmlBody, saved.current.htmlBody))}
+            },
+            { key: 'name', label: 'Name' },
+            {
+              key: 'order',
+              label: 'Order',
+              render: (l) => {
+                const i = selected.indexOf(l.id)
+                return i >= 0 ? String(i + 1) : '—'
+              },
+            },
+            {
+              key: 'actions',
+              label: 'Reorder',
+              stopRowClick: true,
+              render: (l) =>
+                selected.includes(l.id) ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => moveList(l.id, -1)}
+                      aria-label={`Move ${l.name} up`}
+                    >
+                      ↑
+                    </button>{' '}
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => moveList(l.id, 1)}
+                      aria-label={`Move ${l.name} down`}
+                    >
+                      ↓
+                    </button>
+                  </>
+                ) : (
+                  '—'
+                ),
+            },
+          ]}
         />
-      </label>
-      <label className="field">
-        Text Body
-        <textarea
-          value={textBody}
-          onChange={(e) => setTextBody(e.target.value)}
-          rows={10}
-          style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
-          {...dirtyControlProps(!valuesEqual(textBody, saved.current.textBody))}
-        />
-      </label>
-      <p>
-        Preview:{' '}
-        <button type="button" className="btn secondary" onClick={() => setPreview('html')}>
-          HTML
-        </button>{' '}
-        <button type="button" className="btn secondary" onClick={() => setPreview('text')}>
-          Text
-        </button>
-      </p>
-      <div className="card" style={{ background: '#f8fafc' }}>
-        {preview === 'html' ? (
-          <div dangerouslySetInnerHTML={{ __html: htmlBody }} />
-        ) : (
-          <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{textBody}</pre>
-        )}
-      </div>
-      <label className="field">
-        Attachment
-        <input
-          type="file"
-          onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-          {...dirtyControlProps(!!attachment !== saved.current.hasFile)}
-        />
-      </label>
-      <label className="field">
-        Test Send Addresses (Comma Or Newline)
-        <textarea
-          value={testAddresses}
-          onChange={(e) => setTestAddresses(e.target.value)}
-          rows={3}
-          style={{ maxWidth: '100%' }}
-        />
-      </label>
-      <p className="hint">Test Send Ignores Bounce-Disable.</p>
-      <p>
-        <button
-          type="button"
-          className={btnDirtyClass(draftDirty)}
-          title={draftDirty ? 'Unsaved changes' : undefined}
-          onClick={saveDraft}
-        >
-          Save Draft
-        </button>{' '}
-        <button
-          type="button"
-          className="btn secondary"
-          disabled={busy}
-          onClick={async () => {
-            if (busy) return
-            onError('')
-            setMsg('')
-            if (!campaignId) {
-              onError('Save a Draft first')
-              return
-            }
-            setBusy(true)
-            try {
-              const addresses = testAddresses
-                .split(/[\n,;]+/)
-                .map((s) => s.trim())
-                .filter(Boolean)
-              const res = await fetch(`/api/campaigns/${campaignId}/test-send`, {
-                method: 'POST',
-                headers: authHeaders(token),
-                body: JSON.stringify({ addresses }),
-              })
-              if (!res.ok) {
-                onError(`Test send failed (${res.status}): ${await res.text()}`)
+      </section>
+
+      <section className="card">
+        <h3>Actions</h3>
+        <label className="field">
+          Attachment
+          <input
+            type="file"
+            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+            {...dirtyControlProps(!!attachment !== saved.current.hasFile)}
+          />
+        </label>
+        <label className="field">
+          Test Send Addresses (Comma Or Newline)
+          <textarea
+            value={testAddresses}
+            onChange={(e) => setTestAddresses(e.target.value)}
+            rows={3}
+            style={{ maxWidth: '100%' }}
+          />
+        </label>
+        <p className="hint">Test Send Ignores Bounce-Disable.</p>
+        <p>
+          <button
+            type="button"
+            className={btnDirtyClass(draftDirty)}
+            title={draftDirty ? 'Unsaved changes' : undefined}
+            onClick={saveDraft}
+          >
+            Save Draft
+          </button>{' '}
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={busy}
+            onClick={async () => {
+              if (busy) return
+              onError('')
+              setMsg('')
+              if (!campaignId) {
+                onError('Save a Draft first')
                 return
               }
-              const body = await res.json()
-              setMsg(`Test send OK (${body.sent})`)
-            } catch (e) {
-              onError(e.message || String(e))
-            } finally {
-              setBusy(false)
-            }
-          }}
-        >
-          Test send
-        </button>{' '}
-        <button type="button" className="btn" onClick={queueCampaign}>
-          Queue
-        </button>
-      </p>
+              setBusy(true)
+              try {
+                const addresses = testAddresses
+                  .split(/[\n,;]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                const res = await fetch(`/api/campaigns/${campaignId}/test-send`, {
+                  method: 'POST',
+                  headers: authHeaders(token),
+                  body: JSON.stringify({ addresses }),
+                })
+                if (!res.ok) {
+                  onError(`Test send failed (${res.status}): ${await res.text()}`)
+                  return
+                }
+                const body = await res.json()
+                setMsg(`Test send OK (${body.sent})`)
+              } catch (e) {
+                onError(e.message || String(e))
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
+            Test send
+          </button>{' '}
+          <button type="button" className="btn" onClick={queueCampaign}>
+            Queue
+          </button>
+        </p>
+      </section>
     </div>
   )
 }

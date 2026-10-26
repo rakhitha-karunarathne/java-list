@@ -8,6 +8,7 @@ after: [8]
 hitl: false
 risk: medium
 refined: true
+status: done
 ---
 
 # Page sections: title cards, Used By, MTS inbox, Compose
@@ -44,3 +45,18 @@ Tighten the page-sections pattern: **all** detail content lives in white cards (
 ## Notes
 
 - Decision: 2026-10-26 — title is a card; Used By always its own card on catalog detail.
+
+## Dev Agent Record
+
+### Completion Notes
+
+- User: title card; Path/Footer: Used By card; MTS inbox: Title · Account · Senders · Grants; Compose: Content · Preview · Lists · Actions.
+- EXPERIENCE/DESIGN: everything in cards; commits per page.
+
+### Code Review (adversarial)
+
+| Severity | Finding | Disposition |
+|---|---|---|
+| low | Nested Compose preview used a second `.card` | Fixed — `.compose-preview` pane |
+| low | Attachment/test send not named by user | Placed in Actions card with buttons |
+| info | Path/Footer title still with form card | OK — only Used By was required separate; title split deferred unless asked |
