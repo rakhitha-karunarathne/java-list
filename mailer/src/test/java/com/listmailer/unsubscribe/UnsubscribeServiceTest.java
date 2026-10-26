@@ -80,6 +80,21 @@ class UnsubscribeServiceTest {
   }
 
   @Test
+  void alreadyUnsubscribedIsIdempotentWithoutAudit() {
+    byte[] payload =
+        UnsubTokenCodec.encode(new UnsubTokenCodec.Payload("m1", "c1", List.of("l1"), "q1"));
+    when(tokens.open("tok")).thenReturn(payload);
+    when(members.findById("m1"))
+        .thenReturn(Optional.of(new MemberEntity("m1", "a@example.com", true, Instant.now())));
+    ListMemberEntity lm1 = new ListMemberEntity("l1", "m1", true, Instant.now());
+    when(listMembers.findByListIdAndMemberId("l1", "m1")).thenReturn(Optional.of(lm1));
+
+    assertEquals(UnsubscribeService.Outcome.ALREADY, service.apply("tok"));
+    verify(listMembers, never()).save(any());
+    verify(ops, never()).audit(anyString(), anyString());
+  }
+
+  @Test
   void disabledMemberStaysDisabled() {
     byte[] payload =
         UnsubTokenCodec.encode(new UnsubTokenCodec.Payload("m1", "c1", List.of("l1"), "q1"));

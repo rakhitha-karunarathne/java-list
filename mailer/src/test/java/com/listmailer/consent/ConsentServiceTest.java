@@ -92,6 +92,22 @@ class ConsentServiceTest {
   }
 
   @Test
+  void reuseApproveAfterClearIsIdempotentNoAudit() {
+    long exp = Instant.now().toEpochMilli() + TimeUnit.DAYS.toMillis(1);
+    byte[] payload =
+        ConsentTokenCodec.encode(new ConsentTokenCodec.Payload("m1", List.of("L1"), exp));
+    when(tokens.open("tok")).thenReturn(payload);
+    when(members.findById("m1"))
+        .thenReturn(Optional.of(new MemberEntity("m1", "a@x.com", true, Instant.now())));
+    ListMemberEntity lm = new ListMemberEntity("L1", "m1", false, Instant.now());
+    when(listMembers.findByListIdAndMemberId("L1", "m1")).thenReturn(Optional.of(lm));
+
+    assertEquals(ConsentService.ApproveOutcome.ALREADY_CLEAR, service.approve("tok"));
+    verify(listMembers, never()).save(any());
+    verify(ops, never()).audit(anyString(), anyString());
+  }
+
+  @Test
   void requestRejectedWithoutManage() {
     when(members.findById("m1"))
         .thenReturn(Optional.of(new MemberEntity("m1", "a@x.com", true, Instant.now())));
