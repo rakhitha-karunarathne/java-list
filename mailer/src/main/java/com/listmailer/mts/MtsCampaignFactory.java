@@ -44,13 +44,17 @@ public class MtsCampaignFactory {
 
   @Transactional
   public CampaignEntity createQueued(
-      String subject, String htmlBody, String textBody, MtsMappingEntity mapping, List<String> listIds) {
-    if (listIds == null || listIds.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "mapping has no lists");
+      String subject,
+      String htmlBody,
+      String textBody,
+      List<MtsSenderListGrantEntity> grants) {
+    if (grants == null || grants.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sender has no list grants");
     }
     String html = htmlBody == null ? "" : htmlBody;
     String text = textBody == null ? "" : textBody;
-    html = appendFooter(html, mapping, listIds.get(0));
+    // shortcut: multi-list different footers use first grant's footer, split campaigns when that hurts
+    html = appendFooter(html, grants.get(0));
     String id = Guids.newGuid();
     CampaignEntity c =
         campaigns.save(
@@ -62,17 +66,16 @@ public class MtsCampaignFactory {
                 CampaignStatus.DRAFT,
                 Instant.now()));
     int i = 0;
-    for (String listId : listIds) {
-      campaignLists.save(new CampaignListEntity(id, listId, i++));
+    for (MtsSenderListGrantEntity g : grants) {
+      campaignLists.save(new CampaignListEntity(id, g.getListId(), i++));
     }
     return sendService.queueAndSend(id);
   }
 
-  private String appendFooter(String html, MtsMappingEntity mapping, String firstListId) {
-    String footerId = mapping.getFooterId();
+  private String appendFooter(String html, MtsSenderListGrantEntity grant) {
+    String footerId = grant.getFooterId();
     if (!StringUtils.hasText(footerId)) {
-      footerId =
-          lists.findById(firstListId).map(ListEntity::getFooterId).orElse(null);
+      footerId = lists.findById(grant.getListId()).map(ListEntity::getFooterId).orElse(null);
     }
     if (!StringUtils.hasText(footerId)) {
       return html;

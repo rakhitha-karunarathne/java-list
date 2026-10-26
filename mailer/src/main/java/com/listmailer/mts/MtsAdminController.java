@@ -28,11 +28,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class MtsAdminController {
 
   public static final int DEFAULT_POLL = 15;
+  private static final String REF_SOURCE = "MTS_SENDER_GRANT";
 
   private final MtsInboxRepository inboxes;
   private final MtsAuthorizedSenderRepository senders;
-  private final MtsMappingRepository mappings;
-  private final MtsMappingListRepository mappingLists;
+  private final MtsSenderListGrantRepository grants;
   private final ListRepository lists;
   private final MtsFromDomainService fromDomain;
   private final MtsDropService drops;
@@ -42,8 +42,7 @@ public class MtsAdminController {
   public MtsAdminController(
       MtsInboxRepository inboxes,
       MtsAuthorizedSenderRepository senders,
-      MtsMappingRepository mappings,
-      MtsMappingListRepository mappingLists,
+      MtsSenderListGrantRepository grants,
       ListRepository lists,
       MtsFromDomainService fromDomain,
       MtsDropService drops,
@@ -51,8 +50,7 @@ public class MtsAdminController {
       MailConnectionProbe probe) {
     this.inboxes = inboxes;
     this.senders = senders;
-    this.mappings = mappings;
-    this.mappingLists = mappingLists;
+    this.grants = grants;
     this.lists = lists;
     this.fromDomain = fromDomain;
     this.drops = drops;
@@ -61,7 +59,8 @@ public class MtsAdminController {
   }
 
   @GetMapping("/drop-log")
-  public List<DropView> dropLog(@org.springframework.web.bind.annotation.RequestParam(required = false) String inboxId) {
+  public List<DropView> dropLog(
+      @org.springframework.web.bind.annotation.RequestParam(required = false) String inboxId) {
     return drops.list(inboxId).stream()
         .map(
             d ->
@@ -140,7 +139,10 @@ public class MtsAdminController {
 
   @PostMapping("/inboxes/test-connection")
   public ConnectionTestResponse testInboxConnection(@RequestBody ConnectionTestRequest body) {
-    if (body == null || !StringUtils.hasText(body.host()) || body.port() <= 0 || !StringUtils.hasText(body.username())) {
+    if (body == null
+        || !StringUtils.hasText(body.host())
+        || body.port() <= 0
+        || !StringUtils.hasText(body.username())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "host, port, and username are required");
     }
     String password = body.password();
@@ -154,7 +156,7 @@ public class MtsAdminController {
 
   @PostMapping("/inboxes")
   public InboxDetail createInbox(@RequestBody InboxBody body) {
-    validateInbox(body);
+    validateInbox(body, true);
     int poll = body.pollIntervalMinutes() > 0 ? body.pollIntervalMinutes() : DEFAULT_POLL;
     MtsInboxEntity saved =
         inboxes.save(
@@ -178,7 +180,7 @@ public class MtsAdminController {
 
   @PutMapping("/inboxes/{id}")
   public InboxDetail updateInbox(@PathVariable String id, @RequestBody InboxBody body) {
-    validateInbox(body);
+    validateInbox(body, false);
     MtsInboxEntity box = requireInbox(id);
     box.setName(body.name().trim());
     box.setHost(body.host().trim());
@@ -215,96 +217,112 @@ public class MtsAdminController {
   @Transactional
   public InboxDetail removeSender(@PathVariable String id, @PathVariable String email) {
     requireInbox(id);
-    senders.deleteByInboxIdAndEmail(id, email.trim().toLowerCase(Locale.ROOT));
+    String norm = email.trim().toLowerCase(Locale.ROOT);
+    clearGrantReferences(id, norm);
+    grants.deleteByInboxIdAndSenderEmail(id, norm);
+    senders.deleteByInboxIdAndEmail(id, norm);
     return detail(requireInbox(id));
   }
 
-  @GetMapping("/mappings")
-  public List<MappingSummary> allMappings() {
-    List<MappingSummary> out = new ArrayList<>();
-    for (MtsMappingEntity m : mappings.findAll()) {
-      out.add(mappingSummary(m));
+  @GetMapping("/inboxes/{id}/senders/{email}")
+  public SenderDetail getSender(@PathVariable String id, @PathVariable String email) {
+    requireInbox(id);
+    String norm = email.trim().toLowerCase(Locale.ROOT);
+    if (!senders.existsByInboxIdAndEmail(id, norm)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "sender not found");
     }
-    return out;
+    return senderDetail(id, norm);
   }
 
-  @PostMapping("/inboxes/{id}/mappings")
+  @PutMapping("/inboxes/{id}/senders/{email}/grants")
   @Transactional
-  public MappingSummary createMapping(@PathVariable String id, @RequestBody MappingBody body) {
+  public SenderDetail putSenderGrants(
+      @PathVariable String id, @PathVariable String email, @RequestBody GrantsBody body) {
     requireInbox(id);
-    if (body == null || !StringUtils.hasText(body.name()) || body.listIds() == null || body.listIds().isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name and listIds required");
+    String norm = email.trim().toLowerCase(Locale.ROOT);
+    if (!senders.existsByInboxIdAndEmail(id, norm)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "sender not found");
     }
-    for (String listId : body.listIds()) {
-      if (!lists.existsById(listId)) {
+    if (body == null || body.grants() == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "grants required");
+    }
+    clearGrantReferences(id, norm);
+    grants.deleteByInboxIdAndSenderEmail(id, norm);
+    int pos = 0;
+    for (GrantRow row : body.grants()) {
+      if (row == null || !row.granted() || !StringUtils.hasText(row.listId())) {
+        continue;
+      }
+      if (!lists.existsById(row.listId())) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown list");
       }
-    }
-    MtsMappingEntity m =
-        mappings.save(
-            new MtsMappingEntity(
-                Guids.newGuid(),
-                id,
-                body.name().trim(),
-                blankToNull(body.substituteFrom()),
-                blankToNull(body.footerId()),
-                Instant.now()));
-    int i = 0;
-    for (String listId : body.listIds()) {
-      mappingLists.save(new MtsMappingListEntity(m.getId(), listId, i++));
+      String footerId = blankToNull(row.footerId());
+      MtsSenderListGrantEntity g =
+          grants.save(
+              new MtsSenderListGrantEntity(
+                  Guids.newGuid(),
+                  id,
+                  norm,
+                  row.listId(),
+                  blankToNull(row.substituteFrom()),
+                  footerId,
+                  pos++));
       lists
-          .findById(listId)
+          .findById(row.listId())
           .ifPresent(
               list ->
                   references.add(
                       CatalogTargetType.SENDING_PATH,
                       list.getSendingPathId(),
-                      "MTS_MAPPING",
-                      m.getId(),
-                      "MTS mapping " + m.getName()));
+                      REF_SOURCE,
+                      g.getId(),
+                      "MTS sender " + norm + " → " + list.getName()));
+      if (StringUtils.hasText(footerId)) {
+        references.add(
+            CatalogTargetType.FOOTER,
+            footerId,
+            REF_SOURCE,
+            g.getId(),
+            "MTS sender " + norm);
+      }
     }
-    if (StringUtils.hasText(m.getFooterId())) {
-      references.add(
-          CatalogTargetType.FOOTER,
-          m.getFooterId(),
-          "MTS_MAPPING",
-          m.getId(),
-          "MTS mapping " + m.getName());
-    }
-    return mappingSummary(m);
+    return senderDetail(id, norm);
   }
 
-  @DeleteMapping("/mappings/{id}")
-  @Transactional
-  public Map<String, String> deleteMapping(@PathVariable String id) {
-    MtsMappingEntity m =
-        mappings
-            .findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-    for (MtsMappingListEntity ml : mappingLists.findByMappingIdOrderByPositionAsc(id)) {
+  @GetMapping("/mappings")
+  public List<MappingSummary> allMappings() {
+    List<MappingSummary> out = new ArrayList<>();
+    for (MtsSenderListGrantEntity g : grants.findAllByOrderByInboxIdAscSenderEmailAscPositionAsc()) {
+      out.add(mappingSummary(g));
+    }
+    return out;
+  }
+
+  private void clearGrantReferences(String inboxId, String senderEmail) {
+    for (MtsSenderListGrantEntity g :
+        grants.findByInboxIdAndSenderEmailOrderByPositionAsc(inboxId, senderEmail)) {
       lists
-          .findById(ml.getListId())
+          .findById(g.getListId())
           .ifPresent(
               list ->
                   references.remove(
                       CatalogTargetType.SENDING_PATH,
                       list.getSendingPathId(),
-                      "MTS_MAPPING",
-                      id));
+                      REF_SOURCE,
+                      g.getId()));
+      if (StringUtils.hasText(g.getFooterId())) {
+        references.remove(CatalogTargetType.FOOTER, g.getFooterId(), REF_SOURCE, g.getId());
+      }
     }
-    if (StringUtils.hasText(m.getFooterId())) {
-      references.remove(CatalogTargetType.FOOTER, m.getFooterId(), "MTS_MAPPING", id);
-    }
-    mappingLists.deleteByMappingId(id);
-    mappings.delete(m);
-    return Map.of("status", "deleted");
   }
 
   private InboxDetail detail(MtsInboxEntity box) {
     List<String> emails =
         senders.findByInboxId(box.getId()).stream().map(MtsAuthorizedSenderEntity::getEmail).toList();
     List<MappingSummary> maps =
-        mappings.findByInboxId(box.getId()).stream().map(this::mappingSummary).toList();
+        grants.findByInboxIdOrderBySenderEmailAscPositionAsc(box.getId()).stream()
+            .map(this::mappingSummary)
+            .toList();
     return new InboxDetail(
         box.getId(),
         box.getName(),
@@ -318,13 +336,37 @@ public class MtsAdminController {
         maps);
   }
 
-  private MappingSummary mappingSummary(MtsMappingEntity m) {
-    List<String> listIds =
-        mappingLists.findByMappingIdOrderByPositionAsc(m.getId()).stream()
-            .map(MtsMappingListEntity::getListId)
-            .toList();
+  private SenderDetail senderDetail(String inboxId, String email) {
+    Map<String, MtsSenderListGrantEntity> byList =
+        grants.findByInboxIdAndSenderEmailOrderByPositionAsc(inboxId, email).stream()
+            .collect(java.util.stream.Collectors.toMap(MtsSenderListGrantEntity::getListId, g -> g, (a, b) -> a));
+    List<GrantView> rows = new ArrayList<>();
+    lists.findAll().stream()
+        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+        .forEach(
+            list -> {
+              MtsSenderListGrantEntity g = byList.get(list.getId());
+              rows.add(
+                  new GrantView(
+                      list.getId(),
+                      list.getName(),
+                      g != null,
+                      g == null ? null : g.getSubstituteFrom(),
+                      g == null ? null : g.getFooterId()));
+            });
+    return new SenderDetail(email, rows);
+  }
+
+  private MappingSummary mappingSummary(MtsSenderListGrantEntity g) {
+    String listName = lists.findById(g.getListId()).map(l -> l.getName()).orElse(g.getListId());
     return new MappingSummary(
-        m.getId(), m.getInboxId(), m.getName(), m.getSubstituteFrom(), m.getFooterId(), listIds);
+        g.getId(),
+        g.getInboxId(),
+        g.getSenderEmail(),
+        g.getListId(),
+        listName,
+        g.getSubstituteFrom(),
+        g.getFooterId());
   }
 
   private MtsInboxEntity requireInbox(String id) {
@@ -333,13 +375,16 @@ public class MtsAdminController {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "inbox not found"));
   }
 
-  private static void validateInbox(InboxBody body) {
+  private static void validateInbox(InboxBody body, boolean requirePassword) {
     if (body == null
         || !StringUtils.hasText(body.name())
         || !StringUtils.hasText(body.host())
         || !StringUtils.hasText(body.username())
         || body.port() <= 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid inbox");
+    }
+    if (requirePassword && !StringUtils.hasText(body.password())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "password required");
     }
   }
 
@@ -364,7 +409,9 @@ public class MtsAdminController {
 
   public record SenderBody(String email) {}
 
-  public record MappingBody(String name, List<String> listIds, String substituteFrom, String footerId) {}
+  public record GrantsBody(List<GrantRow> grants) {}
+
+  public record GrantRow(String listId, boolean granted, String substituteFrom, String footerId) {}
 
   public record InboxSummary(String id, String name, boolean enabled, int pollIntervalMinutes) {}
 
@@ -380,13 +427,19 @@ public class MtsAdminController {
       List<String> authorizedSenders,
       List<MappingSummary> mappings) {}
 
+  public record SenderDetail(String email, List<GrantView> grants) {}
+
+  public record GrantView(
+      String listId, String listName, boolean granted, String substituteFrom, String footerId) {}
+
   public record MappingSummary(
       String id,
       String inboxId,
-      String name,
+      String senderEmail,
+      String listId,
+      String listName,
       String substituteFrom,
-      String footerId,
-      List<String> listIds) {}
+      String footerId) {}
 
   public record IssueView(
       String id,

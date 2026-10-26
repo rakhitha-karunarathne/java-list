@@ -1,7 +1,5 @@
 package com.listmailer.mts;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -35,13 +33,11 @@ class MtsFromDomainServiceTest {
 
   @Test
   void emptySubstituteOk() {
-    MtsMappingEntity map =
-        new MtsMappingEntity("m", "i", "n", null, null, Instant.now());
-    assertNull(
+    var grant = new MtsSenderListGrantEntity("g", "i", "a@x.com", "L1", null, null, 0);
+    org.junit.jupiter.api.Assertions.assertNull(
         service.validateOrOpenIssue(
             new MtsInboxEntity("i", "n", "h", 1, "u", "p", false, 1, Instant.now()),
-            map,
-            List.of("L1"),
+            List.of(grant),
             "a@x.com",
             "s"));
     verify(issues, never()).save(any());
@@ -49,8 +45,7 @@ class MtsFromDomainServiceTest {
 
   @Test
   void domainMismatchOpensIssueNoCampaignPath() {
-    MtsMappingEntity map =
-        new MtsMappingEntity("m", "i", "n", "bad@evil.com", null, Instant.now());
+    var grant = new MtsSenderListGrantEntity("g", "i", "a@x.com", "L1", "bad@evil.com", null, 0);
     when(lists.findById("L1"))
         .thenReturn(
             Optional.of(new ListEntity("L1", "A", "p1", null, null, null, null, Instant.now())));
@@ -64,17 +59,12 @@ class MtsFromDomainServiceTest {
     var issue =
         service.validateOrOpenIssue(
             new MtsInboxEntity("i", "n", "h", 1, "u", "p", false, 1, Instant.now()),
-            map,
-            List.of("L1"),
+            List.of(grant),
             "a@x.com",
             "s");
-    assertNotNull(issue);
-    assertEqualsDeletedNotify(issue);
-    verify(noticeMail).send(anyString(), anyString(), anyString(), anyString());
-  }
-
-  private static void assertEqualsDeletedNotify(MtsFromDomainIssueEntity issue) {
+    org.junit.jupiter.api.Assertions.assertNotNull(issue);
     org.junit.jupiter.api.Assertions.assertEquals("DELETED_NOTIFY", issue.getResolution());
     org.junit.jupiter.api.Assertions.assertEquals("OPEN", issue.getStatus());
+    verify(noticeMail).send(anyString(), anyString(), anyString(), anyString());
   }
 }

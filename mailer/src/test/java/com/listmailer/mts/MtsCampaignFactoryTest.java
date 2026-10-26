@@ -3,7 +3,6 @@ package com.listmailer.mts;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,10 +44,9 @@ class MtsCampaignFactoryTest {
     CampaignEntity queued =
         new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.QUEUED, Instant.now());
     when(sendService.queueAndSend(anyString())).thenReturn(queued);
-    MtsMappingEntity map =
-        new MtsMappingEntity("m1", "i1", "map", null, null, Instant.now());
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, null, 0);
 
-    CampaignEntity out = factory.createQueued("Hi", "<p>x</p>", "x", map, List.of("list-a"));
+    CampaignEntity out = factory.createQueued("Hi", "<p>x</p>", "x", List.of(grant));
 
     assertEquals(CampaignStatus.QUEUED, out.getStatus());
     verify(sendService).queueAndSend(anyString());

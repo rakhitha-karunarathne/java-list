@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
@@ -20,8 +21,7 @@ public class MtsIngestService {
   private static final Logger log = LoggerFactory.getLogger(MtsIngestService.class);
 
   private final MtsInboxRepository inboxes;
-  private final MtsMappingRepository mappings;
-  private final MtsMappingListRepository mappingLists;
+  private final MtsSenderListGrantRepository grants;
   private final MailboxPort mailbox;
   private final MtsGateService gates;
   private final MtsCampaignFactory campaigns;
@@ -32,8 +32,7 @@ public class MtsIngestService {
 
   public MtsIngestService(
       MtsInboxRepository inboxes,
-      MtsMappingRepository mappings,
-      MtsMappingListRepository mappingLists,
+      MtsSenderListGrantRepository grants,
       MailboxPort mailbox,
       MtsGateService gates,
       MtsCampaignFactory campaigns,
@@ -41,8 +40,7 @@ public class MtsIngestService {
       MtsDropService drops,
       OpsHooksPort ops) {
     this.inboxes = inboxes;
-    this.mappings = mappings;
-    this.mappingLists = mappingLists;
+    this.grants = grants;
     this.mailbox = mailbox;
     this.gates = gates;
     this.campaigns = campaigns;
@@ -84,7 +82,6 @@ public class MtsIngestService {
 
   int pollOne(MtsInboxEntity box, Instant now) {
     AtomicInteger created = new AtomicInteger();
-    List<MtsMappingEntity> maps = mappings.findByInboxId(box.getId());
     try {
       mailbox.poll(
           new MailboxPort.MailboxConn(
@@ -98,28 +95,27 @@ public class MtsIngestService {
             MtsGateService.Decision decision = gates.evaluate(box.getId(), box.getName(), raw);
             String sender = MtsEmails.extract(raw.from());
             if (decision.result() == MtsGateResult.ACCEPT) {
-              if (maps.isEmpty()) {
-                ops.opsLog("mts.ingest", "authorized but no mapping inbox=" + box.getId());
-                return true;
-              }
-              MtsMappingEntity map = maps.get(0);
-              List<String> listIds =
-                  mappingLists.findByMappingIdOrderByPositionAsc(map.getId()).stream()
-                      .map(MtsMappingListEntity::getListId)
-                      .toList();
-              if (listIds.isEmpty()) {
+              String email =
+                  sender == null ? "" : sender.trim().toLowerCase(Locale.ROOT);
+              List<MtsSenderListGrantEntity> senderGrants =
+                  grants.findByInboxIdAndSenderEmailOrderByPositionAsc(box.getId(), email);
+              if (senderGrants.isEmpty()) {
+                ops.opsLog(
+                    "mts.ingest",
+                    "authorized but no list grants inbox=" + box.getId() + " sender=" + email);
                 return true;
               }
               var issue =
-                  fromDomain.validateOrOpenIssue(box, map, listIds, sender, raw.subject());
+                  fromDomain.validateOrOpenIssue(box, senderGrants, email, raw.subject());
               if (issue != null) {
                 return true;
               }
               String html = extractHtml(raw);
               String text = extractText(raw);
-              campaigns.createQueued(raw.subject(), html, text, map, listIds);
+              campaigns.createQueued(raw.subject(), html, text, senderGrants);
               created.incrementAndGet();
-              ops.opsLog("mts.accept", "inbox=" + box.getName() + " mapping=" + map.getId());
+              ops.opsLog(
+                  "mts.accept", "inbox=" + box.getName() + " sender=" + email);
             } else if (decision.result() == MtsGateResult.NOTIFY_CROSS_INBOX) {
               drops.record(box.getId(), sender, decision.reason(), false);
               drops.notifyCrossInbox(sender, box.getName());

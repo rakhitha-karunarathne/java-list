@@ -37,23 +37,22 @@ public class MtsFromDomainService {
     this.ops = ops;
   }
 
-  /** Returns null if OK; otherwise opens Issue (no Campaign). All-or-nothing. */
+  /** Returns null if OK; otherwise opens Issue (no Campaign). All-or-nothing across grants. */
   @Transactional
   public MtsFromDomainIssueEntity validateOrOpenIssue(
       MtsInboxEntity inbox,
-      MtsMappingEntity mapping,
-      List<String> listIds,
+      List<MtsSenderListGrantEntity> grants,
       String senderEmail,
       String subject) {
-    String sub = mapping.getSubstituteFrom();
-    if (!StringUtils.hasText(sub)) {
-      return null;
-    }
-    String subDomain = domainOf(sub);
-    for (String listId : listIds) {
+    for (MtsSenderListGrantEntity grant : grants) {
+      String sub = grant.getSubstituteFrom();
+      if (!StringUtils.hasText(sub)) {
+        continue;
+      }
+      String subDomain = domainOf(sub);
       ListEntity list =
           lists
-              .findById(listId)
+              .findById(grant.getListId())
               .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
       SendingPathEntity path =
           paths
@@ -63,7 +62,7 @@ public class MtsFromDomainService {
       if (!subDomain.equalsIgnoreCase(pathDomain)) {
         return openIssue(
             inbox,
-            mapping,
+            grant.getId(),
             senderEmail,
             subject,
             "substitute From domain "
@@ -71,7 +70,7 @@ public class MtsFromDomainService {
                 + " != path "
                 + pathDomain
                 + " for list "
-                + listId);
+                + grant.getListId());
       }
     }
     return null;
@@ -80,7 +79,7 @@ public class MtsFromDomainService {
   @Transactional
   public MtsFromDomainIssueEntity openIssue(
       MtsInboxEntity inbox,
-      MtsMappingEntity mapping,
+      String grantId,
       String senderEmail,
       String subject,
       String detail) {
@@ -91,7 +90,7 @@ public class MtsFromDomainService {
             new MtsFromDomainIssueEntity(
                 Guids.newGuid(),
                 inbox.getId(),
-                mapping == null ? null : mapping.getId(),
+                grantId,
                 senderEmail,
                 subject,
                 "OPEN",
@@ -142,9 +141,9 @@ public class MtsFromDomainService {
       if (!pathId.equals(list.getSendingPathId())) {
         continue;
       }
-      // mappings that include this list — checked when ingest runs; flag open issues for mismatched substitutes
-      // lightweight: Attention only; full remapping validation on next ingest
-      ops.opsLog("mts.from_domain", "path " + pathId + " changed; rematch on next ingest for list " + list.getId());
+      ops.opsLog(
+          "mts.from_domain",
+          "path " + pathId + " changed; rematch on next ingest for list " + list.getId());
       n++;
     }
     return n;

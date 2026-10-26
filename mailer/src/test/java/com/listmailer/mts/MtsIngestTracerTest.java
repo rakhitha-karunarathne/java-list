@@ -73,8 +73,7 @@ class MtsIngestTracerTest {
   @Autowired MtsIngestService ingest;
   @Autowired MtsInboxRepository inboxes;
   @Autowired MtsAuthorizedSenderRepository senders;
-  @Autowired MtsMappingRepository mappings;
-  @Autowired MtsMappingListRepository mappingLists;
+  @Autowired MtsSenderListGrantRepository grants;
   @Autowired CampaignRepository campaigns;
   @Autowired SendingPathRepository paths;
   @Autowired ListRepository lists;
@@ -123,9 +122,15 @@ class MtsIngestTracerTest {
             1,
             Instant.now()));
     senders.save(new MtsAuthorizedSenderEntity(inboxId, "author@example.com"));
-    String mapId = UUID.randomUUID().toString();
-    mappings.save(new MtsMappingEntity(mapId, inboxId, "default", null, null, Instant.now()));
-    mappingLists.save(new MtsMappingListEntity(mapId, listId, 0));
+    grants.save(
+        new MtsSenderListGrantEntity(
+            UUID.randomUUID().toString(),
+            inboxId,
+            "author@example.com",
+            listId,
+            null,
+            null,
+            0));
 
     GreenMailUtil.sendTextEmail(
         "mts@localhost",
