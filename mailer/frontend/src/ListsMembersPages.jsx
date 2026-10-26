@@ -197,89 +197,93 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
   if (detailId && detail && (saved || !detail.canManage)) {
     const base = saved || form
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Lists
-        </button>
-        <h2>{detail.name}</h2>
-        {detail.canManage ? (
-          <form onSubmit={save}>
-            <label className="field">
-              {fieldLabel('name')}
-              <input
-                value={form.name}
-                onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-                {...dirtyControlProps(!valuesEqual(form.name, base.name))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('sending path')}
-              <select
-                value={form.sendingPathId}
-                onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
-                {...dirtyControlProps(!valuesEqual(form.sendingPathId, base.sendingPathId))}
-              >
-                {paths.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {fieldLabel('footer')}
-              <select
-                value={form.footerId}
-                onChange={(ev) => setForm({ ...form, footerId: ev.target.value })}
-                {...dirtyControlProps(!valuesEqual(form.footerId, base.footerId))}
-              >
-                <option value="">— None —</option>
-                {footers.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {fieldLabel('spamThreshold')}
-              <input
-                value={form.spamThreshold}
-                onChange={(ev) => setForm({ ...form, spamThreshold: ev.target.value })}
-                {...dirtyControlProps(!valuesEqual(form.spamThreshold, base.spamThreshold))}
-              />
-            </label>
-            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
-              Save
-            </button>
-          </form>
-        ) : (
-          <p className="hint">View only (no manage grant).</p>
-        )}
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Lists
+          </button>
+          <h2>{detail.name}</h2>
+          {detail.canManage ? (
+            <form onSubmit={save}>
+              <label className="field">
+                {fieldLabel('name')}
+                <input
+                  value={form.name}
+                  onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+                  {...dirtyControlProps(!valuesEqual(form.name, base.name))}
+                />
+              </label>
+              <label className="field">
+                {fieldLabel('sending path')}
+                <select
+                  value={form.sendingPathId}
+                  onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
+                  {...dirtyControlProps(!valuesEqual(form.sendingPathId, base.sendingPathId))}
+                >
+                  {paths.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                {fieldLabel('footer')}
+                <select
+                  value={form.footerId}
+                  onChange={(ev) => setForm({ ...form, footerId: ev.target.value })}
+                  {...dirtyControlProps(!valuesEqual(form.footerId, base.footerId))}
+                >
+                  <option value="">— None —</option>
+                  {footers.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                {fieldLabel('spamThreshold')}
+                <input
+                  value={form.spamThreshold}
+                  onChange={(ev) => setForm({ ...form, spamThreshold: ev.target.value })}
+                  {...dirtyControlProps(!valuesEqual(form.spamThreshold, base.spamThreshold))}
+                />
+              </label>
+              <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
+                Save
+              </button>
+            </form>
+          ) : (
+            <p className="hint">View only (no manage grant).</p>
+          )}
+        </section>
 
-        <h3>Members On This List</h3>
-        <RecordTable
-          rows={listMembers}
-          rowKey={(m) => m.id}
-          onOpen={onOpenMember ? (m) => onOpenMember(m.id) : undefined}
-          empty="No members on this list."
-          columns={[
-            { key: 'email', label: 'Email' },
-            {
-              key: 'enabled',
-              label: 'Enabled',
-              render: (m) => (m.enabled ? 'Yes' : 'No'),
-            },
-            {
-              key: 'unsubscribed',
-              label: 'Unsubscribed',
-              render: (m) => (m.unsubscribed ? 'Yes' : 'No'),
-            },
-          ]}
-        />
+        <section className="card">
+          <h3>Members</h3>
+          <RecordTable
+            rows={listMembers}
+            rowKey={(m) => m.id}
+            onOpen={onOpenMember ? (m) => onOpenMember(m.id) : undefined}
+            empty="No members on this list."
+            columns={[
+              { key: 'email', label: 'Email' },
+              {
+                key: 'enabled',
+                label: 'Enabled',
+                render: (m) => (m.enabled ? 'Yes' : 'No'),
+              },
+              {
+                key: 'unsubscribed',
+                label: 'Unsubscribed',
+                render: (m) => (m.unsubscribed ? 'Yes' : 'No'),
+              },
+            ]}
+          />
+        </section>
 
         {detail.canManage ? (
-          <>
+          <section className="card">
             <h3>Bulk Add</h3>
             <form onSubmit={bulkAdd}>
               <label className="field">
@@ -309,7 +313,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
                 <li>skipped-unsubscribed: {bulkResult.unsubscribed}</li>
               </ul>
             ) : null}
-          </>
+          </section>
         ) : null}
       </div>
     )

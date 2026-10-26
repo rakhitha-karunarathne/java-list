@@ -30,7 +30,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Campaign detail | No | Campaigns row | Status badge, stats, Stop / Requeue / Add List, deep links |
 | Compose | Yes | Sidebar | Create/edit Draft; Queue Send; Save Draft; Stop; preview + test send |
 | Lists | Yes | Sidebar | List index |
-| List detail | No | Lists / deep links | Settings, bulk add members |
+| List detail | No | Lists / deep links | Page sections: settings through Save · members table · bulk add |
 | Members | Yes | Sidebar | Searchable member index |
 | Member detail | No | Members / deep links | Status, lists, timeline |
 | Inboxes (Mail-to-send) | Yes | Sidebar | Inboxes index only (no global mappings overview); **Add Mail Box** registers an existing server mailbox for polling (does not provision IMAP) |
@@ -89,7 +89,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Unsaved edits | Changed controls + their Save/Create button use `{colors.warning}` treatment (not accent alone); title/hint “Unsaved changes” so color is not the only cue |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On User detail only: enroll QR, verify, backup codes, unenroll |
-| Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title (back + name/email). Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants · Security); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Preview · Lists · Actions) |
+| Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title when that page asks for it. Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants · Security); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Preview · Lists · Actions); List detail (Settings through Save · Members table · Bulk Add) |
 
 ## State Patterns
 

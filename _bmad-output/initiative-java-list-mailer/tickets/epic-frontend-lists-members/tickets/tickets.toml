@@ -43,7 +43,19 @@ title = "Refactor sweep"
 description = "Cleanup only."
 verify = "Lists/Members smokes still pass."
 covers = []
-after = [1, 2, 3]
+after = [1, 2, 3, 5]
+hitl = false
+risk = "low"
+refine = true
+
+[[entry]]
+id = 5
+type = "story"
+title = "List detail page sections (settings, members, bulk add)"
+description = "Settings through Save one card; members table own card; bulk add own card."
+verify = "Three cards on list detail; members is a table; bulk add separate."
+covers = ["R1"]
+after = [1]
 hitl = false
 risk = "low"
 refine = true
