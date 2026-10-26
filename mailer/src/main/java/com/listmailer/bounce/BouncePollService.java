@@ -6,8 +6,10 @@ import com.listmailer.kernel.ids.Guids;
 import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.mailbox.MailboxQueryException;
+import com.listmailer.ops.ActivityLogService;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,17 +28,20 @@ public class BouncePollService {
   private final BounceEventRepository events;
   private final MailboxPort mailbox;
   private final OpsHooksPort ops;
+  private final ActivityLogService activity;
   private final AtomicBoolean running = new AtomicBoolean(false);
 
   public BouncePollService(
       BounceMailboxRepository mailboxes,
       BounceEventRepository events,
       MailboxPort mailbox,
-      OpsHooksPort ops) {
+      OpsHooksPort ops,
+      ActivityLogService activity) {
     this.mailboxes = mailboxes;
     this.events = events;
     this.mailbox = mailbox;
     this.ops = ops;
+    this.activity = activity;
   }
 
   /** Sequential poll of due bounce mailboxes. Same schedule class non-overlap. */
@@ -45,18 +50,27 @@ public class BouncePollService {
       return 0;
     }
     try {
-      int total = 0;
       Instant now = Instant.now();
+      List<BounceMailboxEntity> dueBoxes = new ArrayList<>();
       for (BounceMailboxEntity box : mailboxes.findAll()) {
-        if (!box.isEnabled()) {
-          continue;
+        if (box.isEnabled() && due(box, now)) {
+          dueBoxes.add(box);
         }
-        if (!due(box, now)) {
-          continue;
-        }
-        total += pollOne(box, now);
       }
-      return total;
+      // shortcut: idle ticks (nothing due) are not written; log when a mailbox is polled
+      if (dueBoxes.isEmpty()) {
+        return 0;
+      }
+      activity.write(ActivityLogService.BOUNCE, "START", "bounce poll mailboxes=" + dueBoxes.size());
+      int total = 0;
+      try {
+        for (BounceMailboxEntity box : dueBoxes) {
+          total += pollOne(box, now);
+        }
+        return total;
+      } finally {
+        activity.write(ActivityLogService.BOUNCE, "END", "bounce poll ingested=" + total);
+      }
     } finally {
       running.set(false);
     }
@@ -73,6 +87,7 @@ public class BouncePollService {
 
   int pollOne(BounceMailboxEntity box, Instant now) {
     AtomicInteger count = new AtomicInteger();
+    activity.write(ActivityLogService.BOUNCE, "CONNECT", "inbox=" + box.getName());
     try {
       mailbox.poll(
           new MailboxPort.MailboxConn(
@@ -96,16 +111,32 @@ public class BouncePollService {
                     raw.bytes(),
                     "INGESTED"));
             count.incrementAndGet();
+            activity.write(
+                ActivityLogService.BOUNCE,
+                "FETCH",
+                "inbox="
+                    + box.getName()
+                    + " from="
+                    + raw.from()
+                    + " subject="
+                    + raw.subject()
+                    + " messageId="
+                    + raw.messageId());
             return true;
           });
       box.setLastPolledAt(now);
       mailboxes.save(box);
+      activity.write(ActivityLogService.BOUNCE, "DISCONNECT", "inbox=" + box.getName());
       if (count.get() > 0) {
         ops.opsLog(
             "bounce.poll",
             "mailbox=" + box.getName() + " id=" + box.getId() + " ingested=" + count.get());
       }
     } catch (MailboxQueryException ex) {
+      activity.write(
+          ActivityLogService.BOUNCE,
+          "DISCONNECT",
+          "inbox=" + box.getName() + " error=" + ex.getMessage());
       ops.opsLog("bounce.poll", "mailbox=" + box.getName() + " error=" + ex.getMessage());
       ops.attentionAdmin("Bounce mailbox poll failed", box.getName() + ": " + ex.getMessage());
       log.warn("bounce poll {}: {}", box.getName(), ex.getMessage());

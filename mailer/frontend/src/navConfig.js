@@ -56,6 +56,7 @@ export const NAV_SECTIONS = [
     items: [
       { id: 'users', label: 'Users & Grants', adminOnly: true },
       { id: 'ops', label: 'Ops Logs', adminOnly: true },
+      { id: 'bounce-process-log', label: 'Bounce Processing Log', adminOnly: true },
       { id: 'audit', label: 'Audit Log', hideForSender: true },
     ],
   },

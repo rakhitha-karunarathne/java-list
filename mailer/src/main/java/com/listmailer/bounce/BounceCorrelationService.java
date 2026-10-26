@@ -5,6 +5,7 @@ import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
+import com.listmailer.ops.ActivityLogService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -26,26 +27,52 @@ public class BounceCorrelationService {
   private final SendQueueRepository queue;
   private final ParametersPort parameters;
   private final OpsHooksPort ops;
+  private final ActivityLogService activity;
 
   public BounceCorrelationService(
       BounceEventRepository events,
       SendQueueRepository queue,
       ParametersPort parameters,
-      OpsHooksPort ops) {
+      OpsHooksPort ops,
+      ActivityLogService activity) {
     this.events = events;
     this.queue = queue;
     this.parameters = parameters;
     this.ops = ops;
+    this.activity = activity;
   }
 
   /** Correlate all INGESTED events. Never disables Members (story 4). */
   public int correlatePending() {
-    int n = 0;
-    for (BounceEventEntity ev : events.findByStatus("INGESTED")) {
-      correlateOne(ev);
-      n++;
+    List<BounceEventEntity> pending = events.findByStatus("INGESTED");
+    // shortcut: idle ticks are not written
+    if (pending.isEmpty()) {
+      return 0;
     }
-    return n;
+    activity.write(ActivityLogService.BOUNCE, "START", "bounce correlate");
+    int n = 0;
+    try {
+      for (BounceEventEntity ev : pending) {
+        correlateOne(ev);
+        activity.write(
+            ActivityLogService.BOUNCE,
+            "CORRELATE",
+            "status="
+                + ev.getStatus()
+                + " member="
+                + ev.getMemberId()
+                + " signal="
+                + ev.getCorrelationSignal()
+                + " from="
+                + ev.getFromAddr()
+                + " subject="
+                + ev.getSubject());
+        n++;
+      }
+      return n;
+    } finally {
+      activity.write(ActivityLogService.BOUNCE, "END", "bounce correlate count=" + n);
+    }
   }
 
   void correlateOne(BounceEventEntity ev) {

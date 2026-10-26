@@ -71,3 +71,15 @@ after = [5]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 7
+type = "story"
+title = "Bounce Processing Log"
+description = "Admin log of bounce poll/process: start/end, connect/disconnect, fetch, correlate, disable. Retention default 90 days."
+verify = "Due mailbox poll writes START/CONNECT/FETCH/DISCONNECT/END; Admin page lists them; parameter defaults to 90."
+covers = ["R2"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true

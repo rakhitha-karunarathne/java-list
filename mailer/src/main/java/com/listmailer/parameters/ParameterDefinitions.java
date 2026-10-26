@@ -27,7 +27,19 @@ public final class ParameterDefinitions {
     put(
         ParameterKeys.OPS_LOG_RETENTION_DAYS,
         "90",
-        "Days to retain ops logs (send/bounce/MTS). Integer >= 1. Default 90.");
+        "Days to retain ops logs (send/bounce/MTS errors). Integer >= 1. Default 90.");
+    put(
+        ParameterKeys.BOUNCE_PROCESS_LOG_RETENTION_DAYS,
+        "90",
+        "Days to retain the Bounce Processing Log. Integer >= 1. Default 90 (3 months).");
+    put(
+        ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS,
+        "90",
+        "Days to retain the Queue Sending Log. Integer >= 1. Default 90 (3 months).");
+    put(
+        ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS,
+        "90",
+        "Days to retain the Mail-To-Send Processing Log. Integer >= 1. Default 90 (3 months).");
     put(
         ParameterKeys.AUDIT_RETENTION_DAYS,
         "365",

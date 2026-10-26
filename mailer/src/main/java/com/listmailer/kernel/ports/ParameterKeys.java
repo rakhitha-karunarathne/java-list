@@ -7,6 +7,9 @@ public final class ParameterKeys {
   public static final String MFA_MANDATORY = "operator.mfa.mandatory";
   public static final String VERP_ENABLED = "verp.enabled";
   public static final String OPS_LOG_RETENTION_DAYS = "ops.log.retention.days";
+  public static final String BOUNCE_PROCESS_LOG_RETENTION_DAYS = "bounce.process.log.retention.days";
+  public static final String SEND_QUEUE_LOG_RETENTION_DAYS = "send.queue.log.retention.days";
+  public static final String MTS_PROCESS_LOG_RETENTION_DAYS = "mts.process.log.retention.days";
   public static final String AUDIT_RETENTION_DAYS = "audit.retention.days";
   /** Max SMTP sends per minute system-wide; 0 = unlimited (tests). */
   public static final String SEND_THROTTLE_PER_MINUTE = "send.queue.throttle.per.minute";

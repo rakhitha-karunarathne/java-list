@@ -31,6 +31,7 @@ class BouncePollServiceTest {
   @Mock BounceEventRepository events;
   @Mock MailboxPort mailbox;
   @Mock OpsHooksPort ops;
+  @Mock com.listmailer.ops.ActivityLogService activity;
   @InjectMocks BouncePollService service;
 
   @Test
@@ -62,6 +63,9 @@ class BouncePollServiceTest {
     assertEquals(1, service.pollDue());
     assertEquals(1, max.get());
     verify(ops).opsLog(eq("bounce.poll"), contains("ingested=1"));
+    verify(activity).write(eq("BOUNCE"), eq("FETCH"), contains("subject=bounce"));
+    verify(activity).write(eq("BOUNCE"), eq("CONNECT"), contains("inbox=A"));
+    verify(activity).write(eq("BOUNCE"), eq("DISCONNECT"), contains("inbox=A"));
     verify(mailbox, org.mockito.Mockito.times(1)).poll(any(), any());
   }
 

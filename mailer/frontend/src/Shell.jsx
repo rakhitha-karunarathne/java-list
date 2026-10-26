@@ -21,6 +21,7 @@ const TITLES = {
   users: 'Users & Grants',
   account: 'My Account',
   ops: 'Ops Logs',
+  'bounce-process-log': 'Bounce Processing Log',
   audit: 'Audit Log',
   home: 'Home',
 }

@@ -33,6 +33,7 @@ class BounceProcessServiceTest {
   @Mock MemberRepository members;
   @Mock ParametersPort parameters;
   @Mock OpsHooksPort ops;
+  @Mock com.listmailer.ops.ActivityLogService activity;
   @InjectMocks BounceProcessService service;
 
   @BeforeEach

@@ -49,7 +49,8 @@ public class SecurityConfig {
                         "/api/footers/**",
                         "/api/notice-sending-path/**",
                         "/api/mts/**",
-                        "/api/ops-logs/**")
+                        "/api/ops-logs/**",
+                        "/api/activity-logs/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/api/**")
                     .authenticated()

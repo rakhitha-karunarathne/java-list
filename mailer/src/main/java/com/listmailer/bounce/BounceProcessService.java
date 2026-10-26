@@ -7,6 +7,7 @@ import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
+import com.listmailer.ops.ActivityLogService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ public class BounceProcessService {
   private final MemberRepository members;
   private final ParametersPort parameters;
   private final OpsHooksPort ops;
+  private final ActivityLogService activity;
   private final AtomicBoolean running = new AtomicBoolean(false);
 
   public BounceProcessService(
@@ -32,12 +34,14 @@ public class BounceProcessService {
       SendQueueRepository queue,
       MemberRepository members,
       ParametersPort parameters,
-      OpsHooksPort ops) {
+      OpsHooksPort ops,
+      ActivityLogService activity) {
     this.events = events;
     this.queue = queue;
     this.members = members;
     this.parameters = parameters;
     this.ops = ops;
+    this.activity = activity;
   }
 
   public int processDaily() {
@@ -45,19 +49,24 @@ public class BounceProcessService {
       return 0;
     }
     try {
-      Set<String> memberIds = new HashSet<>();
-      for (BounceEventEntity ev : events.findByStatus("CORRELATED")) {
-        if (ev.getMemberId() != null) {
-          memberIds.add(ev.getMemberId());
-        }
-      }
+      activity.write(ActivityLogService.BOUNCE, "START", "bounce process");
       int disabled = 0;
-      for (String memberId : memberIds) {
-        if (processMember(memberId)) {
-          disabled++;
+      try {
+        Set<String> memberIds = new HashSet<>();
+        for (BounceEventEntity ev : events.findByStatus("CORRELATED")) {
+          if (ev.getMemberId() != null) {
+            memberIds.add(ev.getMemberId());
+          }
         }
+        for (String memberId : memberIds) {
+          if (processMember(memberId)) {
+            disabled++;
+          }
+        }
+        return disabled;
+      } finally {
+        activity.write(ActivityLogService.BOUNCE, "END", "bounce process disabled=" + disabled);
       }
-      return disabled;
     } finally {
       running.set(false);
     }
@@ -154,6 +163,10 @@ public class BounceProcessService {
     members.save(m);
     ops.opsLog("bounce.disable", "member=" + memberId + " class=" + clazz);
     ops.audit("bounce.disable", "member=" + memberId + " class=" + clazz);
+    activity.write(
+        ActivityLogService.BOUNCE,
+        "DISABLE",
+        "member=" + m.getEmail() + " class=" + clazz + " hard=" + hard + " soft=" + soft);
   }
 
   private int intParam(String key, int def) {

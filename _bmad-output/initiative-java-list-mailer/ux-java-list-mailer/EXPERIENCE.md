@@ -45,7 +45,8 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Users | Yes (Admin) | Sidebar | User index; role and list grants only |
 | User detail | No | Users row | Page sections: **Title** · **Account** (Role, Enabled, Save) · **List Grants** — no MFA |
 | My Account | Yes (every role) | Header user id and last item in the scrollable sidebar | Self-service: **Password** then **MFA** |
-| Ops Logs | Yes | Sidebar | Send / bounce poll / MTS poll logs |
+| Ops Logs | Yes (Admin) | Sidebar | Send / bounce poll / MTS poll logs |
+| Bounce Processing Log | Yes (Admin) | Sidebar | Bounce poll and process: start/end, connect/disconnect, fetch, correlate, disable |
 | Audit | As specified in mock/IA | Sidebar or Admin group | Append-only audit (scoped) |
 
 **Catalogs:** no delete while referenced; detail shows navigable **Used By**.

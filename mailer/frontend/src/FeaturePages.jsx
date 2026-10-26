@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiJson } from './api.js'
 import { authHeaders } from './auth.js'
+import { ActivityLogPage } from './ActivityLogPage.jsx'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import {
@@ -578,6 +579,16 @@ export function MainView({
       return <BounceLogPage />
     case 'ops':
       return <OpsLogs token={token} onError={onError} />
+    case 'bounce-process-log':
+      return (
+        <ActivityLogPage
+          token={token}
+          onError={onError}
+          kind="BOUNCE"
+          title="Bounce Processing Log"
+          hint="Process start and end, inbox connect and disconnect, each fetched and correlated message, and member disables. Newest 500. Retention: bounce.process.log.retention.days (default 90 days)."
+        />
+      )
     case 'attention':
       return <AttentionInbox token={token} onError={onError} />
     case 'audit':

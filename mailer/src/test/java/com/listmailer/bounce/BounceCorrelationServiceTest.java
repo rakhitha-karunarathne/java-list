@@ -32,6 +32,7 @@ class BounceCorrelationServiceTest {
   @Mock SendQueueRepository queue;
   @Mock ParametersPort parameters;
   @Mock OpsHooksPort ops;
+  @Mock com.listmailer.ops.ActivityLogService activity;
   @InjectMocks BounceCorrelationService service;
 
   @Test
