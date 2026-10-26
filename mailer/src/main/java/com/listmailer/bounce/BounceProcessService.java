@@ -76,17 +76,14 @@ public class BounceProcessService {
             SendQueueEntity::getSentAt, Comparator.nullsLast(Comparator.naturalOrder())));
 
     Map<String, BounceEventEntity> bySend = new HashMap<>();
-    List<BounceEventEntity> memberBounces = new ArrayList<>();
-    for (BounceEventEntity ev : events.findByStatus("CORRELATED")) {
-      if (!memberId.equals(ev.getMemberId())) {
-        continue;
-      }
-      memberBounces.add(ev);
+    List<BounceEventEntity> memberBounces =
+        events.findByStatusAndMemberId("CORRELATED", memberId);
+    // AD-25: repository filters CORRELATED only — never UNCORRELATED
+    for (BounceEventEntity ev : memberBounces) {
       if (ev.getSendQueueId() != null) {
         bySend.putIfAbsent(ev.getSendQueueId(), ev);
       }
     }
-    // AD-25: never consider UNCORRELATED
 
     int hard = 0;
     int soft = 0;

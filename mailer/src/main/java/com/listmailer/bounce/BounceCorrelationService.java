@@ -99,14 +99,6 @@ public class BounceCorrelationService {
       if (byToken.isPresent()) {
         return Optional.of(new Match(byToken.get(), "VERP"));
       }
-      Optional<SendQueueEntity> byVerp =
-          queue.findAll().stream()
-              .filter(r -> r.getVerpRcpt() != null && r.getVerpRcpt().contains(id))
-              .findFirst();
-      // shortcut: scan — upgrade to findByVerpRcptContaining when volume grows
-      if (byVerp.isPresent()) {
-        return Optional.of(new Match(byVerp.get(), "VERP"));
-      }
     }
     return Optional.empty();
   }
@@ -148,9 +140,7 @@ public class BounceCorrelationService {
     String sub =
         subject.replaceFirst("(?i)^(Undelivered Mail Returned to Sender|Delivery Status Notification).*?:\\s*", "");
     List<SendQueueEntity> hits =
-        queue.findAll().stream()
-            .filter(r -> "SENT".equals(r.getStatus()))
-            .filter(r -> r.getSubject() != null && r.getSubject().equalsIgnoreCase(sub))
+        queue.findByStatusAndSubjectIgnoreCase("SENT", sub).stream()
             .filter(
                 r ->
                     blob.toLowerCase(Locale.ROOT)

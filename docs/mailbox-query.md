@@ -19,3 +19,5 @@ MailboxPort.poll(MailboxConn, MessageHandler)
 `RawMessage`: messageId, subject, from, recipients, headers map, raw bytes.
 
 No bounce/campaign/MTS domain types in this package.
+
+Stable for epic-mail-to-send: `MailboxPort.poll(MailboxConn, MessageHandler)` lifecycle unchanged after bounce epic refactor sweep (story 7.5).

@@ -62,6 +62,7 @@ class BounceProcessServiceTest {
       bounces.add(b);
     }
     when(events.findByStatus("CORRELATED")).thenReturn(bounces);
+    when(events.findByStatusAndMemberId("CORRELATED", "m1")).thenReturn(bounces);
     when(queue.findByMemberIdAndStatus("m1", "SENT")).thenReturn(sends);
     MemberEntity m = new MemberEntity("m1", "a@x.com", true, Instant.now());
     when(members.findById("m1")).thenReturn(Optional.of(m));
@@ -101,6 +102,7 @@ class BounceProcessServiceTest {
       bounces.add(b);
     }
     when(events.findByStatus("CORRELATED")).thenReturn(bounces);
+    when(events.findByStatusAndMemberId("CORRELATED", "m1")).thenReturn(bounces);
     when(queue.findByMemberIdAndStatus("m1", "SENT")).thenReturn(sends);
     MemberEntity m = new MemberEntity("m1", "a@x.com", true, Instant.now());
     when(members.findById("m1")).thenReturn(Optional.of(m));

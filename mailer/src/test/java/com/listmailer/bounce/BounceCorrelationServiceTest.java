@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,7 +59,9 @@ class BounceCorrelationServiceTest {
     when(parameters.get(ParameterKeys.VERP_ENABLED)).thenReturn(Optional.of("false"));
     BounceEventEntity ev = event("e2", "random noise without tokens");
     when(events.findByStatus("INGESTED")).thenReturn(List.of(ev));
-    when(queue.findAll()).thenReturn(List.of());
+    lenient()
+        .when(queue.findByStatusAndSubjectIgnoreCase("SENT", "Hello"))
+        .thenReturn(List.of());
     when(events.save(ev)).thenReturn(ev);
 
     service.correlatePending();
@@ -78,7 +81,7 @@ class BounceCorrelationServiceTest {
     b.setSubject("Hello");
     BounceEventEntity ev = event("e3", "Hello\nsame@x.com bounced");
     when(events.findByStatus("INGESTED")).thenReturn(List.of(ev));
-    when(queue.findAll()).thenReturn(List.of(a, b));
+    when(queue.findByStatusAndSubjectIgnoreCase("SENT", "Hello")).thenReturn(List.of(a, b));
     when(events.save(ev)).thenReturn(ev);
 
     service.correlatePending();
