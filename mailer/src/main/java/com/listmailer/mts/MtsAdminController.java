@@ -199,6 +199,19 @@ public class MtsAdminController {
     return detail(inboxes.save(box));
   }
 
+  @DeleteMapping("/inboxes/{id}")
+  @Transactional
+  public Map<String, String> deleteInbox(@PathVariable String id) {
+    MtsInboxEntity box = requireInbox(id);
+    for (MtsAuthorizedSenderEntity sender : senders.findByInboxId(id)) {
+      clearGrantReferences(id, sender.getEmail());
+    }
+    drops.deleteDropsForInbox(id);
+    // DB cascades: senders → grants; from-domain issues
+    inboxes.delete(box);
+    return Map.of("status", "deleted");
+  }
+
   @PostMapping("/inboxes/{id}/senders")
   @Transactional
   public InboxDetail addSender(@PathVariable String id, @RequestBody SenderBody body) {

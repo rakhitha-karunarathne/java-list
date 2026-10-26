@@ -10,6 +10,8 @@ public interface MtsDropLogRepository extends JpaRepository<MtsDropLogEntity, St
 
   List<MtsDropLogEntity> findAllByOrderByCreatedAtDesc();
 
+  void deleteByInboxId(String inboxId);
+
   long countBySenderEmailAndCountedForAutoBlockTrueAndCreatedAtAfter(
       String senderEmail, Instant after);
 }

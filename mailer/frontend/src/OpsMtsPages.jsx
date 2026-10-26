@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
+import { confirmDelete } from './confirmDelete.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import { ConnectionTestBanner, testImapConnection } from './ConnectionTest.jsx'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
@@ -206,12 +207,26 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   }
 
   async function removeSender(email) {
+    if (!confirmDelete(`authorized sender ${email}`)) return
     try {
       setDetail(
         await apiJson(token, `/api/mts/inboxes/${nav.inboxId}/senders/${encodeURIComponent(email)}`, {
           method: 'DELETE',
         }),
       )
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  async function deleteInbox() {
+    if (!confirmDelete(`inbox “${detail?.name || nav.inboxId}” and all connected data`)) return
+    try {
+      await apiJson(token, `/api/mts/inboxes/${nav.inboxId}`, { method: 'DELETE' })
+      await loadInboxes()
+      resetInbox()
+      setDetail(null)
+      onCloseDetail()
     } catch (err) {
       onError(err.message)
     }
@@ -491,6 +506,9 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             title={inboxDirty ? 'Unsaved changes' : undefined}
           >
             Save Account
+          </button>{' '}
+          <button type="button" className="btn secondary" onClick={deleteInbox}>
+            Delete Inbox
           </button>
         </form>
 
@@ -762,6 +780,7 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
   }, [token])
 
   async function unblock(id) {
+    if (!confirmDelete('this block')) return
     try {
       await apiJson(token, `/api/mts/blocks/${id}`, { method: 'DELETE' })
       await load()

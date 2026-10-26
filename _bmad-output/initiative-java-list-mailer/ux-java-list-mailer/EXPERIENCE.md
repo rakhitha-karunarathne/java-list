@@ -80,6 +80,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Stop | Available on Draft, Queued, Sending (index row and detail); not on Finished/Stopped |
 | Requeue | On Stopped always; on Finished only after Add List (control disabled until a new List is attached) |
 | Used By | Navigable links; blocks delete while in use |
+| Destructive delete | Always confirm first (cannot undo); Cancel leaves data; OK calls delete API. Covers catalog Delete, bounce/inbox Delete, remove sender, Unblock, MFA unenroll |
 | Form field | **Stacked:** Title Case label **above** the control (never inline beside it); SPA `label.field` CSS enforces this |
 | Boolean field | Scalar true/false (or on/off) settings use a **toggle** (switch + On/Off text), never a bare checkbox; multi-select / per-row permission checks may still use checkboxes |
 | Field label wording | Valid English with spaces between words (`From Email`, `HTML Body`, `Use TLS`); SPA `fieldLabel()` — never raw camelCase keys |

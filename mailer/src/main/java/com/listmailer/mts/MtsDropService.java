@@ -113,6 +113,11 @@ public class MtsDropService {
     drops.save(d);
   }
 
+  @Transactional
+  public void deleteDropsForInbox(String inboxId) {
+    drops.deleteByInboxId(inboxId);
+  }
+
   private void maybeAutoBlock(String senderEmail) {
     int n = intParam("mts.auto.block.per.day", 10);
     Instant since = Instant.now().minus(1, ChronoUnit.DAYS);

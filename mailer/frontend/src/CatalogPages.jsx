@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiJson } from './api.js'
+import { confirmDelete } from './confirmDelete.js'
 import { DeleteBlocked, UsedByList } from './catalogUi.jsx'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import {
@@ -146,6 +147,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
   }
 
   async function remove() {
+    if (!confirmDelete(`sending path “${detail?.name || form.name || detailId}”`)) return
     onError('')
     setDelErr(null)
     try {
@@ -396,6 +398,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
   }
 
   async function remove() {
+    if (!confirmDelete(`footer “${detail?.name || form.name || detailId}”`)) return
     setDelErr(null)
     const res = await fetch(`/api/footers/${detailId}`, {
       method: 'DELETE',
@@ -625,6 +628,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   }
 
   async function remove() {
+    if (!confirmDelete(`bounce mail box “${detail?.name || form.name || detailId}”`)) return
     try {
       await apiJson(token, `/api/bounce-mailboxes/${detailId}`, { method: 'DELETE' })
       onCloseDetail()

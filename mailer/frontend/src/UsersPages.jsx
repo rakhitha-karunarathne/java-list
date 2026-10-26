@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiJson } from './api.js'
 import { decodeJwtPayload } from './auth.js'
+import { confirmDelete } from './confirmDelete.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
@@ -371,6 +372,7 @@ function SecurityMfaPanel({ token, onError, self }) {
 
   async function unenroll(e) {
     e.preventDefault()
+    if (!confirmDelete('MFA enrollment for this account')) return
     try {
       await apiJson(token, '/api/me/mfa', {
         method: 'DELETE',

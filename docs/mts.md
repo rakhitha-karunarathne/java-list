@@ -4,7 +4,7 @@ Admin API under `/api/mts/**` (ADMIN role). Poll uses shared `MailboxPort` (mail
 
 | Path | Purpose |
 | --- | --- |
-| `/api/mts/inboxes` | Index + CRUD |
+| `/api/mts/inboxes` | Index + create/update; `DELETE /inboxes/{id}` cascades senders, grants, issues, drop rows |
 | `/api/mts/mappings` | Flat sender×list grant rows (inbox detail / tooling; not an index overview) |
 | `/api/mts/from-domain-issues` | Issues ≠ Drop log |
 | `/api/mts/drop-log` | Drop log (+ `?inboxId=`) |

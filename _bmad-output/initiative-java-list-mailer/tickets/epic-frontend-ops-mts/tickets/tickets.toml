@@ -67,7 +67,7 @@ title = "Frontend Clearwater end-to-end walkthrough suite"
 description = "Closing FE suite: shell role nav; one catalog; one list/member; compose queue smoke; MTS index; Attention."
 verify = "Documented walkthrough or light e2e green against test profile."
 covers = ["R1", "R4"]
-after = [5, 7, 8]
+after = [5, 7, 8, 9]
 hitl = true
 risk = "medium"
 refine = true
@@ -94,4 +94,16 @@ covers = ["R1"]
 after = [7]
 hitl = false
 risk = "low"
+refine = true
+
+[[entry]]
+id = 9
+type = "story"
+title = "Delete MTS inbox (cascade) and confirm all destructive deletes"
+description = "DELETE inbox removes senders/grants/issues/drop rows; SPA confirms every permanent delete."
+verify = "Delete inbox gone with grants; Cancel on confirm leaves data; Delete Path/Footer/Bounce/sender/Unblock/unenroll all confirm."
+covers = ["R1"]
+after = [8]
+hitl = false
+risk = "medium"
 refine = true
