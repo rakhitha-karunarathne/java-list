@@ -8,7 +8,11 @@ import {
   isBooleanString,
   parseBooleanString,
 } from './booleanValue.js'
-import { ConnectionTestBanner, testSmtpConnection } from './ConnectionTest.jsx'
+import {
+  ConnectionTestBanner,
+  testBounceImapConnection,
+  testSmtpConnection,
+} from './ConnectionTest.jsx'
 import { btnDirtyClass, dirtyControlProps, isFormDirty, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
@@ -627,6 +631,30 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   )
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
+  const [connTest, setConnTest] = useState(null)
+  const [testing, setTesting] = useState(false)
+
+  async function runBounceImapTest() {
+    setTesting(true)
+    setConnTest(null)
+    onError('')
+    try {
+      setConnTest(
+        await testBounceImapConnection(token, {
+          host: form.host,
+          port: form.port,
+          username: form.username,
+          password: form.password,
+          useSsl: !!form.useSsl,
+          mailboxId: creating ? null : detailId,
+        }),
+      )
+    } catch (err) {
+      setConnTest({ ok: false, message: err.message })
+    } finally {
+      setTesting(false)
+    }
+  }
 
   async function load() {
     try {
@@ -641,6 +669,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   }, [token])
 
   useEffect(() => {
+    setConnTest(null)
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       if (isCreatePage(detailId)) resetToBlank()
@@ -724,18 +753,24 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           The mailbox is created on the mail server. This only adds it to the Bounce polling list.
         </p>
         <form onSubmit={create}>
-          {['name', 'host', 'username', 'password'].map((k) => (
-            <label className="field" key={k}>
-              {fieldLabel(k)}
-              <input
-                type={k === 'password' ? 'password' : 'text'}
-                value={form[k]}
-                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
-                required
-                {...dirtyControlProps(!valuesEqual(form[k], blank[k]))}
-              />
-            </label>
-          ))}
+          <label className="field">
+            {fieldLabel('name')}
+            <input
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.name, blank.name))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('host')}
+            <input
+              value={form.host}
+              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.host, blank.host))}
+            />
+          </label>
           <label className="field">
             {fieldLabel('port')}
             <input
@@ -743,6 +778,25 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               value={form.port}
               onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
               {...dirtyControlProps(!valuesEqual(form.port, blank.port))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('username')}
+            <input
+              value={form.username}
+              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.username, blank.username))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('password')}
+            <input
+              type="password"
+              value={form.password}
+              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.password, blank.password))}
             />
           </label>
           <label className="field">
@@ -763,9 +817,20 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               onChange={(on) => setForm({ ...form, useSsl: on })}
             />
           </label>
-          <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
-            Add Mail Box
-          </button>
+          <ConnectionTestBanner result={connTest} />
+          <p>
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={testing}
+              onClick={runBounceImapTest}
+            >
+              {testing ? 'Testing…' : 'Test Connection'}
+            </button>{' '}
+            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
+              Add Mail Box
+            </button>
+          </p>
         </form>
       </div>
     )
@@ -779,24 +844,20 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         </button>
         <h2>{detail.name}</h2>
         <form onSubmit={save}>
-          {['name', 'host', 'username'].map((k) => (
-            <label className="field" key={k}>
-              {fieldLabel(k)}
-              <input
-                value={form[k]}
-                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
-                {...dirtyControlProps(!valuesEqual(form[k], saved[k]))}
-              />
-            </label>
-          ))}
           <label className="field">
-            {fieldLabel('password')} (Blank = Keep)
+            {fieldLabel('name')}
             <input
-              type="password"
-              value={form.password}
-              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
-              autoComplete="new-password"
-              {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('host')}
+            <input
+              value={form.host}
+              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.host, saved.host))}
             />
           </label>
           <label className="field">
@@ -806,6 +867,24 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               value={form.port}
               onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
               {...dirtyControlProps(!valuesEqual(form.port, saved.port))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('username')}
+            <input
+              value={form.username}
+              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
+              {...dirtyControlProps(!valuesEqual(form.username, saved.username))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('password')} (Blank = Keep)
+            <input
+              type="password"
+              value={form.password}
+              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+              autoComplete="new-password"
+              {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
             />
           </label>
           <label className="field">
@@ -826,7 +905,16 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               onChange={(on) => setForm({ ...form, useSsl: on })}
             />
           </label>
+          <ConnectionTestBanner result={connTest} />
           <p>
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={testing}
+              onClick={runBounceImapTest}
+            >
+              {testing ? 'Testing…' : 'Test Connection'}
+            </button>{' '}
             <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Save
             </button>{' '}

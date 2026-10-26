@@ -30,3 +30,10 @@ export async function testImapConnection(token, body) {
     body: JSON.stringify(body),
   })
 }
+
+export async function testBounceImapConnection(token, body) {
+  return apiJson(token, '/api/bounce-mailboxes/test-connection', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}

@@ -1,6 +1,7 @@
 package com.listmailer.catalogs;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.mailbox.MailConnectionProbe;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,9 +24,28 @@ public class BounceMailboxesController {
   public static final int DEFAULT_POLL_MINUTES = 15;
 
   private final BounceMailboxRepository mailboxes;
+  private final MailConnectionProbe probe;
 
-  public BounceMailboxesController(BounceMailboxRepository mailboxes) {
+  public BounceMailboxesController(BounceMailboxRepository mailboxes, MailConnectionProbe probe) {
     this.mailboxes = mailboxes;
+    this.probe = probe;
+  }
+
+  @PostMapping("/test-connection")
+  public ConnectionTestResponse testConnection(@RequestBody ConnectionTestRequest body) {
+    if (body == null
+        || !StringUtils.hasText(body.host())
+        || body.port() <= 0
+        || !StringUtils.hasText(body.username())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "host, port, and username are required");
+    }
+    String password = body.password();
+    if (!StringUtils.hasText(password) && StringUtils.hasText(body.mailboxId())) {
+      password = require(body.mailboxId()).getPassword();
+    }
+    MailConnectionProbe.Result result =
+        probe.testImap(body.host(), body.port(), body.username(), password, body.useSsl());
+    return new ConnectionTestResponse(result.ok(), result.message());
   }
 
   @GetMapping
@@ -112,6 +132,11 @@ public class BounceMailboxesController {
       String password,
       boolean useSsl,
       int pollIntervalMinutes) {}
+
+  public record ConnectionTestRequest(
+      String host, int port, String username, String password, boolean useSsl, String mailboxId) {}
+
+  public record ConnectionTestResponse(boolean ok, String message) {}
 
   public record MailboxSummary(String id, String name, String host, int pollIntervalMinutes) {
     static MailboxSummary from(BounceMailboxEntity b) {
