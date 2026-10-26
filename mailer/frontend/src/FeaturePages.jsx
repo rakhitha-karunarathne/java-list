@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { authHeaders } from './auth.js'
-import { FootersPage, SendingPathsPage } from './CatalogPages.jsx'
+import {
+  BounceMailboxesPage,
+  FootersPage,
+  NoticePathPage,
+  SendingPathsPage,
+} from './CatalogPages.jsx'
 import Placeholder from './Placeholder.jsx'
 
 export function Compose({ token, onError }) {
@@ -527,6 +532,18 @@ export function MainView({ view, token, onError, detailId, onOpenDetail, onClose
           onCloseDetail={onCloseDetail}
         />
       )
+    case 'bounce-mailboxes':
+      return (
+        <BounceMailboxesPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
+    case 'notice-path':
+      return <NoticePathPage token={token} onError={onError} />
     case 'home':
       return (
         <Placeholder

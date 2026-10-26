@@ -406,3 +406,267 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
     </div>
   )
 }
+
+export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const [rows, setRows] = useState([])
+  const [detail, setDetail] = useState(null)
+  const [form, setForm] = useState({
+    name: '',
+    host: '127.0.0.1',
+    port: 143,
+    username: '',
+    password: '',
+    useSsl: false,
+    pollIntervalMinutes: 15,
+  })
+
+  async function load() {
+    try {
+      setRows(await apiJson(token, '/api/bounce-mailboxes'))
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
+  useEffect(() => {
+    load()
+  }, [token])
+
+  useEffect(() => {
+    if (!detailId) {
+      setDetail(null)
+      return
+    }
+    apiJson(token, `/api/bounce-mailboxes/${detailId}`)
+      .then((d) => {
+        setDetail(d)
+        setForm({
+          name: d.name,
+          host: d.host,
+          port: d.port,
+          username: d.username,
+          password: '',
+          useSsl: d.useSsl,
+          pollIntervalMinutes: d.pollIntervalMinutes,
+        })
+      })
+      .catch((e) => onError(e.message))
+  }, [token, detailId])
+
+  async function create(e) {
+    e.preventDefault()
+    try {
+      const created = await apiJson(token, '/api/bounce-mailboxes', {
+        method: 'POST',
+        body: JSON.stringify(form),
+      })
+      await load()
+      onOpen(created.id)
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  async function save(e) {
+    e.preventDefault()
+    try {
+      const body = { ...form }
+      if (!body.password) body.password = null
+      await apiJson(token, `/api/bounce-mailboxes/${detailId}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      })
+      setDetail(await apiJson(token, `/api/bounce-mailboxes/${detailId}`))
+      setForm((f) => ({ ...f, password: '' }))
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  async function remove() {
+    try {
+      await apiJson(token, `/api/bounce-mailboxes/${detailId}`, { method: 'DELETE' })
+      onCloseDetail()
+      load()
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  if (detailId && detail) {
+    return (
+      <div className="card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          ← Bounce Mailboxes
+        </button>
+        <h2>{detail.name}</h2>
+        <form onSubmit={save}>
+          {['name', 'host', 'username'].map((k) => (
+            <label className="field" key={k}>
+              {k}
+              <input value={form[k]} onChange={(ev) => setForm({ ...form, [k]: ev.target.value })} />
+            </label>
+          ))}
+          <label className="field">
+            password (blank = keep)
+            <input
+              type="password"
+              value={form.password}
+              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+              autoComplete="new-password"
+            />
+          </label>
+          <label className="field">
+            port
+            <input
+              type="number"
+              value={form.port}
+              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+            />
+          </label>
+          <label className="field">
+            pollIntervalMinutes
+            <input
+              type="number"
+              value={form.pollIntervalMinutes}
+              onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
+            />
+          </label>
+          <label className="field">
+            <input
+              type="checkbox"
+              checked={form.useSsl}
+              onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
+            />{' '}
+            useSsl
+          </label>
+          <p>
+            <button type="submit" className="btn">
+              Save
+            </button>{' '}
+            <button type="button" className="btn secondary" onClick={remove}>
+              Delete
+            </button>
+          </p>
+        </form>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card">
+      <h2>Bounce Mailboxes</h2>
+      <ul>
+        {rows.map((r) => (
+          <li key={r.id}>
+            <button type="button" className="btn secondary" onClick={() => onOpen(r.id)}>
+              {r.name}
+            </button>{' '}
+            {r.host} · poll {r.pollIntervalMinutes}m
+          </li>
+        ))}
+      </ul>
+      <h3>Create</h3>
+      <form onSubmit={create}>
+        {['name', 'host', 'username', 'password'].map((k) => (
+          <label className="field" key={k}>
+            {k}
+            <input
+              type={k === 'password' ? 'password' : 'text'}
+              value={form[k]}
+              onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
+              required
+            />
+          </label>
+        ))}
+        <label className="field">
+          port
+          <input
+            type="number"
+            value={form.port}
+            onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+          />
+        </label>
+        <label className="field">
+          pollIntervalMinutes
+          <input
+            type="number"
+            value={form.pollIntervalMinutes}
+            onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
+          />
+        </label>
+        <label className="field">
+          <input
+            type="checkbox"
+            checked={form.useSsl}
+            onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
+          />{' '}
+          useSsl
+        </label>
+        <button type="submit" className="btn">
+          Create
+        </button>
+      </form>
+    </div>
+  )
+}
+
+export function NoticePathPage({ token, onError }) {
+  const [paths, setPaths] = useState([])
+  const [pathId, setPathId] = useState('')
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    Promise.all([
+      apiJson(token, '/api/sending-paths'),
+      apiJson(token, '/api/notice-sending-path'),
+    ])
+      .then(([p, n]) => {
+        setPaths(p)
+        setPathId(n.sendingPathId || '')
+        setLoaded(true)
+      })
+      .catch((e) => onError(e.message))
+  }, [token])
+
+  async function save(e) {
+    e.preventDefault()
+    try {
+      const out = await apiJson(token, '/api/notice-sending-path', {
+        method: 'PUT',
+        body: JSON.stringify({ sendingPathId: pathId || null }),
+      })
+      setPathId(out.sendingPathId || '')
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  return (
+    <div className="card">
+      <h2>Notice Sending Path</h2>
+      <p className="hint">
+        Used for system/consent/admin notices — not Campaign queue. Empty = notices are skipped
+        until a path is set.
+      </p>
+      {!loaded ? <p className="hint">Loading…</p> : null}
+      <form onSubmit={save}>
+        <label className="field">
+          Sending path
+          <select value={pathId} onChange={(ev) => setPathId(ev.target.value)}>
+            <option value="">— unset (no notice mail) —</option>
+            {paths.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {!pathId ? <p className="hint">Notice path is unset.</p> : null}
+        <button type="submit" className="btn">
+          Save
+        </button>
+      </form>
+    </div>
+  )
+}
