@@ -11,11 +11,23 @@ import { useDirtyForm } from './useDirtyForm.js'
 
 const ROLES = ['ADMIN', 'LIST_MANAGER', 'LIST_SENDER']
 
+function isGranted(g) {
+  return !!(g && (g.manage || g.send))
+}
+
+/** Role decides capabilities: Managers manage+send; Senders send only. */
+function flagsForRole(role) {
+  if (role === 'LIST_MANAGER') return { manage: true, send: true }
+  if (role === 'LIST_SENDER') return { manage: false, send: true }
+  return { manage: false, send: false }
+}
+
 function grantsSig(gs) {
   return JSON.stringify(
     [...(gs || [])]
-      .map((g) => ({ listId: g.listId, manage: !!g.manage, send: !!g.send }))
-      .sort((a, b) => String(a.listId).localeCompare(String(b.listId))),
+      .filter(isGranted)
+      .map((g) => g.listId)
+      .sort((a, b) => String(a).localeCompare(String(b))),
   )
 }
 
@@ -115,9 +127,13 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   async function saveGrants(e) {
     e.preventDefault()
     try {
+      const flags = flagsForRole(patch.role)
+      const body = grants
+        .filter((g) => g.listId && isGranted(g))
+        .map((g) => ({ listId: g.listId, ...flags }))
       const next = await apiJson(token, `/api/users/${detailId}/grants`, {
         method: 'PUT',
-        body: JSON.stringify(grants.filter((g) => g.listId && (g.manage || g.send))),
+        body: JSON.stringify(body),
       })
       setGrants(next)
       setSavedGrants(next)
@@ -126,15 +142,13 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     }
   }
 
-  function toggleGrant(listId, field) {
+  function toggleGranted(listId) {
     setGrants((prev) => {
       const existing = prev.find((g) => g.listId === listId)
-      if (!existing) {
-        return [...prev, { listId, manage: field === 'manage', send: field === 'send' }]
+      if (isGranted(existing)) {
+        return prev.filter((g) => g.listId !== listId)
       }
-      const next = { ...existing, [field]: !existing[field] }
-      if (!next.manage && !next.send) return prev.filter((g) => g.listId !== listId)
-      return prev.map((g) => (g.listId === listId ? next : g))
+      return [...prev.filter((g) => g.listId !== listId), { listId, ...flagsForRole(patch.role) }]
     })
   }
 
@@ -234,6 +248,11 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         {showListGrants ? (
           <>
             <h3>List Grants</h3>
+            <p className="hint">
+              {patch.role === 'LIST_MANAGER'
+                ? 'Granted lists: manage and send.'
+                : 'Granted lists: send only.'}
+            </p>
             <form onSubmit={saveGrants}>
               <RecordTable
                 rows={lists}
@@ -242,39 +261,19 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                 columns={[
                   { key: 'name', label: 'List' },
                   {
-                    key: 'manage',
-                    label: 'Manage',
+                    key: 'granted',
+                    label: 'Granted',
                     stopRowClick: true,
                     render: (l) => {
-                      const g = grants.find((x) => x.listId === l.id) || { manage: false, send: false }
-                      const sg =
-                        savedGrants.find((x) => x.listId === l.id) || { manage: false, send: false }
+                      const granted = isGranted(grants.find((x) => x.listId === l.id))
+                      const saved = isGranted(savedGrants.find((x) => x.listId === l.id))
                       return (
                         <input
                           type="checkbox"
-                          checked={!!g.manage}
-                          onChange={() => toggleGrant(l.id, 'manage')}
-                          aria-label={`Manage ${l.name}`}
-                          {...dirtyControlProps(!!g.manage !== !!sg.manage)}
-                        />
-                      )
-                    },
-                  },
-                  {
-                    key: 'send',
-                    label: 'Send',
-                    stopRowClick: true,
-                    render: (l) => {
-                      const g = grants.find((x) => x.listId === l.id) || { manage: false, send: false }
-                      const sg =
-                        savedGrants.find((x) => x.listId === l.id) || { manage: false, send: false }
-                      return (
-                        <input
-                          type="checkbox"
-                          checked={!!g.send}
-                          onChange={() => toggleGrant(l.id, 'send')}
-                          aria-label={`Send ${l.name}`}
-                          {...dirtyControlProps(!!g.send !== !!sg.send)}
+                          checked={granted}
+                          onChange={() => toggleGranted(l.id)}
+                          aria-label={`Grant ${l.name}`}
+                          {...dirtyControlProps(granted !== saved)}
                         />
                       )
                     },
