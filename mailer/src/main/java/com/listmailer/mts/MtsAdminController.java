@@ -1,5 +1,7 @@
 package com.listmailer.mts;
 
+import com.listmailer.catalogs.CatalogReferenceService;
+import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.lists.ListRepository;
 import java.time.Instant;
@@ -33,6 +35,7 @@ public class MtsAdminController {
   private final ListRepository lists;
   private final MtsFromDomainService fromDomain;
   private final MtsDropService drops;
+  private final CatalogReferenceService references;
 
   public MtsAdminController(
       MtsInboxRepository inboxes,
@@ -41,7 +44,8 @@ public class MtsAdminController {
       MtsMappingListRepository mappingLists,
       ListRepository lists,
       MtsFromDomainService fromDomain,
-      MtsDropService drops) {
+      MtsDropService drops,
+      CatalogReferenceService references) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.mappings = mappings;
@@ -49,6 +53,7 @@ public class MtsAdminController {
     this.lists = lists;
     this.fromDomain = fromDomain;
     this.drops = drops;
+    this.references = references;
   }
 
   @GetMapping("/drop-log")
@@ -229,8 +234,52 @@ public class MtsAdminController {
     int i = 0;
     for (String listId : body.listIds()) {
       mappingLists.save(new MtsMappingListEntity(m.getId(), listId, i++));
+      lists
+          .findById(listId)
+          .ifPresent(
+              list ->
+                  references.add(
+                      CatalogTargetType.SENDING_PATH,
+                      list.getSendingPathId(),
+                      "MTS_MAPPING",
+                      m.getId(),
+                      "MTS mapping " + m.getName()));
+    }
+    if (StringUtils.hasText(m.getFooterId())) {
+      references.add(
+          CatalogTargetType.FOOTER,
+          m.getFooterId(),
+          "MTS_MAPPING",
+          m.getId(),
+          "MTS mapping " + m.getName());
     }
     return mappingSummary(m);
+  }
+
+  @DeleteMapping("/mappings/{id}")
+  @Transactional
+  public Map<String, String> deleteMapping(@PathVariable String id) {
+    MtsMappingEntity m =
+        mappings
+            .findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    for (MtsMappingListEntity ml : mappingLists.findByMappingIdOrderByPositionAsc(id)) {
+      lists
+          .findById(ml.getListId())
+          .ifPresent(
+              list ->
+                  references.remove(
+                      CatalogTargetType.SENDING_PATH,
+                      list.getSendingPathId(),
+                      "MTS_MAPPING",
+                      id));
+    }
+    if (StringUtils.hasText(m.getFooterId())) {
+      references.remove(CatalogTargetType.FOOTER, m.getFooterId(), "MTS_MAPPING", id);
+    }
+    mappingLists.deleteByMappingId(id);
+    mappings.delete(m);
+    return Map.of("status", "deleted");
   }
 
   private InboxDetail detail(MtsInboxEntity box) {
