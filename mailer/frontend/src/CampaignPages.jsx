@@ -65,9 +65,9 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
   }, [token])
 
   useEffect(() => {
+    setMsg('')
     if (!detailId) {
       setDetail(null)
-      setMsg('')
       return
     }
     apiJson(token, `/api/campaigns/${detailId}`)
@@ -91,8 +91,10 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
     try {
       const updated = await apiJson(token, `/api/campaigns/${id}/queue`, { method: 'POST' })
       await load()
-      if (detailId === id) setDetail(updated)
-      setMsg('Queued')
+      if (detailId === id) {
+        setDetail(updated)
+        setMsg('Queued')
+      }
     } catch (e) {
       onError(e.message)
     }
