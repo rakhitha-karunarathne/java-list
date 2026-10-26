@@ -107,3 +107,15 @@ after = [8]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 10
+type = "story"
+title = "Enable or disable each processing log"
+description = "Boolean parameters, default true, skip new rows when false. Pages and retention stay."
+verify = "false skips save; unset or true writes; Parameters shows three toggles."
+covers = ["R2"]
+after = [9]
+hitl = false
+risk = "low"
+refine = true

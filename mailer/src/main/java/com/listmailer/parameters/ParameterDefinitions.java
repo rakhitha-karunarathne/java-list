@@ -33,13 +33,25 @@ public final class ParameterDefinitions {
         "90",
         "Days to retain the Bounce Processing Log. Integer >= 1. Default 90 (3 months).");
     put(
+        ParameterKeys.BOUNCE_PROCESS_LOG_ENABLED,
+        "true",
+        "Write the Bounce Processing Log. Values: true|false. Default true.");
+    put(
         ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS,
         "90",
         "Days to retain the Queue Sending Log. Integer >= 1. Default 90 (3 months).");
     put(
+        ParameterKeys.SEND_QUEUE_LOG_ENABLED,
+        "true",
+        "Write the Queue Sending Log. Values: true|false. Default true.");
+    put(
         ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS,
         "90",
         "Days to retain the Mail-To-Send Processing Log. Integer >= 1. Default 90 (3 months).");
+    put(
+        ParameterKeys.MTS_PROCESS_LOG_ENABLED,
+        "true",
+        "Write the Mail-To-Send Processing Log. Values: true|false. Default true.");
     put(
         ParameterKeys.AUDIT_RETENTION_DAYS,
         "365",

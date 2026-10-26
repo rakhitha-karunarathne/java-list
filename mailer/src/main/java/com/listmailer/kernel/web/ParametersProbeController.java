@@ -74,13 +74,20 @@ public class ParametersProbeController {
     if (ParameterKeys.PUBLIC_BASE_URL.equals(key) && !body.value().startsWith("https://")) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public base URL must be https://");
     }
-    if ((ParameterKeys.MFA_MANDATORY.equals(key) || ParameterKeys.VERP_ENABLED.equals(key))
+    if ((ParameterKeys.MFA_MANDATORY.equals(key)
+            || ParameterKeys.VERP_ENABLED.equals(key)
+            || ParameterKeys.BOUNCE_PROCESS_LOG_ENABLED.equals(key)
+            || ParameterKeys.SEND_QUEUE_LOG_ENABLED.equals(key)
+            || ParameterKeys.MTS_PROCESS_LOG_ENABLED.equals(key))
         && !"true".equalsIgnoreCase(body.value())
         && !"false".equalsIgnoreCase(body.value())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value must be true or false");
     }
     if (ParameterKeys.OPS_LOG_RETENTION_DAYS.equals(key)
-        || ParameterKeys.AUDIT_RETENTION_DAYS.equals(key)) {
+        || ParameterKeys.AUDIT_RETENTION_DAYS.equals(key)
+        || ParameterKeys.BOUNCE_PROCESS_LOG_RETENTION_DAYS.equals(key)
+        || ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS.equals(key)
+        || ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS.equals(key)) {
       try {
         if (Integer.parseInt(body.value().trim()) < 1) {
           throw new NumberFormatException();

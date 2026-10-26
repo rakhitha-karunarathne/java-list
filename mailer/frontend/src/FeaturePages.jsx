@@ -586,7 +586,7 @@ export function MainView({
           onError={onError}
           kind="BOUNCE"
           title="Bounce Processing Log"
-          hint="Process start and end, inbox connect and disconnect, each fetched and correlated message, and member disables. Newest 500. Retention: bounce.process.log.retention.days (default 90 days)."
+          hint="Process start and end, inbox connect and disconnect, each fetched and correlated message, and member disables. Newest 500. Turn off with bounce.process.log.enabled. Retention: bounce.process.log.retention.days (default 90 days)."
         />
       )
     case 'queue-send-log':
@@ -596,7 +596,7 @@ export function MainView({
           onError={onError}
           kind="SEND"
           title="Queue Sending Log"
-          hint="Process start and end, sending-path connect and disconnect, and each message sent. Newest 500. Retention: send.queue.log.retention.days (default 90 days)."
+          hint="Process start and end, sending-path connect and disconnect, and each message sent. Newest 500. Turn off with send.queue.log.enabled. Retention: send.queue.log.retention.days (default 90 days)."
         />
       )
     case 'mts-process-log':
@@ -606,7 +606,7 @@ export function MainView({
           onError={onError}
           kind="MTS"
           title="Mail-To-Send Processing Log"
-          hint="Process start and end, inbox connect and disconnect, each fetched message, and campaigns with their lists. Newest 500. Retention: mts.process.log.retention.days (default 90 days)."
+          hint="Process start and end, inbox connect and disconnect, each fetched message, and campaigns with their lists. Newest 500. Turn off with mts.process.log.enabled. Retention: mts.process.log.retention.days (default 90 days)."
         />
       )
     case 'attention':
