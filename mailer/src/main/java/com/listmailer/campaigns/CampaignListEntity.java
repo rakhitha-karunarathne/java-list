@@ -21,11 +21,15 @@ public class CampaignListEntity {
   @Column(name = "list_id", length = 36, nullable = false)
   private String listId;
 
+  @Column(nullable = false)
+  private int position;
+
   protected CampaignListEntity() {}
 
-  public CampaignListEntity(String campaignId, String listId) {
+  public CampaignListEntity(String campaignId, String listId, int position) {
     this.campaignId = campaignId;
     this.listId = listId;
+    this.position = position;
   }
 
   public String getCampaignId() {
@@ -34,6 +38,10 @@ public class CampaignListEntity {
 
   public String getListId() {
     return listId;
+  }
+
+  public int getPosition() {
+    return position;
   }
 
   public static final class Pk implements Serializable {

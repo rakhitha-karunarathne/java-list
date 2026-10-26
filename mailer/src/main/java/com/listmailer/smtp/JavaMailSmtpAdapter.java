@@ -9,10 +9,13 @@ import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import java.util.Properties;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 @Primary
@@ -51,7 +54,44 @@ public class JavaMailSmtpAdapter implements SmtpPort {
       mime.setFrom(new InternetAddress(path.getFromEmail(), path.getFromName()));
       mime.setRecipients(Message.RecipientType.TO, InternetAddress.parse(message.toEmail()));
       mime.setSubject(message.subject(), "UTF-8");
-      mime.setText(message.textBody(), "UTF-8");
+
+      boolean hasHtml = StringUtils.hasText(message.htmlBody());
+      boolean hasText = StringUtils.hasText(message.textBody());
+      boolean hasAttachments = !message.attachments().isEmpty();
+
+      MimeBodyPart bodyPart = new MimeBodyPart();
+      if (hasHtml && hasText) {
+        MimeMultipart alt = new MimeMultipart("alternative");
+        MimeBodyPart textPart = new MimeBodyPart();
+        textPart.setText(message.textBody(), "UTF-8");
+        MimeBodyPart htmlPart = new MimeBodyPart();
+        htmlPart.setContent(message.htmlBody(), "text/html; charset=UTF-8");
+        alt.addBodyPart(textPart);
+        alt.addBodyPart(htmlPart);
+        bodyPart.setContent(alt);
+      } else if (hasHtml) {
+        bodyPart.setContent(message.htmlBody(), "text/html; charset=UTF-8");
+      } else {
+        bodyPart.setText(hasText ? message.textBody() : "", "UTF-8");
+      }
+
+      if (hasAttachments) {
+        MimeMultipart mixed = new MimeMultipart("mixed");
+        mixed.addBodyPart(bodyPart);
+        for (Attachment a : message.attachments()) {
+          MimeBodyPart filePart = new MimeBodyPart();
+          filePart.setFileName(a.filename());
+          filePart.setContent(a.content(), a.contentType());
+          mixed.addBodyPart(filePart);
+        }
+        mime.setContent(mixed);
+      } else if (hasHtml && hasText) {
+        mime.setContent((MimeMultipart) bodyPart.getContent());
+      } else if (hasHtml) {
+        mime.setContent(message.htmlBody(), "text/html; charset=UTF-8");
+      } else {
+        mime.setText(hasText ? message.textBody() : "", "UTF-8");
+      }
       Transport.send(mime);
     } catch (Exception ex) {
       throw new IllegalStateException("SMTP send failed: " + ex.getMessage(), ex);

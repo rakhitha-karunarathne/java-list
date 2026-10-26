@@ -10,10 +10,12 @@ import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -21,6 +23,7 @@ public class CampaignSendService {
 
   private final CampaignRepository campaigns;
   private final CampaignListRepository campaignLists;
+  private final CampaignAttachmentRepository attachments;
   private final SendQueueRepository queue;
   private final ListRepository lists;
   private final ListMemberRepository listMembers;
@@ -30,6 +33,7 @@ public class CampaignSendService {
   public CampaignSendService(
       CampaignRepository campaigns,
       CampaignListRepository campaignLists,
+      CampaignAttachmentRepository attachments,
       SendQueueRepository queue,
       ListRepository lists,
       ListMemberRepository listMembers,
@@ -37,6 +41,7 @@ public class CampaignSendService {
       SmtpPort smtp) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
+    this.attachments = attachments;
     this.queue = queue;
     this.lists = lists;
     this.listMembers = listMembers;
@@ -54,17 +59,23 @@ public class CampaignSendService {
         && campaign.getStatus() != CampaignStatus.STOPPED) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "campaign not queueable");
     }
-    List<CampaignListEntity> linked = campaignLists.findByCampaignId(campaignId);
+    if (!StringUtils.hasText(campaign.getHtmlBody())
+        && !StringUtils.hasText(campaign.getTextBody())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "html or text body required");
+    }
+    List<CampaignListEntity> linked =
+        campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(campaignId);
     if (linked.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "campaign has no lists");
     }
-    // first list determines sending path (AD)
+    // first ordered list determines sending path (AD)
     ListEntity firstList =
         lists
             .findById(linked.get(0).getListId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
     String pathId = firstList.getSendingPathId();
 
+    // address-level dedupe (R1): same email → one queue row
     Map<String, MemberEntity> unique = new LinkedHashMap<>();
     for (CampaignListEntity cl : linked) {
       for (ListMemberEntity lm : listMembers.findByListId(cl.getListId())) {
@@ -74,7 +85,8 @@ public class CampaignSendService {
         members
             .findById(lm.getMemberId())
             .filter(MemberEntity::isEnabled)
-            .ifPresent(m -> unique.putIfAbsent(m.getId(), m));
+            .ifPresent(
+                m -> unique.putIfAbsent(m.getEmail().trim().toLowerCase(Locale.ROOT), m));
       }
     }
     campaign.setStatus(CampaignStatus.QUEUED);
@@ -89,6 +101,13 @@ public class CampaignSendService {
               pathId,
               "PENDING"));
     }
+    List<SmtpPort.Attachment> files =
+        attachments.findByCampaignId(campaignId).stream()
+            .map(
+                a ->
+                    new SmtpPort.Attachment(
+                        a.getFilename(), a.getContentType(), a.getContent()))
+            .toList();
     campaign.setStatus(CampaignStatus.SENDING);
     campaigns.save(campaign);
     for (SendQueueEntity row : queue.findByCampaignId(campaignId)) {
@@ -101,7 +120,8 @@ public class CampaignSendService {
               row.getEmail(),
               campaign.getSubject(),
               campaign.getTextBody(),
-              campaign.getHtmlBody()));
+              campaign.getHtmlBody(),
+              files));
       row.setStatus("SENT");
       queue.save(row);
     }

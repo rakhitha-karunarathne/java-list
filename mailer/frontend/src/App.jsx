@@ -2,6 +2,227 @@ import { useEffect, useState } from 'react'
 
 const TOKEN_KEY = 'listmailer.jwt'
 
+function authHeaders(token) {
+  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+}
+
+function Compose({ token, onError }) {
+  const [lists, setLists] = useState([])
+  const [selected, setSelected] = useState([])
+  const [subject, setSubject] = useState('')
+  const [htmlBody, setHtmlBody] = useState('<p>Hello</p>')
+  const [textBody, setTextBody] = useState('Hello')
+  const [preview, setPreview] = useState('html')
+  const [campaignId, setCampaignId] = useState('')
+  const [status, setStatus] = useState('')
+  const [attachment, setAttachment] = useState(null)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    fetch('/api/lists', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`)
+        return r.json()
+      })
+      .then(setLists)
+      .catch(() => setLists([]))
+  }, [token])
+
+  function toggleList(id) {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  function moveList(id, dir) {
+    setSelected((prev) => {
+      const i = prev.indexOf(id)
+      if (i < 0) return prev
+      const j = i + dir
+      if (j < 0 || j >= prev.length) return prev
+      const next = [...prev]
+      ;[next[i], next[j]] = [next[j], next[i]]
+      return next
+    })
+  }
+
+  async function fileToAttachment(file) {
+    const buf = await file.arrayBuffer()
+    const bytes = new Uint8Array(buf)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    return {
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+      contentBase64: btoa(binary),
+    }
+  }
+
+  async function bodyPayload() {
+    const attachments = attachment ? [await fileToAttachment(attachment)] : []
+    return {
+      subject,
+      htmlBody,
+      textBody,
+      listIds: selected,
+      attachments,
+    }
+  }
+
+  async function saveDraft() {
+    onError('')
+    setMsg('')
+    try {
+      const payload = await bodyPayload()
+      const res = await fetch(campaignId ? `/api/campaigns/${campaignId}` : '/api/campaigns', {
+        method: campaignId ? 'PUT' : 'POST',
+        headers: authHeaders(token),
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        onError(`Save failed (${res.status})`)
+        return
+      }
+      const body = await res.json()
+      setCampaignId(body.id)
+      setStatus(body.status)
+      setSelected(body.listIds || [])
+      if (body.subject != null) setSubject(body.subject)
+      if (body.htmlBody != null) setHtmlBody(body.htmlBody)
+      if (body.textBody != null) setTextBody(body.textBody)
+      setMsg(`Saved Draft ${body.id}`)
+    } catch (e) {
+      onError(e.message || String(e))
+    }
+  }
+
+  async function queueCampaign() {
+    onError('')
+    setMsg('')
+    if (!campaignId) {
+      onError('Save a Draft first')
+      return
+    }
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/queue`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const t = await res.text()
+        onError(`Queue failed (${res.status}): ${t}`)
+        return
+      }
+      const body = await res.json()
+      setStatus(body.status)
+      setMsg(`Queued → ${body.status}; sent ${body.sentCount}`)
+    } catch (e) {
+      onError(e.message || String(e))
+    }
+  }
+
+  return (
+    <section style={{ maxWidth: 840 }}>
+      <h2>Compose</h2>
+      {msg ? <p>{msg}</p> : null}
+      {status ? (
+        <p>
+          Campaign <code>{campaignId}</code> — <strong>{status}</strong>
+        </p>
+      ) : null}
+      <label>
+        Subject
+        <input value={subject} onChange={(e) => setSubject(e.target.value)} style={{ width: '100%' }} />
+      </label>
+      <fieldset style={{ marginTop: '1rem' }}>
+        <legend>Lists (order = first Sending path)</legend>
+        {lists.map((l) => (
+          <div key={l.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={selected.includes(l.id)}
+                onChange={() => toggleList(l.id)}
+              />{' '}
+              {l.name}
+            </label>
+            {selected.includes(l.id) ? (
+              <>
+                <button type="button" onClick={() => moveList(l.id, -1)}>
+                  ↑
+                </button>
+                <button type="button" onClick={() => moveList(l.id, 1)}>
+                  ↓
+                </button>
+              </>
+            ) : null}
+          </div>
+        ))}
+        <p style={{ fontSize: '0.85rem', color: '#555' }}>
+          Selected order: {selected.map((id) => lists.find((l) => l.id === id)?.name || id).join(' → ') || '—'}
+        </p>
+      </fieldset>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+        <label>
+          HTML
+          <textarea
+            value={htmlBody}
+            onChange={(e) => setHtmlBody(e.target.value)}
+            rows={10}
+            style={{ width: '100%', fontFamily: 'monospace' }}
+          />
+        </label>
+        <label>
+          Text
+          <textarea
+            value={textBody}
+            onChange={(e) => setTextBody(e.target.value)}
+            rows={10}
+            style={{ width: '100%', fontFamily: 'monospace' }}
+          />
+        </label>
+      </div>
+      <p>
+        Preview:{' '}
+        <button type="button" onClick={() => setPreview('html')}>
+          HTML
+        </button>{' '}
+        <button type="button" onClick={() => setPreview('text')}>
+          Text
+        </button>
+      </p>
+      <div
+        style={{
+          border: '1px solid #ccc',
+          padding: '1rem',
+          minHeight: 80,
+          background: '#fafafa',
+          whiteSpace: preview === 'text' ? 'pre-wrap' : undefined,
+        }}
+      >
+        {preview === 'html' ? (
+          <div dangerouslySetInnerHTML={{ __html: htmlBody }} />
+        ) : (
+          textBody
+        )}
+      </div>
+      <p style={{ fontSize: '0.85rem', color: '#555' }}>
+        Tip: reference an image URL in HTML (blob rewrite is a later story). Add one attachment below.
+      </p>
+      <label>
+        Attachment
+        <input type="file" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+      </label>
+      <p style={{ marginTop: '1rem' }}>
+        <button type="button" onClick={saveDraft}>
+          Save Draft
+        </button>{' '}
+        <button type="button" onClick={queueCampaign}>
+          Queue
+        </button>
+      </p>
+    </section>
+  )
+}
+
 function App() {
   const [email, setEmail] = useState('admin@example.com')
   const [password, setPassword] = useState('changeme')
@@ -73,10 +294,7 @@ function App() {
     setError('')
     const res = await fetch(`/api/parameters/${encodeURIComponent(key)}`, {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(token),
       body: JSON.stringify({ value }),
     })
     if (!res.ok) {
@@ -88,7 +306,7 @@ function App() {
   }
 
   return (
-    <main style={{ fontFamily: 'system-ui', padding: '2rem', maxWidth: 720 }}>
+    <main style={{ fontFamily: 'system-ui', padding: '2rem', maxWidth: 900 }}>
       <h1>List Mailer</h1>
       {!token ? (
         <form onSubmit={onLogin} style={{ maxWidth: 420 }}>
@@ -118,20 +336,32 @@ function App() {
             <button type="button" onClick={() => setView('home')}>
               Home
             </button>{' '}
+            <button type="button" onClick={() => setView('compose')}>
+              Compose
+            </button>{' '}
             <button type="button" onClick={() => setView('parameters')}>
               Parameters
             </button>
           </p>
+          {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
           {view === 'home' ? (
             <p>
               <code>/api/ping</code>: <strong>{ping}</strong>
             </p>
-          ) : (
+          ) : null}
+          {view === 'compose' ? <Compose token={token} onError={setError} /> : null}
+          {view === 'parameters' ? (
             <section>
               <h2>Parameters</h2>
-              {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
               {params.map((p) => (
-                <div key={p.key} style={{ marginBottom: '1.25rem', borderBottom: '1px solid #ddd', paddingBottom: '1rem' }}>
+                <div
+                  key={p.key}
+                  style={{
+                    marginBottom: '1.25rem',
+                    borderBottom: '1px solid #ddd',
+                    paddingBottom: '1rem',
+                  }}
+                >
                   <label>
                     <code>{p.key}</code>
                     <input
@@ -145,7 +375,7 @@ function App() {
                 </div>
               ))}
             </section>
-          )}
+          ) : null}
         </>
       )}
     </main>

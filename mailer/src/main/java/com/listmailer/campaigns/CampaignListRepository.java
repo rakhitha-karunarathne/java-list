@@ -5,5 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CampaignListRepository extends JpaRepository<CampaignListEntity, CampaignListEntity.Pk> {
 
-  List<CampaignListEntity> findByCampaignId(String campaignId);
+  List<CampaignListEntity> findByCampaignIdOrderByPositionAscListIdAsc(String campaignId);
+
+  void deleteByCampaignId(String campaignId);
 }
