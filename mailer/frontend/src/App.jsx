@@ -274,6 +274,86 @@ function Compose({ token, onError }) {
   )
 }
 
+function MtsInboxes({ token, onError }) {
+  const [inboxes, setInboxes] = useState([])
+  const [mappings, setMappings] = useState([])
+  const [detail, setDetail] = useState(null)
+
+  function load() {
+    fetch('/api/mts/inboxes', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`)
+        return r.json()
+      })
+      .then(setInboxes)
+      .catch(() => setInboxes([]))
+    fetch('/api/mts/mappings', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`)
+        return r.json()
+      })
+      .then(setMappings)
+      .catch(() => setMappings([]))
+  }
+
+  useEffect(() => {
+    load()
+  }, [token])
+
+  async function openInbox(id) {
+    onError('')
+    const res = await fetch(`/api/mts/inboxes/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      onError(`inbox ${res.status}`)
+      return
+    }
+    setDetail(await res.json())
+  }
+
+  return (
+    <section>
+      <h2>Inboxes &amp; mappings</h2>
+      <p style={{ color: '#555' }}>Index only — open an inbox for senders and mappings (C8).</p>
+      <ul>
+        {inboxes.map((i) => (
+          <li key={i.id}>
+            <button type="button" onClick={() => openInbox(i.id)}>
+              {i.name}
+            </button>{' '}
+            {i.enabled ? '' : '(disabled)'} poll {i.pollIntervalMinutes}m
+          </li>
+        ))}
+      </ul>
+      <h3>All mappings</h3>
+      <ul>
+        {mappings.map((m) => (
+          <li key={m.id}>
+            {m.name} → lists {m.listIds?.join(', ')}{' '}
+            <button type="button" onClick={() => openInbox(m.inboxId)}>
+              inbox
+            </button>
+          </li>
+        ))}
+      </ul>
+      {detail ? (
+        <div style={{ marginTop: '1rem', borderTop: '1px solid #ddd', paddingTop: '1rem' }}>
+          <h3>{detail.name}</h3>
+          <p>
+            {detail.host}:{detail.port} user {detail.username}
+          </p>
+          <p>Authorized: {detail.authorizedSenders?.join(', ') || '—'}</p>
+          <p>Mappings: {detail.mappings?.map((m) => m.name).join(', ') || '—'}</p>
+          <button type="button" onClick={() => setDetail(null)}>
+            Close detail
+          </button>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
 function App() {
   const [email, setEmail] = useState('admin@example.com')
   const [password, setPassword] = useState('changeme')
@@ -392,6 +472,9 @@ function App() {
             </button>{' '}
             <button type="button" onClick={() => setView('parameters')}>
               Parameters
+            </button>{' '}
+            <button type="button" onClick={() => setView('mts')}>
+              Inboxes &amp; mappings
             </button>
           </p>
           {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
@@ -401,6 +484,7 @@ function App() {
             </p>
           ) : null}
           {view === 'compose' ? <Compose token={token} onError={setError} /> : null}
+          {view === 'mts' ? <MtsInboxes token={token} onError={setError} /> : null}
           {view === 'parameters' ? (
             <section>
               <h2>Parameters</h2>
