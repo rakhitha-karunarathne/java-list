@@ -43,7 +43,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Footers | Yes | Sidebar | Footer index + detail via row |
 | Parameters | Yes (Admin) | Sidebar | System tunables — stacked fields + descriptions |
 | Users | Yes (Admin) | Sidebar | User index |
-| User detail | No | Users row | Profile, roles, list grants (table with **Granted** only; List Manager → manage+send, List Sender → send; hidden for Admin), **Security** (MFA) |
+| User detail | No | Users row | Page sections: **Account** (Role, Enabled, Save) · **List Grants** · **Security** (MFA) |
 | Ops Logs | Yes | Sidebar | Send / bounce poll / MTS poll logs |
 | Audit | As specified in mock/IA | Sidebar or Admin group | Append-only audit (scoped) |
 
