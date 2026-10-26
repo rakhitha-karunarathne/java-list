@@ -1,5 +1,6 @@
 package com.listmailer.members;
 
+import com.listmailer.consent.ConsentService;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
@@ -8,6 +9,7 @@ import com.listmailer.users.UserListGrantRepository;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -34,18 +36,21 @@ public class MembersController {
   private final ListRepository lists;
   private final ListAccessService access;
   private final UserListGrantRepository grants;
+  private final ConsentService consent;
 
   public MembersController(
       MemberRepository members,
       ListMemberRepository listMembers,
       ListRepository lists,
       ListAccessService access,
-      UserListGrantRepository grants) {
+      UserListGrantRepository grants,
+      ConsentService consent) {
     this.members = members;
     this.listMembers = listMembers;
     this.lists = lists;
     this.access = access;
     this.grants = grants;
+    this.consent = consent;
   }
 
   @GetMapping
@@ -110,6 +115,15 @@ public class MembersController {
     return get(id);
   }
 
+  /** Starts consent clear-unsub via Notice path; does not clear unsub unilaterally (R2). */
+  @PostMapping("/{id}/consent-clear-unsub")
+  public Map<String, String> requestConsentClear(
+      @PathVariable String id, @RequestBody(required = false) ConsentClearBody body) {
+    requireVisible(id);
+    consent.requestClearUnsub(id, body == null ? null : body.listIds());
+    return Map.of("status", "consent_sent");
+  }
+
   @PostMapping("/{id}/lists/{listId}")
   @Transactional
   public MemberDetail reAdd(
@@ -123,7 +137,7 @@ public class MembersController {
     }
     var existing = listMembers.findByListIdAndMemberId(listId, id);
     if (existing.isPresent() && existing.get().isUnsubscribed()) {
-      // unsubscribed re-add ignored
+      // R2: unsubscribed re-add ignored — clear only via consent /approve
       return get(id);
     }
     if (existing.isEmpty()) {
@@ -201,4 +215,6 @@ public class MembersController {
   public record PatchBody(Boolean enabled, String disableReason, Boolean confirm) {}
 
   public record ReAddBody(Boolean confirm) {}
+
+  public record ConsentClearBody(List<String> listIds) {}
 }
