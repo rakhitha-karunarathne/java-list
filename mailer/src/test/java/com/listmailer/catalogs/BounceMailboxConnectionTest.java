@@ -32,27 +32,27 @@ class BounceMailboxConnectionTest {
             Optional.of(
                 new BounceMailboxEntity(
                     "b1", "B", "h", 143, "u", "secret", false, 15, Instant.now())));
-    when(probe.testImap(anyString(), anyInt(), anyString(), anyString(), anyBoolean()))
+    when(probe.testImap(anyString(), anyInt(), anyString(), anyString(), anyBoolean(), anyBoolean()))
         .thenReturn(MailConnectionProbe.Result.success());
 
     var r =
         controller.testConnection(
             new BounceMailboxesController.ConnectionTestRequest(
-                "h", 143, "u", "", false, "b1"));
+                "h", 143, "u", "", false, false, "b1"));
 
     assertTrue(r.ok());
-    verify(probe).testImap(eq("h"), eq(143), eq("u"), eq("secret"), eq(false));
+    verify(probe).testImap(eq("h"), eq(143), eq("u"), eq("secret"), eq(false), eq(false));
   }
 
   @Test
   void testConnectionReturnsFailureMessage() {
-    when(probe.testImap(anyString(), anyInt(), anyString(), anyString(), anyBoolean()))
+    when(probe.testImap(anyString(), anyInt(), anyString(), anyString(), anyBoolean(), anyBoolean()))
         .thenReturn(MailConnectionProbe.Result.failure("refused"));
 
     var r =
         controller.testConnection(
             new BounceMailboxesController.ConnectionTestRequest(
-                "h", 143, "u", "p", true, null));
+                "h", 143, "u", "p", true, false, null));
 
     assertFalse(r.ok());
     org.junit.jupiter.api.Assertions.assertEquals("refused", r.message());

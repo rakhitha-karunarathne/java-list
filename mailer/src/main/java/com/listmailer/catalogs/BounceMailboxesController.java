@@ -2,6 +2,7 @@ package com.listmailer.catalogs;
 
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.mailbox.MailConnectionProbe;
+import com.listmailer.mailbox.MailSecurity;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -44,7 +45,8 @@ public class BounceMailboxesController {
       password = require(body.mailboxId()).getPassword();
     }
     MailConnectionProbe.Result result =
-        probe.testImap(body.host(), body.port(), body.username(), password, body.useSsl());
+        probe.testImap(
+            body.host(), body.port(), body.username(), password, body.useSsl(), body.useTls());
     return new ConnectionTestResponse(result.ok(), result.message());
   }
 
@@ -58,18 +60,19 @@ public class BounceMailboxesController {
     validate(body, true);
     int poll = body.pollIntervalMinutes() > 0 ? body.pollIntervalMinutes() : DEFAULT_POLL_MINUTES;
     try {
-      return MailboxDetail.from(
-          mailboxes.save(
-              new BounceMailboxEntity(
-                  Guids.newGuid(),
-                  body.name().trim(),
-                  body.host().trim(),
-                  body.port(),
-                  body.username(),
-                  body.password(),
-                  body.useSsl(),
-                  poll,
-                  Instant.now())));
+      BounceMailboxEntity box =
+          new BounceMailboxEntity(
+              Guids.newGuid(),
+              body.name().trim(),
+              body.host().trim(),
+              body.port(),
+              body.username(),
+              body.password(),
+              body.useSsl(),
+              poll,
+              Instant.now());
+      box.setUseTls(body.useTls());
+      return MailboxDetail.from(mailboxes.save(box));
     } catch (DataIntegrityViolationException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "name already exists");
     }
@@ -92,6 +95,7 @@ public class BounceMailboxesController {
       box.setPassword(body.password());
     }
     box.setUseSsl(body.useSsl());
+    box.setUseTls(body.useTls());
     box.setPollIntervalMinutes(
         body.pollIntervalMinutes() > 0 ? body.pollIntervalMinutes() : DEFAULT_POLL_MINUTES);
     try {
@@ -122,6 +126,15 @@ public class BounceMailboxesController {
         || (passwordRequired && !StringUtils.hasText(body.password()))) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid bounce mailbox");
     }
+    security(body.useSsl(), body.useTls());
+  }
+
+  private static void security(boolean useSsl, boolean useTls) {
+    try {
+      MailSecurity.check(useSsl, useTls);
+    } catch (IllegalArgumentException ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
   }
 
   public record MailboxRequest(
@@ -131,10 +144,17 @@ public class BounceMailboxesController {
       String username,
       String password,
       boolean useSsl,
+      boolean useTls,
       int pollIntervalMinutes) {}
 
   public record ConnectionTestRequest(
-      String host, int port, String username, String password, boolean useSsl, String mailboxId) {}
+      String host,
+      int port,
+      String username,
+      String password,
+      boolean useSsl,
+      boolean useTls,
+      String mailboxId) {}
 
   public record ConnectionTestResponse(boolean ok, String message) {}
 
@@ -151,6 +171,7 @@ public class BounceMailboxesController {
       int port,
       String username,
       boolean useSsl,
+      boolean useTls,
       int pollIntervalMinutes) {
     static MailboxDetail from(BounceMailboxEntity b) {
       return new MailboxDetail(
@@ -160,6 +181,7 @@ public class BounceMailboxesController {
           b.getPort(),
           b.getUsername(),
           b.isUseSsl(),
+          b.isUseTls(),
           b.getPollIntervalMinutes());
     }
   }

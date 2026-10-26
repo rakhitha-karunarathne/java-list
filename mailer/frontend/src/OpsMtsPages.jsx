@@ -18,6 +18,7 @@ const INBOX_BLANK = {
   username: '',
   password: '',
   useSsl: false,
+  useTls: false,
   pollIntervalMinutes: 5,
   enabled: true,
 }
@@ -74,6 +75,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           username: inboxForm.username,
           password: inboxForm.password,
           useSsl: !!inboxForm.useSsl,
+          useTls: !!inboxForm.useTls,
           inboxId: creating ? null : nav.inboxId,
         }),
       )
@@ -121,6 +123,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             username: d.username || '',
             password: '',
             useSsl: !!d.useSsl,
+        useTls: !!d.useTls,
             pollIntervalMinutes: d.pollIntervalMinutes || 5,
             enabled: !!d.enabled,
           })
@@ -181,6 +184,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         username: d.username || '',
         password: '',
         useSsl: !!d.useSsl,
+        useTls: !!d.useTls,
         pollIntervalMinutes: d.pollIntervalMinutes || 5,
         enabled: !!d.enabled,
       })
@@ -340,7 +344,28 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             checked={!!inboxForm.useSsl}
             dirty={!valuesEqual(inboxForm.useSsl, inboxBase('useSsl'))}
             aria-label={fieldLabel('useSsl')}
-            onChange={(on) => setInboxForm({ ...inboxForm, useSsl: on })}
+            onChange={(on) =>
+              setInboxForm({
+                ...inboxForm,
+                useSsl: on,
+                useTls: on ? false : !!inboxForm.useTls,
+              })
+            }
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('useTls')}
+          <Toggle
+            checked={!!inboxForm.useTls}
+            dirty={!valuesEqual(inboxForm.useTls, inboxBase('useTls'))}
+            aria-label={fieldLabel('useTls')}
+            onChange={(on) =>
+              setInboxForm({
+                ...inboxForm,
+                useTls: on,
+                useSsl: on ? false : !!inboxForm.useSsl,
+              })
+            }
           />
         </label>
         {!creating ? (

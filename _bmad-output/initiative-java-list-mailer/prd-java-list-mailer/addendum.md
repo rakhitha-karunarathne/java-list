@@ -46,9 +46,10 @@ Open for architecture: which extra standard headers beyond Message-ID to parse i
 | Bounce mailbox / mail-to-send poll | 15 minutes (per mailbox) |
 | Bounce-process | 02:00 daily, timezone UTC |
 | Send queue interval | 15 minutes |
-| Message interval | 1 second |
-| Messages per run | 900 |
-| Message rate | 3600 / hour |
+| Delay per email | 1000 ms |
+| Send batch size | 600 |
+| Send batch duration | 10 minutes |
+| Messages per hour | 3600, rolling 60 minutes |
 | Hard bounce limit | 3 |
 | Soft bounce limit | 6 initially (2× hard); then independent |
 | Holdback multiplier | 2 |

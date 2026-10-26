@@ -27,7 +27,7 @@ class BounceMailboxesControllerTest {
             });
     var req =
         new BounceMailboxesController.MailboxRequest(
-            "Inbox", "imap.example.com", 993, "u", "p", true, 0);
+            "Inbox", "imap.example.com", 993, "u", "p", true, false, 0);
     var detail = controller.create(req);
     assertEquals(15, detail.pollIntervalMinutes());
     ArgumentCaptor<BounceMailboxEntity> captor = ArgumentCaptor.forClass(BounceMailboxEntity.class);

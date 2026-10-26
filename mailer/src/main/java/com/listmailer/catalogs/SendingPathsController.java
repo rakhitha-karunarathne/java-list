@@ -2,6 +2,7 @@ package com.listmailer.catalogs;
 
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.mailbox.MailConnectionProbe;
+import com.listmailer.mailbox.MailSecurity;
 import com.listmailer.mts.MtsFromDomainService;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -52,7 +53,8 @@ public class SendingPathsController {
       password = require(body.pathId()).getPassword();
     }
     MailConnectionProbe.Result result =
-        probe.testSmtp(body.host(), body.port(), body.username(), password, body.useTls());
+        probe.testSmtp(
+            body.host(), body.port(), body.username(), password, body.useSsl(), body.useTls());
     return new ConnectionTestResponse(result.ok(), result.message());
   }
 
@@ -67,17 +69,19 @@ public class SendingPathsController {
     try {
       SendingPathEntity saved =
           paths.save(
-              new SendingPathEntity(
-                  Guids.newGuid(),
-                  body.name().trim(),
-                  body.host().trim(),
-                  body.port(),
-                  body.username(),
-                  body.password(),
-                  body.fromEmail().trim(),
-                  body.fromName().trim(),
-                  body.useTls(),
-                  Instant.now()));
+              path(
+                  new SendingPathEntity(
+                      Guids.newGuid(),
+                      body.name().trim(),
+                      body.host().trim(),
+                      body.port(),
+                      body.username(),
+                      body.password(),
+                      body.fromEmail().trim(),
+                      body.fromName().trim(),
+                      body.useTls(),
+                      Instant.now()),
+                  body.useSsl()));
       return PathDetail.from(saved, List.of());
     } catch (DataIntegrityViolationException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "name already exists");
@@ -103,6 +107,7 @@ public class SendingPathsController {
     path.setFromEmail(body.fromEmail().trim());
     path.setFromName(body.fromName().trim());
     path.setUseTls(body.useTls());
+    path.setUseSsl(body.useSsl());
     try {
       SendingPathEntity saved = paths.save(path);
       fromDomain.revalidateForSendingPath(id);
@@ -152,6 +157,20 @@ public class SendingPathsController {
         || (passwordRequired && !StringUtils.hasText(body.password()))) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid sending path");
     }
+    security(body.useSsl(), body.useTls());
+  }
+
+  private static SendingPathEntity path(SendingPathEntity entity, boolean useSsl) {
+    entity.setUseSsl(useSsl);
+    return entity;
+  }
+
+  private static void security(boolean useSsl, boolean useTls) {
+    try {
+      MailSecurity.check(useSsl, useTls);
+    } catch (IllegalArgumentException ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
   }
 
   public record PathRequest(
@@ -162,10 +181,17 @@ public class SendingPathsController {
       String password,
       String fromEmail,
       String fromName,
-      boolean useTls) {}
+      boolean useTls,
+      boolean useSsl) {}
 
   public record ConnectionTestRequest(
-      String host, int port, String username, String password, boolean useTls, String pathId) {}
+      String host,
+      int port,
+      String username,
+      String password,
+      boolean useTls,
+      boolean useSsl,
+      String pathId) {}
 
   public record ConnectionTestResponse(boolean ok, String message) {}
 
@@ -186,6 +212,7 @@ public class SendingPathsController {
       String fromEmail,
       String fromName,
       boolean useTls,
+      boolean useSsl,
       List<UsedBy> usedBy) {
     static PathDetail from(SendingPathEntity p, List<UsedBy> usedBy) {
       return new PathDetail(
@@ -197,6 +224,7 @@ public class SendingPathsController {
           p.getFromEmail(),
           p.getFromName(),
           p.isUseTls(),
+          p.isUseSsl(),
           usedBy);
     }
   }

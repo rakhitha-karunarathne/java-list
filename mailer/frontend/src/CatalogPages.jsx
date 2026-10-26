@@ -30,6 +30,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     fromEmail: '',
     fromName: '',
     useTls: false,
+    useSsl: false,
   })
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
@@ -56,6 +57,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
           username: form.username,
           password: form.password,
           useTls: !!form.useTls,
+          useSsl: !!form.useSsl,
           pathId: creating ? null : detailId,
         }),
       )
@@ -98,6 +100,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
           fromEmail: d.fromEmail,
           fromName: d.fromName,
           useTls: d.useTls,
+          useSsl: !!d.useSsl,
         }
         setForm(next)
         setSaved(next)
@@ -142,6 +145,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         fromEmail: d.fromEmail,
         fromName: d.fromName,
         useTls: d.useTls,
+        useSsl: !!d.useSsl,
       }
       setForm(next)
       setSaved(next)
@@ -255,7 +259,20 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               checked={!!form.useTls}
               dirty={!valuesEqual(form.useTls, base.useTls)}
               aria-label={fieldLabel('useTls')}
-              onChange={(on) => setForm({ ...form, useTls: on })}
+              onChange={(on) =>
+                setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
+              }
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('useSsl')}
+            <Toggle
+              checked={!!form.useSsl}
+              dirty={!valuesEqual(form.useSsl, base.useSsl)}
+              aria-label={fieldLabel('useSsl')}
+              onChange={(on) =>
+                setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
+              }
             />
           </label>
           <ConnectionTestBanner result={connTest} />
@@ -355,7 +372,20 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
                 checked={!!form.useTls}
                 dirty={!valuesEqual(form.useTls, saved.useTls)}
                 aria-label={fieldLabel('useTls')}
-                onChange={(on) => setForm({ ...form, useTls: on })}
+                onChange={(on) =>
+                  setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
+                }
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('useSsl')}
+              <Toggle
+                checked={!!form.useSsl}
+                dirty={!valuesEqual(form.useSsl, saved.useSsl)}
+                aria-label={fieldLabel('useSsl')}
+                onChange={(on) =>
+                  setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
+                }
               />
             </label>
             <ConnectionTestBanner result={connTest} />
@@ -632,6 +662,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
       username: '',
       password: '',
       useSsl: false,
+      useTls: false,
       pollIntervalMinutes: 15,
     },
     creating ? 'bounce-create' : `bounce-${detailId || 'x'}`,
@@ -654,6 +685,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           username: form.username,
           password: form.password,
           useSsl: !!form.useSsl,
+          useTls: !!form.useTls,
           mailboxId: creating ? null : detailId,
         }),
       )
@@ -693,6 +725,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           username: d.username,
           password: '',
           useSsl: d.useSsl,
+          useTls: !!d.useTls,
           pollIntervalMinutes: d.pollIntervalMinutes,
         })
       })
@@ -732,6 +765,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         username: d.username,
         password: '',
         useSsl: d.useSsl,
+        useTls: !!d.useTls,
         pollIntervalMinutes: d.pollIntervalMinutes,
       })
     } catch (err) {
@@ -822,7 +856,20 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               checked={!!form.useSsl}
               dirty={!valuesEqual(form.useSsl, blank.useSsl)}
               aria-label={fieldLabel('useSsl')}
-              onChange={(on) => setForm({ ...form, useSsl: on })}
+              onChange={(on) =>
+                setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
+              }
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('useTls')}
+            <Toggle
+              checked={!!form.useTls}
+              dirty={!valuesEqual(form.useTls, blank.useTls)}
+              aria-label={fieldLabel('useTls')}
+              onChange={(on) =>
+                setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
+              }
             />
           </label>
           <ConnectionTestBanner result={connTest} />
@@ -910,7 +957,20 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               checked={!!form.useSsl}
               dirty={!valuesEqual(form.useSsl, saved.useSsl)}
               aria-label={fieldLabel('useSsl')}
-              onChange={(on) => setForm({ ...form, useSsl: on })}
+              onChange={(on) =>
+                setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
+              }
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('useTls')}
+            <Toggle
+              checked={!!form.useTls}
+              dirty={!valuesEqual(form.useTls, saved.useTls)}
+              aria-label={fieldLabel('useTls')}
+              onChange={(on) =>
+                setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
+              }
             />
           </label>
           <ConnectionTestBanner result={connTest} />

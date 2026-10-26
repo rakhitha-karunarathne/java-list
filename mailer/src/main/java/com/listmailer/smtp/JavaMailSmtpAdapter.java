@@ -3,6 +3,7 @@ package com.listmailer.smtp;
 import com.listmailer.catalogs.SendingPathEntity;
 import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ports.SmtpPort;
+import com.listmailer.mailbox.MailSecurity;
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
 import jakarta.mail.PasswordAuthentication;
@@ -33,13 +34,8 @@ public class JavaMailSmtpAdapter implements SmtpPort {
         paths
             .findById(message.sendingPathId())
             .orElseThrow(() -> new IllegalArgumentException("unknown sending path"));
-    Properties props = new Properties();
-    props.put("mail.smtp.host", path.getHost());
-    props.put("mail.smtp.port", String.valueOf(path.getPort()));
-    props.put("mail.smtp.auth", "true");
-    if (path.isUseTls()) {
-      props.put("mail.smtp.starttls.enable", "true");
-    }
+    Properties props =
+        MailSecurity.smtp(path.getHost(), path.getPort(), path.isUseSsl(), path.isUseTls());
     Session session =
         Session.getInstance(
             props,

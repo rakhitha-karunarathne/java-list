@@ -14,7 +14,7 @@ risk: high
 
 ## Description
 
-Multi-list campaigns: compose (HTML/text, images, attachments, preview, test send), lifecycle (Draft → Queued → Sending → Finished; Stop → Stopped; Requeue from Stopped or from Finished after Add List), blob-storage `/dl`, system send-queue with throttle, open pixel + reporting. Uses smtp-adapter and GreenMail in test.
+Multi-list campaigns: compose (HTML/text, images, attachments, preview, test send), lifecycle (Draft → Queued → Sending → Finished; Stop → Stopped; Requeue from Stopped or from Finished after Add List), blob-storage `/dl`, system send-queue with pacing, open pixel + reporting. Uses smtp-adapter and GreenMail in test.
 
 ## Outcome
 
@@ -28,7 +28,7 @@ R2 (parent R19): Text + HTML, images, attachments; compose has HTML/Text preview
 
 R3 (parent R20): Test send from compose to pasted addresses; uses first List’s path; ignores bounce-disable; not campaign sent-stats; failures → Ops Logs / Admin Attention.
 
-R4 (parent R21): System send-queue processor; system-wide throttle only; Lists only enqueue.
+R4 (parent R21): System send-queue processor; system-wide pacing only (delay per email, batch size, batch duration, rolling hourly cap; a run sends only the room left in that hour); Lists only enqueue.
 
 R5 (parent R22): Image-fetch Off / Best Effort / Mandatory + SSRF guards; rewritten images CDN TTL after campaign’s most recent Finished (Requeue that finishes again restarts TTL; Stopped does not).
 
@@ -60,7 +60,7 @@ C5 (parent R35): Already-sent addresses are never re-sent on Requeue; test sends
 2. Status Draft → Queued → Sending → Finished; Stop → Stopped; Requeue from Stopped; Requeue from Finished after adding a List (new-list addresses only, exclude already-sent); index/detail show status + Stop/Requeue.
 3. Test send ignores bounce-disable; failures land in ops/Attention hooks.
 4. Images stored as DB blobs; public `/dl/<campaignGuid>/<file>`; cascade delete with campaign.
-5. Send-queue processes with system throttle; pixel async; reporting shows unique/total opens.
+5. Send-queue processes with system send pacing; pixel async; reporting shows unique/total opens.
 6. GreenMail test path can prove enqueue → SMTP → pixel open recorded.
 
 ## Boundaries

@@ -26,15 +26,9 @@ public class ImapMailboxQuery implements MailboxPort {
 
   @Override
   public void poll(MailboxConn conn, MessageHandler handler) {
-    Properties props = new Properties();
-    String protocol = conn.useSsl() ? "imaps" : "imap";
-    props.put("mail.store.protocol", protocol);
-    props.put("mail." + protocol + ".host", conn.host());
-    props.put("mail." + protocol + ".port", String.valueOf(conn.port()));
-    if (conn.useSsl()) {
-      props.put("mail.imaps.ssl.enable", "true");
-      props.put("mail.imaps.ssl.trust", "*");
-    }
+    Properties props =
+        MailSecurity.imap(conn.host(), conn.port(), conn.useSsl(), conn.useTls());
+    String protocol = MailSecurity.imapProtocol(conn.useSsl());
     Session session = Session.getInstance(props);
     try (Store store = session.getStore(protocol)) {
       store.connect(conn.host(), conn.port(), conn.username(), conn.password());

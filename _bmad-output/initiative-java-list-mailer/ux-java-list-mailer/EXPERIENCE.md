@@ -76,7 +76,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Create form | **Own page** (not on the index): index shows table + Create/Add action only; opens a dedicated page with back to index (not a second card under the table; not a sidebar item) |
 | Add Mail Box | Mail-to-Send and Bounce: label is **Add Mail Box** (not Create) — mailbox already exists on the mail server; we only add it to the polling list |
 | Test Connection | Sending Path (SMTP), MTS inbox, and Bounce mail box (IMAP): button attempts connect only; shows success or failure with error detail; does not save or send mail |
-| Connection field order | Host then Port; Username then Password (then From / poll / TLS as applicable) |
+| Connection field order | Host then Port; Username then Password (then From / poll / Use SSL and Use TLS as applicable). SSL and TLS are separate; turning one on turns the other off |
 | Compose preview | HTML / Text tabs; live sync from editors |
 | Compose body editors | HTML Body and Text Body stack vertically (label above each field) — not side-by-side on one horizontal line |
 | Compose lists | **HTML table** (Include / Name / Order / Reorder) — not a stack of checkbox rows; first included list sets the sending path |

@@ -46,7 +46,7 @@ Terminology: login accounts = users. People on lists = **members** (phpList “u
 | Bounce mailboxes | Polled for bounces; not part of list config. Many mailboxes. **Poll interval configurable per mailbox** (scheduled task). **Default: 15 minutes.** |
 | Footers | Own page. List points at one. Mail-to-send mapping can point at one. |
 | Notice sending path | One UI-configured path for rejections, issue notices, admin notices / digests, **consent (accept/reject) emails**, and other admin/notification mail. **Bypasses bounce-disable.** May email an **unsubscribed** address **only** for consent/admin notices. **Campaign queue** still honors disable and never sends to unsubscribed list memberships. |
-| **Parameters** | Single **admin-only** page + entity for **all** system-wide UI-tunable non-credential settings: bounce limits, VERP, schedules (incl. bounce-process **02:00** + timezone default **UTC**), throttle, image fetch timeout default **30s**, payload/image hard uppers, campaign TTL default/max, bounce log TTLs, audit retention, image-fetch mode, consent expiry, auto-block default **10/day**, hard bounce limit **3**, soft default **2× hard**, holdback multiplier **2**, etc. **Credentials** stay on sending paths / mailboxes only. **Signing secrets** for pixel / unsubscribe / consent tokens live in **env / secret file**, never Parameters plaintext. |
+| **Parameters** | Single **admin-only** page + entity for **all** system-wide UI-tunable non-credential settings: bounce limits, VERP, schedules (incl. bounce-process **02:00** + timezone default **UTC**), send pacing, image fetch timeout default **30s**, payload/image hard uppers, campaign TTL default/max, bounce log TTLs, audit retention, image-fetch mode, consent expiry, auto-block default **10/day**, hard bounce limit **3**, soft default **2× hard**, holdback multiplier **2**, etc. **Credentials** stay on sending paths / mailboxes only. **Signing secrets** for pixel / unsubscribe / consent tokens live in **env / secret file**, never Parameters plaintext. |
 | **Attention dashboard** | Inbox of items needing human action. **V1 catalog:** uncorrelated bounces; From-domain / sender issues; mail-to-send holds; Mandatory image / payload failures. Not a second store — links into bounce log, issues, etc. **Admin** sees all. **List managers** see items for **their lists / members** only. System-wide items admin-only. |
 
 ## Lists
@@ -128,7 +128,7 @@ Bounce tracking is **global per email address**. A bounce must identify the **em
 
 - Bounce **mailbox poll** and mail-to-send **inbox poll** — per mailbox, default **15 minutes** (ingest / correlate / log).
 - **Bounce-process** task — system-wide on **Parameters**, **default once per day at 02:00** in the **Parameters timezone** (**default timezone: UTC**). Owns consecutive counting and auto-disable. Does **not** reset streaks on SMTP SEND OK.
-- Send-queue processor — system-wide, default **15 minutes**, plus throttle params above.
+- Send-queue processor — system-wide, default **15 minutes**, plus the send-pacing Parameters above.
 
 **Bounce-process algorithm** (per email with unprocessed bounce activity):
 
@@ -149,11 +149,12 @@ Bounce tracking is **global per email address**. A bounce must identify the **em
 - UI-composed campaigns have no substitute From → path From only
 - Support text and HTML, images, attachments
 - **Send queue** processed by a system-wide scheduled task; schedule interval on **Parameters**, **default 15 minutes**
-- **Send throttle** (system-wide **Parameters** only; **no per-list/path overrides** planned):
-  - **Message interval** — wait after each successful send before the next. **Default: 1 second**
-  - **Messages per run** — max queue rows to send in one scheduler run. **Default: 900**
-  - **Message rate** — max messages per hour (rolling). **Default: 3600 / hour**
-  - **Enforced only by the send-queue processor.** Lists/campaigns **only enqueue**; they do not check throttle.
+- **Send pacing** (system-wide **Parameters** only; **no per-list/path overrides**; no per-minute throttle):
+  - **Delay per email** — pause before each SMTP send after the first in a run. **Default: 1000 ms**
+  - **Batch size** — maximum SMTP sends in one scheduler run. **Default: 600**
+  - **Batch duration** — the run stops before the next send after this time, even if the batch is not full. A send already in flight may finish. **Default: 10 minutes**
+  - **Messages per hour** — maximum messages sent in the last 60 minutes. A run sends only the room left in that hour, and never more than the batch size. When the hour is full, the run sends nothing. **Default: 3600**
+  - **Enforced only by the send-queue processor.** Lists/campaigns **only enqueue**; they do not check pacing.
 
 ### HTML body, images, attachments (mail-to-send and outbound)
 

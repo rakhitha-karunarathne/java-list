@@ -64,7 +64,7 @@ R19 (prd FR-17): Text + HTML, images, attachments; compose has HTML/Text preview
 
 R20 (prd FR-38): Test send from compose to pasted addresses; uses first List’s path; ignores bounce-disable; not campaign sent-stats; failures → Ops Logs / Admin Attention.
 
-R21 (prd FR-18, FR-19): System send-queue processor; system-wide throttle only; Lists only enqueue.
+R21 (prd FR-18, FR-19): System send-queue processor; system-wide pacing only (delay per email 1000 ms, batch size 600, batch duration 10 minutes, 3600 messages per rolling hour; a run sends only the room left in that hour); Lists only enqueue.
 
 R22 (prd FR-20, FR-21): Image-fetch Off / Best Effort / Mandatory + SSRF guards; rewritten images CDN TTL after campaign’s most recent Finished (Requeue that finishes again restarts TTL; Stopped does not).
 

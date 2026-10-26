@@ -22,7 +22,13 @@ public interface MailboxPort {
   }
 
   record MailboxConn(
-      String host, int port, String username, String password, boolean useSsl, String folder) {
+      String host,
+      int port,
+      String username,
+      String password,
+      boolean useSsl,
+      boolean useTls,
+      String folder) {
     public MailboxConn {
       if (folder == null || folder.isBlank()) {
         folder = "INBOX";

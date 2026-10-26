@@ -105,6 +105,7 @@ public class MtsIngestService {
               box.getUsername(),
               box.getPassword(),
               box.isUseSsl(),
+              box.isUseTls(),
               "INBOX"),
           raw -> {
             MtsGateService.Decision decision = gates.evaluate(box.getId(), box.getName(), raw);

@@ -96,6 +96,7 @@ public class BouncePollService {
               box.getUsername(),
               box.getPassword(),
               box.isUseSsl(),
+              box.isUseTls(),
               "INBOX"),
           raw -> {
             String headersJson = headersToText(raw.headers());

@@ -32,6 +32,9 @@ public class BounceMailboxEntity {
   @Column(name = "use_ssl", nullable = false)
   private boolean useSsl;
 
+  @Column(name = "use_tls", nullable = false)
+  private boolean useTls;
+
   @Column(name = "poll_interval_minutes", nullable = false)
   private int pollIntervalMinutes;
 
@@ -118,6 +121,14 @@ public class BounceMailboxEntity {
 
   public void setUseSsl(boolean useSsl) {
     this.useSsl = useSsl;
+  }
+
+  public boolean isUseTls() {
+    return useTls;
+  }
+
+  public void setUseTls(boolean useTls) {
+    this.useTls = useTls;
   }
 
   public int getPollIntervalMinutes() {

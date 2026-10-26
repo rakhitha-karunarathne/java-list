@@ -38,6 +38,9 @@ public class SendingPathEntity {
   @Column(name = "use_tls", nullable = false)
   private boolean useTls;
 
+  @Column(name = "use_ssl", nullable = false)
+  private boolean useSsl;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -132,6 +135,14 @@ public class SendingPathEntity {
 
   public void setUseTls(boolean useTls) {
     this.useTls = useTls;
+  }
+
+  public boolean isUseSsl() {
+    return useSsl;
+  }
+
+  public void setUseSsl(boolean useSsl) {
+    this.useSsl = useSsl;
   }
 
   public Instant getCreatedAt() {

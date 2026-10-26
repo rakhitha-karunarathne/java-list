@@ -1,0 +1,8 @@
+ALTER TABLE sending_paths
+  ADD COLUMN use_ssl TINYINT(1) NOT NULL DEFAULT 0;
+
+ALTER TABLE bounce_mailboxes
+  ADD COLUMN use_tls TINYINT(1) NOT NULL DEFAULT 0;
+
+ALTER TABLE mts_inboxes
+  ADD COLUMN use_tls TINYINT(1) NOT NULL DEFAULT 0;

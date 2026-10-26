@@ -35,6 +35,7 @@ class ImapMailboxQueryTest {
         "mailer@localhost",
         "mailer",
         false,
+        false,
         "INBOX");
   }
 
@@ -72,7 +73,7 @@ class ImapMailboxQueryTest {
   void badCredentialsFailFast() {
     MailboxPort.MailboxConn bad =
         new MailboxPort.MailboxConn(
-            "127.0.0.1", greenMail.getImap().getPort(), "mailer", "wrong", false, "INBOX");
+            "127.0.0.1", greenMail.getImap().getPort(), "mailer", "wrong", false, false, "INBOX");
     MailboxQueryException ex =
         assertThrows(MailboxQueryException.class, () -> query.poll(bad, m -> true));
     assertTrue(ex.getMessage().contains("IMAP poll failed"));

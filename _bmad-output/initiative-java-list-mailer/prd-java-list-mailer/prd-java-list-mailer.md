@@ -39,11 +39,11 @@ The product wins when an existing phpList-shaped ops team can run the same daily
 
 Internal multi-role tool — light journeys; named operators for downstream UX.
 
-- **UJ-1. Ava (Admin) stands up catalogs and Parameters.** Ava signs in as Admin, creates sending paths and bounce mailboxes, sets the notice sending path, and tunes Parameters (bounce limits, throttle, image mode). She confirms the public HTTPS base URL and that origin TLS is Full or Full Strict. **Climax:** catalogs save; Attention is empty. **Edge:** Flexible mode is rejected / documented as unsupported.
+- **UJ-1. Ava (Admin) stands up catalogs and Parameters.** Ava signs in as Admin, creates sending paths and bounce mailboxes, sets the notice sending path, and tunes Parameters (bounce limits, send pacing, image mode). She confirms the public HTTPS base URL and that origin TLS is Full or Full Strict. **Climax:** catalogs save; Attention is empty. **Edge:** Flexible mode is rejected / documented as unsupported.
 
 - **UJ-2. Mei (List manager) maintains membership and watches Attention.** Mei opens her lists, paste-adds a block of addresses (skips invalid/dupes/already-on-list), removes members, reviews bounce-disabled members with `disable_reason`, and acts only on Attention items for her lists/members. **Climax:** membership and status match reality; scoped Attention is clear.
 
-- **UJ-3. Sam (List sender) composes and queues a multi-list campaign.** Sam picks lists, composes HTML+text, passes payload/image gates, queues (Draft → Queued → Sending → Finished). He may Stop mid-send and later Requeue, or after Finished add another List and Requeue so only new-list addresses not already sent receive mail. Deduped recipients use the first selected list’s sending path. Queue processor sends under system throttle. **Climax:** campaign finishes; open stats show unique vs total opens.
+- **UJ-3. Sam (List sender) composes and queues a multi-list campaign.** Sam picks lists, composes HTML+text, passes payload/image gates, queues (Draft → Queued → Sending → Finished). He may Stop mid-send and later Requeue, or after Finished add another List and Requeue so only new-list addresses not already sent receive mail. Deduped recipients use the first selected list’s sending path. Queue processor sends under system send pacing (FR-19). **Climax:** campaign finishes; open stats show unique vs total opens.
 
 - **UJ-4. Sam sends via mail-to-send.** Sam’s authorized From hits the mapped inbox; auth/spam pass; campaign is created (or held/deleted-and-notified on From-issue). **Climax:** one inbox message → one campaign; wrong-mailbox gets a notice, strangers get silence.
 
@@ -58,7 +58,7 @@ Internal multi-role tool — light journeys; named operators for downstream UX.
 - **Bounce mailbox** — Catalog IMAP mailbox polled for bounce/DSN mail (not part of List config).
 - **Footer** — Catalog reusable footer content; Lists and mail-to-send mappings reference it.
 - **Notice sending path** — Single UI-configured path for rejections, issue notices, admin digests, consent emails, and other system mail. **Bypasses bounce-disable**; may reach an unsubscribed address **only** for consent/admin notices.
-- **Parameters** — Admin-only system-wide UI-tunable non-credential settings (limits, schedules, throttle, TTLs, modes, etc.). Credentials stay on Sending paths / mailboxes; signing secrets stay in env/secret file.
+- **Parameters** — Admin-only system-wide UI-tunable non-credential settings (limits, schedules, send pacing, TTLs, modes, etc.). Credentials stay on Sending paths / mailboxes; signing secrets stay in env/secret file.
 - **Attention dashboard** — Inbox of items needing human action (links into bounce log, Issues, etc. — not a second store).
 - **Campaign** — Outbound send targeting one or more Lists; may be UI-composed or created from mail-to-send. Status: Draft · Queued · Sending · Finished · Stopped (FR-40); Stop and Requeue as specified there.
 - **Send queue** — Per-recipient rows for a Campaign send pass (deduped by address across selected Lists for that pass; Requeue never re-sends an address already sent for that Campaign).
@@ -150,7 +150,7 @@ Admin can configure exactly one Notice sending path used for system/consent/admi
 
 #### FR-7: Parameters (admin-only)
 
-Admin can edit all system-wide non-credential tunables on a single Parameters page/entity (bounce limits, VERP, schedules including bounce-process default 02:00 and timezone default UTC, throttle, image fetch timeout default 30s, payload/image hard uppers, campaign TTL default/max, bounce log TTLs, audit retention, **ops log retention default 90 days**, image-fetch mode, consent expiry, auto-block default 10/day, hard bounce limit default 3, soft default initially 2× hard then independent, holdback multiplier default 2, etc.). Credentials remain only on Sending paths / mailboxes. Signing secrets for pixel/unsubscribe/consent are not stored as Parameters plaintext.
+Admin can edit all system-wide non-credential tunables on a single Parameters page/entity (bounce limits, VERP, schedules including bounce-process default 02:00 and timezone default UTC, send pacing, image fetch timeout default 30s, payload/image hard uppers, campaign TTL default/max, bounce log TTLs, audit retention, **ops log retention default 90 days**, image-fetch mode, consent expiry, auto-block default 10/day, hard bounce limit default 3, soft default initially 2× hard then independent, holdback multiplier default 2, etc.). Credentials remain only on Sending paths / mailboxes. Signing secrets for pixel/unsubscribe/consent are not stored as Parameters plaintext.
 
 **Consequences (testable):**
 - Changing hard bounce limit does not change an already-customized soft limit.
@@ -219,9 +219,9 @@ Admin and List managers have a sidebar **Members** page: a searchable list of Me
 
 Member page shows Lists they are on, Lists they unsubscribed from, global status + `disable_reason`, and Member timeline = Audit log filtered by this Member (send, open, bounce, disable/enable, unsubscribe, consent lifecycle, notices). Opened from the Members index (FR-36) or deep links elsewhere — not a sidebar destination.
 
-### 4.4 Campaigns, queue, throttle, content limits
+### 4.4 Campaigns, queue, send pacing, content limits
 
-**Description:** Compose or ingest Campaigns; dedupe; process Send queue under system throttle; enforce payload and stored-image rules; TTL for campaign media. Realizes UJ-3.
+**Description:** Compose or ingest Campaigns; dedupe; process Send queue under system send pacing (FR-19); enforce payload and stored-image rules; TTL for campaign media. Realizes UJ-3.
 
 **Functional Requirements:**
 
@@ -284,11 +284,24 @@ Admins have Ops Logs covering at least: **send issues** (production queue and te
 
 #### FR-18: Send queue processor
 
-A system-wide scheduled Send queue processor (interval on Parameters, default 15 minutes) sends queue rows. Lists/Campaigns only enqueue; they do not enforce throttle. Send failures are recorded per FR-39.
+A system-wide scheduled Send queue processor (interval on Parameters, default 15 minutes) sends queue rows. Lists/Campaigns only enqueue; they do not enforce send pacing. Send failures are recorded per FR-39.
 
-#### FR-19: System throttle (Parameters only)
+#### FR-19: Send pacing (Parameters only)
 
-Throttle is system-wide only (no per-list/path overrides in V1): message interval default 1s after each successful send; messages per run default 900; message rate default 3600/hour rolling. Enforced only by the Send queue processor.
+Send pacing is system-wide only (no per-list or per-path overrides). Only the Send queue processor enforces it. There is no per-minute throttle. Four Parameters, edited on the Parameters page:
+
+- **Delay per email** (`send.delay.per.email.ms`). Pause before each SMTP send after the first in a run. Integer >= 0. Default **1000**.
+- **Batch size** (`send.batch.size`). Maximum SMTP sends in one schedule run. Integer >= 1. Default **600**.
+- **Batch duration** (`send.batch.duration.minutes`). The run stops before the next send once this many minutes have passed, even when the batch is not full. A send already in flight may finish. Integer >= 1. Default **10**.
+- **Messages per hour** (`send.messages.per.hour`). Maximum messages whose sent time falls in the last 60 minutes. Integer >= 1. Default **3600**.
+
+A run sends the smaller of the batch size and the room left in that rolling hour. When the hour is already full, the run sends nothing.
+
+**Consequences (testable):**
+- With defaults, one run sends at most 600 messages and does not start another message after 10 minutes.
+- If 3550 messages were sent in the last 60 minutes, the next run sends at most 50.
+- If 3600 or more were sent in the last 60 minutes, the next run sends none.
+- An Admin can change all four values on Parameters. `send.queue.throttle.per.minute` is not a Parameter.
 
 #### FR-20: Image-fetch mode
 
@@ -398,7 +411,7 @@ Install produces an initial Admin. Admins can create/disable Users and assign ro
 - Roles: Admin, List manager, List sender
 - Catalogs: Sending paths, Bounce mailboxes, Footers, Notice sending path, Parameters, Attention; referenced configs blocked from delete while in use (Used by on detail)
 - Lists, Members index (searchable) + Member page, bulk paste add on List page, global disable, per-list unsubscribe + consent clear
-- Campaigns (UI + mail-to-send), dedupe, queue, system throttle, compose test send
+- Campaigns (UI + mail-to-send), dedupe, queue, system send pacing, compose test send
 - HTML/text/images/attachments with Image-fetch modes, payload + stored-image limits, TTL
 - Bounce poll + daily bounce-process with hard/soft/holdback/VERP optional
 - Mail-to-send IMAP auth/spam/From-issue/hold/Drop log/auto-block
@@ -413,7 +426,7 @@ Install produces an initial Admin. Admins can create/disable Users and assign ro
 - Plugin marketplace / implementations
 - Public subscribe / preference center / template library
 - List **public / private** visibility and the post-V1 rules: private → Admin-only member add (Members may unsubscribe); public → public subscribe page
-- Per-list or per-path throttle overrides
+- Per-list or per-path send-pacing overrides
 - Hourly auto-block cap
 
 ## 7. Success Metrics
@@ -462,7 +475,7 @@ Install produces an initial Admin. Admins can create/disable Users and assign ro
 ## 11. Constraints and Guardrails
 
 - **Safety:** Notice channel may email disabled/unsubscribed only for consent/admin notices; Campaign queue never does.
-- **Cost / capacity:** Payload and stored-image hard uppers; throttle caps; bounce/audit retention purge jobs.
+- **Cost / capacity:** Payload and stored-image hard uppers; send-pacing caps; bounce/audit retention purge jobs.
 - **Privacy:** HTTPS-only member-facing links; no mailto List-Unsubscribe in V1.
 
 ## 12. Platform

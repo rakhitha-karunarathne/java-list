@@ -15,20 +15,22 @@ public class MailConnectionProbe {
 
   private static final String TIMEOUT_MS = "10000";
 
-  public Result testSmtp(String host, int port, String username, String password, boolean useTls) {
+  public Result testSmtp(
+      String host, int port, String username, String password, boolean useSsl, boolean useTls) {
     if (!StringUtils.hasText(host) || port <= 0 || !StringUtils.hasText(username) || !StringUtils.hasText(password)) {
       return Result.failure("host, port, username, and password are required");
     }
-    Properties props = new Properties();
-    props.put("mail.smtp.host", host.trim());
-    props.put("mail.smtp.port", String.valueOf(port));
-    props.put("mail.smtp.auth", "true");
-    props.put("mail.smtp.connectiontimeout", TIMEOUT_MS);
-    props.put("mail.smtp.timeout", TIMEOUT_MS);
-    props.put("mail.smtp.writetimeout", TIMEOUT_MS);
-    if (useTls) {
-      props.put("mail.smtp.starttls.enable", "true");
+    Properties props;
+    String protocol;
+    try {
+      props = MailSecurity.smtp(host.trim(), port, useSsl, useTls);
+      protocol = MailSecurity.smtpProtocol(useSsl);
+    } catch (IllegalArgumentException ex) {
+      return Result.failure(ex.getMessage());
     }
+    props.put("mail." + protocol + ".connectiontimeout", TIMEOUT_MS);
+    props.put("mail." + protocol + ".timeout", TIMEOUT_MS);
+    props.put("mail." + protocol + ".writetimeout", TIMEOUT_MS);
     Session session =
         Session.getInstance(
             props,
@@ -39,7 +41,7 @@ public class MailConnectionProbe {
               }
             });
     try {
-      Transport transport = session.getTransport("smtp");
+      Transport transport = session.getTransport(protocol);
       try {
         transport.connect(host.trim(), port, username, password);
       } finally {
@@ -51,21 +53,21 @@ public class MailConnectionProbe {
     }
   }
 
-  public Result testImap(String host, int port, String username, String password, boolean useSsl) {
+  public Result testImap(
+      String host, int port, String username, String password, boolean useSsl, boolean useTls) {
     if (!StringUtils.hasText(host) || port <= 0 || !StringUtils.hasText(username) || !StringUtils.hasText(password)) {
       return Result.failure("host, port, username, and password are required");
     }
-    String protocol = useSsl ? "imaps" : "imap";
-    Properties props = new Properties();
-    props.put("mail.store.protocol", protocol);
-    props.put("mail." + protocol + ".host", host.trim());
-    props.put("mail." + protocol + ".port", String.valueOf(port));
+    Properties props;
+    String protocol;
+    try {
+      props = MailSecurity.imap(host.trim(), port, useSsl, useTls);
+      protocol = MailSecurity.imapProtocol(useSsl);
+    } catch (IllegalArgumentException ex) {
+      return Result.failure(ex.getMessage());
+    }
     props.put("mail." + protocol + ".connectiontimeout", TIMEOUT_MS);
     props.put("mail." + protocol + ".timeout", TIMEOUT_MS);
-    if (useSsl) {
-      props.put("mail.imaps.ssl.enable", "true");
-      props.put("mail.imaps.ssl.trust", "*");
-    }
     Session session = Session.getInstance(props);
     try (Store store = session.getStore(protocol)) {
       store.connect(host.trim(), port, username, password);

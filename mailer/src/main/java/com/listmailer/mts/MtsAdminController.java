@@ -5,6 +5,7 @@ import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.mailbox.MailConnectionProbe;
+import com.listmailer.mailbox.MailSecurity;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -150,7 +151,8 @@ public class MtsAdminController {
       password = requireInbox(body.inboxId()).getPassword();
     }
     MailConnectionProbe.Result result =
-        probe.testImap(body.host(), body.port(), body.username(), password, body.useSsl());
+        probe.testImap(
+            body.host(), body.port(), body.username(), password, body.useSsl(), body.useTls());
     return new ConnectionTestResponse(result.ok(), result.message());
   }
 
@@ -158,18 +160,19 @@ public class MtsAdminController {
   public InboxDetail createInbox(@RequestBody InboxBody body) {
     validateInbox(body, true);
     int poll = body.pollIntervalMinutes() > 0 ? body.pollIntervalMinutes() : DEFAULT_POLL;
-    MtsInboxEntity saved =
-        inboxes.save(
-            new MtsInboxEntity(
-                Guids.newGuid(),
-                body.name().trim(),
-                body.host().trim(),
-                body.port(),
-                body.username(),
-                body.password(),
-                body.useSsl(),
-                poll,
-                Instant.now()));
+    MtsInboxEntity box =
+        new MtsInboxEntity(
+            Guids.newGuid(),
+            body.name().trim(),
+            body.host().trim(),
+            body.port(),
+            body.username(),
+            body.password(),
+            body.useSsl(),
+            poll,
+            Instant.now());
+    box.setUseTls(body.useTls());
+    MtsInboxEntity saved = inboxes.save(box);
     return detail(saved);
   }
 
@@ -190,6 +193,7 @@ public class MtsAdminController {
       box.setPassword(body.password());
     }
     box.setUseSsl(body.useSsl());
+    box.setUseTls(body.useTls());
     if (body.pollIntervalMinutes() > 0) {
       box.setPollIntervalMinutes(body.pollIntervalMinutes());
     }
@@ -343,6 +347,7 @@ public class MtsAdminController {
         box.getPort(),
         box.getUsername(),
         box.isUseSsl(),
+        box.isUseTls(),
         box.getPollIntervalMinutes(),
         box.isEnabled(),
         emails,
@@ -399,6 +404,11 @@ public class MtsAdminController {
     if (requirePassword && !StringUtils.hasText(body.password())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "password required");
     }
+    try {
+      MailSecurity.check(body.useSsl(), body.useTls());
+    } catch (IllegalArgumentException ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
   }
 
   private static String blankToNull(String s) {
@@ -412,11 +422,18 @@ public class MtsAdminController {
       String username,
       String password,
       boolean useSsl,
+      boolean useTls,
       int pollIntervalMinutes,
       Boolean enabled) {}
 
   public record ConnectionTestRequest(
-      String host, int port, String username, String password, boolean useSsl, String inboxId) {}
+      String host,
+      int port,
+      String username,
+      String password,
+      boolean useSsl,
+      boolean useTls,
+      String inboxId) {}
 
   public record ConnectionTestResponse(boolean ok, String message) {}
 
@@ -435,6 +452,7 @@ public class MtsAdminController {
       int port,
       String username,
       boolean useSsl,
+      boolean useTls,
       int pollIntervalMinutes,
       boolean enabled,
       List<String> authorizedSenders,
