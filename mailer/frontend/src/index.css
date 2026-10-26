@@ -428,6 +428,12 @@ body.nav-open .backdrop {
   line-height: 1.4;
 }
 
+/* Parameter: description sits between label and control (not after). */
+label.field > .field-desc {
+  font-weight: 400;
+  margin: 0;
+}
+
 /* Record indexes: tables, not button lists. Create forms are their own page (CREATE_ID). */
 .table-scroll {
   overflow-x: auto;

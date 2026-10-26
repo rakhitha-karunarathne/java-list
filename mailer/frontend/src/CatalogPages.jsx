@@ -787,6 +787,7 @@ export function ParametersPage({ token, onError }) {
           <div key={p.key} style={{ marginBottom: '1.5rem' }}>
             <label className="field">
               {fieldLabel(p.key)}
+              <span className="hint field-desc">{p.description}</span>
               <div className="field-control-row">
                 {asToggle ? (
                   <Toggle
@@ -814,9 +815,6 @@ export function ParametersPage({ token, onError }) {
                 </button>
               </div>
             </label>
-            <p className="hint" style={{ marginTop: 0 }}>
-              {p.description}
-            </p>
           </div>
         )
       })}
