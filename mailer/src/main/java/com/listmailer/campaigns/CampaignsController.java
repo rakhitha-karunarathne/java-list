@@ -112,6 +112,15 @@ public class CampaignsController {
     return detail(sendService.queueAndSend(id));
   }
 
+  @PostMapping("/{id}/test-send")
+  public TestSendResult testSend(@PathVariable String id, @RequestBody TestSendBody body) {
+    if (body == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "addresses required");
+    }
+    int sent = sendService.testSend(id, body.addresses());
+    return new TestSendResult(sent);
+  }
+
   @PostMapping("/{id}/stop")
   @Transactional
   public CampaignDetail stop(@PathVariable String id) {
@@ -223,6 +232,10 @@ public class CampaignsController {
         sent,
         files);
   }
+
+  public record TestSendBody(List<String> addresses) {}
+
+  public record TestSendResult(int sent) {}
 
   public record AttachmentIn(String filename, String contentType, String contentBase64) {}
 

@@ -16,6 +16,8 @@ function Compose({ token, onError }) {
   const [campaignId, setCampaignId] = useState('')
   const [status, setStatus] = useState('')
   const [attachment, setAttachment] = useState(null)
+  const [testAddresses, setTestAddresses] = useState('')
+  const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
@@ -211,9 +213,56 @@ function Compose({ token, onError }) {
         Attachment
         <input type="file" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
       </label>
+      <label style={{ display: 'block', marginTop: '1rem' }}>
+        Test send addresses (comma or newline)
+        <textarea
+          value={testAddresses}
+          onChange={(e) => setTestAddresses(e.target.value)}
+          rows={3}
+          style={{ width: '100%' }}
+          placeholder="you@example.com"
+        />
+      </label>
       <p style={{ marginTop: '1rem' }}>
         <button type="button" onClick={saveDraft}>
           Save Draft
+        </button>{' '}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            if (busy) return
+            onError('')
+            setMsg('')
+            if (!campaignId) {
+              onError('Save a Draft first')
+              return
+            }
+            setBusy(true)
+            try {
+              const addresses = testAddresses
+                .split(/[\n,;]+/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+              const res = await fetch(`/api/campaigns/${campaignId}/test-send`, {
+                method: 'POST',
+                headers: authHeaders(token),
+                body: JSON.stringify({ addresses }),
+              })
+              if (!res.ok) {
+                onError(`Test send failed (${res.status}): ${await res.text()}`)
+                return
+              }
+              const body = await res.json()
+              setMsg(`Test send OK (${body.sent})`)
+            } catch (e) {
+              onError(e.message || String(e))
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          Test send
         </button>{' '}
         <button type="button" onClick={queueCampaign}>
           Queue

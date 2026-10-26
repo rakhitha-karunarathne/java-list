@@ -7,6 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
@@ -37,6 +38,7 @@ class CampaignSendServiceTest {
   @Mock ListMemberRepository listMembers;
   @Mock MemberRepository members;
   @Mock SmtpPort smtp;
+  @Mock OpsHooksPort ops;
   @InjectMocks CampaignSendService service;
 
   @Test
@@ -130,6 +132,68 @@ class CampaignSendServiceTest {
     when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
 
     assertThrows(ResponseStatusException.class, () -> service.queueAndSend("c1"));
+  }
+
+  @Test
+  void testSendUsesFirstPathPrefixesSubjectSkipsQueue() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.DRAFT, Instant.now());
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1"))
+        .thenReturn(
+            List.of(
+                new CampaignListEntity("c1", "list-b", 0),
+                new CampaignListEntity("c1", "list-a", 1)));
+    when(lists.findById("list-b"))
+        .thenReturn(
+            Optional.of(
+                new ListEntity("list-b", "B", "path-b", null, null, null, null, Instant.now())));
+    when(attachments.findByCampaignId("c1")).thenReturn(List.of());
+
+    int n = service.testSend("c1", List.of("anyone@example.com"));
+
+    assertEquals(1, n);
+    ArgumentCaptor<SmtpPort.SmtpMessage> cap = ArgumentCaptor.forClass(SmtpPort.SmtpMessage.class);
+    verify(smtp, times(1)).send(cap.capture());
+    assertEquals("path-b", cap.getValue().sendingPathId());
+    assertEquals("[TEST] Hi", cap.getValue().subject());
+    verify(queue, times(0)).save(any());
+    assertEquals(CampaignStatus.DRAFT, campaign.getStatus());
+  }
+
+  @Test
+  void testSendRejectsInvalidAddress() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.DRAFT, Instant.now());
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1"))
+        .thenReturn(List.of(new CampaignListEntity("c1", "list-a", 0)));
+
+    ResponseStatusException ex =
+        assertThrows(
+            ResponseStatusException.class, () -> service.testSend("c1", List.of("not-an-email")));
+    assertEquals(400, ex.getStatusCode().value());
+  }
+
+  @Test
+  void testSendFailureEmitsOpsHooks() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.DRAFT, Instant.now());
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1"))
+        .thenReturn(List.of(new CampaignListEntity("c1", "list-a", 0)));
+    when(lists.findById("list-a"))
+        .thenReturn(
+            Optional.of(
+                new ListEntity("list-a", "A", "path-1", null, null, null, null, Instant.now())));
+    when(attachments.findByCampaignId("c1")).thenReturn(List.of());
+    org.mockito.Mockito.doThrow(new IllegalStateException("smtp down")).when(smtp).send(any());
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> service.testSend("c1", List.of("a@b.com")));
+    assertEquals(502, ex.getStatusCode().value());
+    verify(ops).opsLog(org.mockito.ArgumentMatchers.eq("send.test"), org.mockito.ArgumentMatchers.contains("smtp down"));
+    verify(ops).attentionAdmin(org.mockito.ArgumentMatchers.contains("Test send"), org.mockito.ArgumentMatchers.anyString());
   }
 
   @Test

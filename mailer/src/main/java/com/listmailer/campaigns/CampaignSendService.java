@@ -1,6 +1,7 @@
 package com.listmailer.campaigns;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
@@ -8,10 +9,13 @@ import com.listmailer.members.ListMemberEntity;
 import com.listmailer.members.ListMemberRepository;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,9 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class CampaignSendService {
 
+  private static final Pattern EMAIL =
+      Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+
   private final CampaignRepository campaigns;
   private final CampaignListRepository campaignLists;
   private final CampaignAttachmentRepository attachments;
@@ -29,6 +36,7 @@ public class CampaignSendService {
   private final ListMemberRepository listMembers;
   private final MemberRepository members;
   private final SmtpPort smtp;
+  private final OpsHooksPort ops;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -38,7 +46,8 @@ public class CampaignSendService {
       ListRepository lists,
       ListMemberRepository listMembers,
       MemberRepository members,
-      SmtpPort smtp) {
+      SmtpPort smtp,
+      OpsHooksPort ops) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -47,6 +56,86 @@ public class CampaignSendService {
     this.listMembers = listMembers;
     this.members = members;
     this.smtp = smtp;
+    this.ops = ops;
+  }
+
+  /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
+  public int testSend(String campaignId, List<String> rawAddresses) {
+    CampaignEntity campaign =
+        campaigns
+            .findById(campaignId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
+    if (campaign.getStatus() != CampaignStatus.DRAFT) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "test send only from Draft");
+    }
+    if (!StringUtils.hasText(campaign.getHtmlBody())
+        && !StringUtils.hasText(campaign.getTextBody())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "html or text body required");
+    }
+    List<CampaignListEntity> linked =
+        campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(campaignId);
+    if (linked.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "campaign has no lists");
+    }
+    List<String> addresses = normalizeAddresses(rawAddresses);
+    if (addresses.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "paste at least one valid address");
+    }
+    ListEntity firstList =
+        lists
+            .findById(linked.get(0).getListId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
+    String pathId = firstList.getSendingPathId();
+    List<SmtpPort.Attachment> files =
+        attachments.findByCampaignId(campaignId).stream()
+            .map(
+                a ->
+                    new SmtpPort.Attachment(
+                        a.getFilename(), a.getContentType(), a.getContent()))
+            .toList();
+    int sent = 0;
+    for (String to : addresses) {
+      try {
+        smtp.send(
+            new SmtpPort.SmtpMessage(
+                pathId,
+                to,
+                "[TEST] " + campaign.getSubject(),
+                campaign.getTextBody(),
+                campaign.getHtmlBody(),
+                files));
+        sent++;
+      } catch (RuntimeException ex) {
+        ops.opsLog("send.test", "test send failed to " + to + ": " + ex.getMessage());
+        ops.attentionAdmin("Test send failed", "Campaign " + campaignId + " → " + to);
+        throw new ResponseStatusException(
+            HttpStatus.BAD_GATEWAY, "test send failed: " + ex.getMessage(), ex);
+      }
+    }
+    return sent;
+  }
+
+  private static List<String> normalizeAddresses(List<String> raw) {
+    LinkedHashSet<String> out = new LinkedHashSet<>();
+    if (raw == null) {
+      return List.of();
+    }
+    for (String line : raw) {
+      if (!StringUtils.hasText(line)) {
+        continue;
+      }
+      for (String part : line.split("[,;\\s]+")) {
+        String email = part.trim();
+        if (!StringUtils.hasText(email)) {
+          continue;
+        }
+        if (!EMAIL.matcher(email).matches()) {
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid address: " + email);
+        }
+        out.add(email);
+      }
+    }
+    return new ArrayList<>(out);
   }
 
   @Transactional

@@ -9,3 +9,11 @@
 - source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-multi-list-dedupe-and-content-compose-plan.md`
   summary: No dedicated JavaMailSmtpAdapter MIME-structure unit test.
   evidence: Adapter untested beyond CampaignSendService forwarding attachments; GreenMail MIME assert would harden 5.10.
+
+- source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-test-send-from-compose-plan.md`
+  summary: Test send can partially deliver then return 502 on later recipient failure.
+  evidence: Sequential loop; no transactional all-or-nothing SMTP.
+
+- source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-test-send-from-compose-plan.md`
+  summary: Queue-path SMTP failures do not yet emit OpsHooksPort (only test-send does).
+  evidence: Intent caveat; epic-ops will complete persistence; consider wiring queue failures when Ops Logs land.
