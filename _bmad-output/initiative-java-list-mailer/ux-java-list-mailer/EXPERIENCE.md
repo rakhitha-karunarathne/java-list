@@ -59,6 +59,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | “This list is used by 3 campaigns — remove those first” | Silent failed delete |
 | “Test send ignored bounce-disable for these addresses” | Hide test-send rules |
 | Short operator English; Title Case labels | Cute marketing microcopy on admin chrome |
+| Field labels = **valid English phrases** (spaced words; never CamelCase / glued keys like `fromEmail`) | Showing API property names as labels |
 
 ## Component Patterns
 
@@ -75,6 +76,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Requeue | On Stopped always; on Finished only after Add List (control disabled until a new List is attached) |
 | Used By | Navigable links; blocks delete while in use |
 | Form field | **Stacked:** Title Case label **above** the control (never inline beside it); SPA `label.field` CSS enforces this |
+| Field label wording | Valid English with spaces between words (`From Email`, `HTML Body`, `Use TLS`); SPA `fieldLabel()` — never raw camelCase keys |
 | Parameter field | Label → control → helper (purpose, supported values, range) always visible |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On User detail only: enroll QR, verify, backup codes, unenroll |

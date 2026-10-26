@@ -170,6 +170,7 @@ Airy SaaS density: generous page padding (`{spacing.page}`), card gaps (`{spacin
 - Sidebar fixed ~`{spacing.sidebar}` on desktop; drawer on small viewports.
 - Main column fluid; tables scroll horizontally on narrow screens rather than crushing columns.
 - Forms (Parameters, settings, all operator inputs): **stacked fields** — Title Case label **above** the control (never beside it), then helper when present — with clear vertical rhythm (`{spacing.4}`–`{spacing.5}` between fields). SPA: `label.field` uses column flex; checkbox/radio rows stay horizontal.
+- Field labels are **valid English phrases** (words separated by spaces; never CamelCase or glued API identifiers). Use `fieldLabel()`; prefer natural wording and standard acronyms (HTML, TLS, MFA, URL).
 
 ## Elevation & Depth
 
