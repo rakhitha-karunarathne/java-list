@@ -68,7 +68,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Sidebar nav | Title Case items; UPPERCASE categories; active = `{colors.accent-subtle}` treatment |
 | Index → detail | Row click / Edit opens detail; detail not in sidebar |
 | Record index | **HTML table** (not a list of buttons); row click opens detail; optional action column for Stop/etc. |
-| Create form | **Separate card/form** from the index table (e.g. “Create List” below or beside the table — never mixed into table rows) |
+| Create form | **Own page** (not on the index): index shows table + Create action only; Create opens a dedicated page with back to index (not a second card under the table; not a sidebar item) |
 | Compose preview | HTML / Text tabs; live sync from editors |
 | Test send | Paste addresses; uses first list path; ignores bounce-disable; failures → Ops Logs / Admin Attention |
 | Campaign status badge | Exact label Draft / Queued / Sending / Finished / Stopped (text + color; never color alone) |

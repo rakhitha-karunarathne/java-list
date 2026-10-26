@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiJson } from './api.js'
 import { decodeJwtPayload } from './auth.js'
+import { CREATE_ID, isCreatePage } from './createPage.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
 
@@ -29,7 +30,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   }, [token])
 
   useEffect(() => {
-    if (!detailId) {
+    if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       return
     }
@@ -100,6 +101,52 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       if (!next.manage && !next.send) return prev.filter((g) => g.listId !== listId)
       return prev.map((g) => (g.listId === listId ? next : g))
     })
+  }
+
+  if (isCreatePage(detailId)) {
+    return (
+      <div className="card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          ← Users & Grants
+        </button>
+        <h2>Create User</h2>
+        <form onSubmit={create}>
+          <label className="field">
+            {fieldLabel('email')}
+            <input
+              value={form.email}
+              onChange={(ev) => setForm({ ...form, email: ev.target.value })}
+              required
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('password')}
+            <input
+              type="password"
+              value={form.password}
+              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+              required
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('role')}
+            <select
+              value={form.role}
+              onChange={(ev) => setForm({ ...form, role: ev.target.value })}
+            >
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit" className="btn">
+            Create User
+          </button>
+        </form>
+      </div>
+    )
   }
 
   if (detailId && detail) {
@@ -175,64 +222,29 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   }
 
   return (
-    <>
-      <div className="card">
+    <div className="card">
+      <div className="index-actions">
         <h2>Users & Grants</h2>
-        <RecordTable
-          rows={rows}
-          rowKey={(r) => r.id}
-          onOpen={(r) => onOpen(r.id)}
-          empty="No users yet."
-          columns={[
-            { key: 'email', label: 'Email' },
-            { key: 'role', label: 'Role' },
-            {
-              key: 'enabled',
-              label: 'Enabled',
-              render: (r) => (r.enabled ? 'Yes' : 'No'),
-            },
-          ]}
-        />
+        <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
+          Create User
+        </button>
       </div>
-      <div className="card create-card">
-        <h2>Create User</h2>
-        <form onSubmit={create}>
-          <label className="field">
-            {fieldLabel('email')}
-            <input
-              value={form.email}
-              onChange={(ev) => setForm({ ...form, email: ev.target.value })}
-              required
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('password')}
-            <input
-              type="password"
-              value={form.password}
-              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
-              required
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('role')}
-            <select
-              value={form.role}
-              onChange={(ev) => setForm({ ...form, role: ev.target.value })}
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className="btn">
-            Create User
-          </button>
-        </form>
-      </div>
-    </>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        onOpen={(r) => onOpen(r.id)}
+        empty="No users yet."
+        columns={[
+          { key: 'email', label: 'Email' },
+          { key: 'role', label: 'Role' },
+          {
+            key: 'enabled',
+            label: 'Enabled',
+            render: (r) => (r.enabled ? 'Yes' : 'No'),
+          },
+        ]}
+      />
+    </div>
   )
 }
 

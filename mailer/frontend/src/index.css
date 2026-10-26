@@ -298,7 +298,7 @@ body.nav-open .backdrop {
   line-height: 1.4;
 }
 
-/* Record indexes: tables, not button lists. Create forms live in a separate card. */
+/* Record indexes: tables, not button lists. Create forms are their own page (CREATE_ID). */
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -343,8 +343,18 @@ table.data-table tr.row-link:focus-visible {
   outline-offset: -2px;
 }
 
-.create-card {
-  margin-top: 14px;
+.index-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.index-actions h2 {
+  margin: 0;
+  flex: 1;
+  font-size: 16px;
 }
 
 .error {

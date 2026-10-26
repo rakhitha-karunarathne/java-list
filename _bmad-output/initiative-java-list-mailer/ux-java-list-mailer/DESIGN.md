@@ -195,7 +195,7 @@ Light only: cards use a single soft shadow (`{components.card.shadow}`). No stac
 - **Badge** — `{components.badge}` for quiet status; danger/warning variants use those color tokens.
 - **Table** — header `{components.table-header}`; row separators `{colors.border}`; no zebra required.
 - **Form field** — stacked: `{typography.label}` above control (not inline); checkbox/radio may keep control + short text on one row.
-- **Record index** — `{components.table}` / `.data-table` in a `.table-scroll`; primary identity is a text cell, not a button row. Create lives in a **separate** card/form.
+- **Record index** — `{components.table}` / `.data-table` in a `.table-scroll`; primary identity is a text cell, not a button row. **Create is its own page** (index → Create action → create page → back / open detail) — never embedded on the index under the table.
 - **Parameter field** — stacked: `{typography.label}` → control → `{typography.helper}` description (purpose, supported values, range).
 
 ## Do's and Don'ts

@@ -473,7 +473,15 @@ export function MainView({
         />
       )
     case 'blocks':
-      return <GlobalBlocksPage token={token} onError={onError} />
+      return (
+        <GlobalBlocksPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
     case 'bounces':
       return <BounceLogPage />
     case 'ops':

@@ -4,6 +4,7 @@ import { CONSENT_REQUEST_HINT } from './consentCopy.js'
 import { emptyHint } from './emptyHint.js'
 import { fieldLabel } from './fieldLabel.js'
 import { membersSearchPath } from './membersSearch.js'
+import { CREATE_ID, isCreatePage } from './createPage.js'
 import { RecordTable } from './RecordTable.jsx'
 
 export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenMember }) {
@@ -42,7 +43,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
   }, [token])
 
   useEffect(() => {
-    if (!detailId) {
+    if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       setBulkResult(null)
       return
@@ -127,6 +128,45 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
     } catch (err) {
       onError(err.message)
     }
+  }
+
+  if (isCreatePage(detailId)) {
+    return (
+      <div className="card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          ← Lists
+        </button>
+        <h2>Create List</h2>
+        <form onSubmit={create}>
+          <label className="field">
+            {fieldLabel('name')}
+            <input
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              required
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('sending path')}
+            <select
+              value={form.sendingPathId}
+              onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
+              required
+            >
+              <option value="">— Select —</option>
+              {paths.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit" className="btn">
+            Create List
+          </button>
+        </form>
+      </div>
+    )
   }
 
   if (detailId && detail) {
@@ -241,56 +281,28 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
   }
 
   return (
-    <>
-      <div className="card">
+    <div className="card">
+      <div className="index-actions">
         <h2>Lists</h2>
-        <RecordTable
-          rows={rows}
-          rowKey={(r) => r.id}
-          onOpen={(r) => onOpen(r.id)}
-          empty="No lists yet."
-          columns={[
-            { key: 'name', label: 'Name' },
-            {
-              key: 'sendingPathId',
-              label: 'Sending Path',
-              render: (r) => paths.find((p) => p.id === r.sendingPathId)?.name || r.sendingPathId,
-            },
-          ]}
-        />
+        <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
+          Create List
+        </button>
       </div>
-      <div className="card create-card">
-        <h2>Create List</h2>
-        <form onSubmit={create}>
-          <label className="field">
-            {fieldLabel('name')}
-            <input
-              value={form.name}
-              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-              required
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('sending path')}
-            <select
-              value={form.sendingPathId}
-              onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
-              required
-            >
-              <option value="">— Select —</option>
-              {paths.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className="btn">
-            Create List
-          </button>
-        </form>
-      </div>
-    </>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        onOpen={(r) => onOpen(r.id)}
+        empty="No lists yet."
+        columns={[
+          { key: 'name', label: 'Name' },
+          {
+            key: 'sendingPathId',
+            label: 'Sending Path',
+            render: (r) => paths.find((p) => p.id === r.sendingPathId)?.name || r.sendingPathId,
+          },
+        ]}
+      />
+    </div>
   )
 }
 

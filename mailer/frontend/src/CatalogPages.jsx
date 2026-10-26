@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { DeleteBlocked, UsedByList } from './catalogUi.jsx'
+import { CREATE_ID, isCreatePage } from './createPage.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
 
@@ -32,7 +33,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
   }, [token])
 
   useEffect(() => {
-    if (!detailId) {
+    if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       return
     }
@@ -111,14 +112,47 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     }
   }
 
+  if (isCreatePage(detailId)) {
+    return (
+      <div className="card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          {'←'} Sending Paths
+        </button>
+        <h2>Create Sending Path</h2>
+        <form onSubmit={create}>
+          {['name', 'host', 'username', 'password', 'fromEmail', 'fromName'].map((k) => (
+            <label className="field" key={k}>
+              {fieldLabel(k)}
+              <input
+                type={k === 'password' ? 'password' : 'text'}
+                value={form[k]}
+                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
+                required={k !== 'fromName'}
+              />
+            </label>
+          ))}
+          <label className="field">
+            {fieldLabel('port')}
+            <input
+              type="number"
+              value={form.port}
+              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+            />
+          </label>
+          <button type="submit" className="btn">
+            Create Sending Path
+          </button>
+        </form>
+      </div>
+    )
+  }
+
   if (detailId && detail) {
     return (
       <div className="card">
-        <p className="hint">
-          <button type="button" className="btn secondary" onClick={onCloseDetail}>
-            ← Sending Paths
-          </button>
-        </p>
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          {'←'} Sending Paths
+        </button>
         <h2>{detail.name}</h2>
         <form onSubmit={save}>
           {['name', 'host', 'username', 'fromEmail', 'fromName'].map((k) => (
@@ -173,53 +207,29 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
   }
 
   return (
-    <>
-      <div className="card">
+    <div className="card">
+      <div className="index-actions">
         <h2>Sending Paths</h2>
-        <RecordTable
-          rows={rows}
-          rowKey={(r) => r.id}
-          onOpen={(r) => onOpen(r.id)}
-          empty="No sending paths yet."
-          columns={[
-            { key: 'name', label: 'Name' },
-            {
-              key: 'host',
-              label: 'Host',
-              render: (r) => `${r.host}:${r.port}`,
-            },
-            { key: 'fromEmail', label: 'From Email' },
-          ]}
-        />
+        <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
+          Create Sending Path
+        </button>
       </div>
-      <div className="card create-card">
-        <h2>Create Sending Path</h2>
-        <form onSubmit={create}>
-          {['name', 'host', 'username', 'password', 'fromEmail', 'fromName'].map((k) => (
-            <label className="field" key={k}>
-              {fieldLabel(k)}
-              <input
-                type={k === 'password' ? 'password' : 'text'}
-                value={form[k]}
-                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
-                required={k !== 'fromName'}
-              />
-            </label>
-          ))}
-          <label className="field">
-            {fieldLabel('port')}
-            <input
-              type="number"
-              value={form.port}
-              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
-            />
-          </label>
-          <button type="submit" className="btn">
-            Create Sending Path
-          </button>
-        </form>
-      </div>
-    </>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        onOpen={(r) => onOpen(r.id)}
+        empty="No sending paths yet."
+        columns={[
+          { key: 'name', label: 'Name' },
+          {
+            key: 'host',
+            label: 'Host',
+            render: (r) => `${r.host}:${r.port}`,
+          },
+          { key: 'fromEmail', label: 'From Email' },
+        ]}
+      />
+    </div>
   )
 }
 
@@ -242,7 +252,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
   }, [token])
 
   useEffect(() => {
-    if (!detailId) {
+    if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       return
     }
@@ -302,6 +312,48 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
     load()
   }
 
+  if (isCreatePage(detailId)) {
+    return (
+      <div className="card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          ← Footers
+        </button>
+        <h2>Create Footer</h2>
+        <form onSubmit={create}>
+          <label className="field">
+            {fieldLabel('name')}
+            <input
+              value={form.name}
+              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+              required
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('htmlBody')}
+            <textarea
+              rows={4}
+              style={{ maxWidth: '100%' }}
+              value={form.htmlBody}
+              onChange={(ev) => setForm({ ...form, htmlBody: ev.target.value })}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('textBody')}
+            <textarea
+              rows={3}
+              style={{ maxWidth: '100%' }}
+              value={form.textBody}
+              onChange={(ev) => setForm({ ...form, textBody: ev.target.value })}
+            />
+          </label>
+          <button type="submit" className="btn">
+            Create Footer
+          </button>
+        </form>
+      </div>
+    )
+  }
+
   if (detailId && detail) {
     return (
       <div className="card">
@@ -349,52 +401,21 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
   }
 
   return (
-    <>
-      <div className="card">
+    <div className="card">
+      <div className="index-actions">
         <h2>Footers</h2>
-        <RecordTable
-          rows={rows}
-          rowKey={(r) => r.id}
-          onOpen={(r) => onOpen(r.id)}
-          empty="No footers yet."
-          columns={[{ key: 'name', label: 'Name' }]}
-        />
+        <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
+          Create Footer
+        </button>
       </div>
-      <div className="card create-card">
-        <h2>Create Footer</h2>
-        <form onSubmit={create}>
-          <label className="field">
-            {fieldLabel('name')}
-            <input
-              value={form.name}
-              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-              required
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('htmlBody')}
-            <textarea
-              rows={4}
-              style={{ maxWidth: '100%' }}
-              value={form.htmlBody}
-              onChange={(ev) => setForm({ ...form, htmlBody: ev.target.value })}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('textBody')}
-            <textarea
-              rows={3}
-              style={{ maxWidth: '100%' }}
-              value={form.textBody}
-              onChange={(ev) => setForm({ ...form, textBody: ev.target.value })}
-            />
-          </label>
-          <button type="submit" className="btn">
-            Create Footer
-          </button>
-        </form>
-      </div>
-    </>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        onOpen={(r) => onOpen(r.id)}
+        empty="No footers yet."
+        columns={[{ key: 'name', label: 'Name' }]}
+      />
+    </div>
   )
 }
 
@@ -424,7 +445,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   }, [token])
 
   useEffect(() => {
-    if (!detailId) {
+    if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       return
     }
@@ -482,6 +503,57 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
     } catch (err) {
       onError(err.message)
     }
+  }
+
+  if (isCreatePage(detailId)) {
+    return (
+      <div className="card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          ← Bounce Mailboxes
+        </button>
+        <h2>Create Bounce Mailbox</h2>
+        <form onSubmit={create}>
+          {['name', 'host', 'username', 'password'].map((k) => (
+            <label className="field" key={k}>
+              {fieldLabel(k)}
+              <input
+                type={k === 'password' ? 'password' : 'text'}
+                value={form[k]}
+                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
+                required
+              />
+            </label>
+          ))}
+          <label className="field">
+            {fieldLabel('port')}
+            <input
+              type="number"
+              value={form.port}
+              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('pollIntervalMinutes')}
+            <input
+              type="number"
+              value={form.pollIntervalMinutes}
+              onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
+            />
+          </label>
+          <label className="field">
+            <input
+              type="checkbox"
+              checked={form.useSsl}
+              onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
+            />{' '}
+            {fieldLabel('useSsl')}
+          </label>
+          <button type="submit" className="btn">
+            Create Bounce Mailbox
+          </button>
+        </form>
+      </div>
+    )
   }
 
   if (detailId && detail) {
@@ -545,69 +617,29 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   }
 
   return (
-    <>
-      <div className="card">
+    <div className="card">
+      <div className="index-actions">
         <h2>Bounce Mailboxes</h2>
-        <RecordTable
-          rows={rows}
-          rowKey={(r) => r.id}
-          onOpen={(r) => onOpen(r.id)}
-          empty="No bounce mailboxes yet."
-          columns={[
-            { key: 'name', label: 'Name' },
-            { key: 'host', label: 'Host' },
-            {
-              key: 'pollIntervalMinutes',
-              label: 'Poll Minutes',
-              render: (r) => r.pollIntervalMinutes,
-            },
-          ]}
-        />
+        <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
+          Create Bounce Mailbox
+        </button>
       </div>
-      <div className="card create-card">
-        <h2>Create Bounce Mailbox</h2>
-        <form onSubmit={create}>
-          {['name', 'host', 'username', 'password'].map((k) => (
-            <label className="field" key={k}>
-              {fieldLabel(k)}
-              <input
-                type={k === 'password' ? 'password' : 'text'}
-                value={form[k]}
-                onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
-                required
-              />
-            </label>
-          ))}
-          <label className="field">
-            {fieldLabel('port')}
-            <input
-              type="number"
-              value={form.port}
-              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('pollIntervalMinutes')}
-            <input
-              type="number"
-              value={form.pollIntervalMinutes}
-              onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
-            />
-          </label>
-          <label className="field">
-            <input
-              type="checkbox"
-              checked={form.useSsl}
-              onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
-            />{' '}
-            {fieldLabel('useSsl')}
-          </label>
-          <button type="submit" className="btn">
-            Create Bounce Mailbox
-          </button>
-        </form>
-      </div>
-    </>
+      <RecordTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        onOpen={(r) => onOpen(r.id)}
+        empty="No bounce mailboxes yet."
+        columns={[
+          { key: 'name', label: 'Name' },
+          { key: 'host', label: 'Host' },
+          {
+            key: 'pollIntervalMinutes',
+            label: 'Poll Minutes',
+            render: (r) => r.pollIntervalMinutes,
+          },
+        ]}
+      />
+    </div>
   )
 }
 

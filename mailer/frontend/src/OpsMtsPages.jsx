@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
+import { CREATE_ID, isCreatePage } from './createPage.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
 
@@ -47,7 +48,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   }, [token])
 
   useEffect(() => {
-    if (!detailId) {
+    if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       return
     }
@@ -113,6 +114,33 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     } catch (err) {
       onError(err.message)
     }
+  }
+
+  if (isCreatePage(detailId)) {
+    return (
+      <div className="card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          ← Inboxes & Mappings
+        </button>
+        <h2>Create Inbox</h2>
+        <form onSubmit={createInbox}>
+          {['name', 'host', 'username', 'password'].map((k) => (
+            <label className="field" key={k}>
+              {fieldLabel(k)}
+              <input
+                type={k === 'password' ? 'password' : 'text'}
+                value={inboxForm[k]}
+                onChange={(ev) => setInboxForm({ ...inboxForm, [k]: ev.target.value })}
+                required
+              />
+            </label>
+          ))}
+          <button type="submit" className="btn">
+            Create Inbox
+          </button>
+        </form>
+      </div>
+    )
   }
 
   if (detailId && detail) {
@@ -241,68 +269,52 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   }
 
   return (
-    <>
-      <div className="card">
+    <div className="card">
+      <div className="index-actions">
         <h2>Inboxes &amp; Mappings</h2>
-        <RecordTable
-          rows={inboxes}
-          rowKey={(i) => i.id}
-          onOpen={(i) => onOpen(i.id)}
-          empty="No inboxes yet."
-          columns={[
-            { key: 'name', label: 'Name' },
-            {
-              key: 'enabled',
-              label: 'Enabled',
-              render: (i) => (i.enabled ? 'Yes' : 'No'),
-            },
-            {
-              key: 'pollIntervalMinutes',
-              label: 'Poll Minutes',
-            },
-          ]}
-        />
-        <h3>All Mappings</h3>
-        <RecordTable
-          rows={mappings}
-          rowKey={(m) => m.id}
-          onOpen={(m) => onOpen(m.inboxId)}
-          empty="No mappings yet."
-          columns={[
-            { key: 'name', label: 'Name' },
-            {
-              key: 'listIds',
-              label: 'Lists',
-              render: (m) => (m.listIds || []).join(', ') || '—',
-            },
-            {
-              key: 'substituteFrom',
-              label: 'Substitute From',
-              render: (m) => m.substituteFrom || '—',
-            },
-          ]}
-        />
+        <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
+          Create Inbox
+        </button>
       </div>
-      <div className="card create-card">
-        <h2>Create Inbox</h2>
-        <form onSubmit={createInbox}>
-          {['name', 'host', 'username', 'password'].map((k) => (
-            <label className="field" key={k}>
-              {fieldLabel(k)}
-              <input
-                type={k === 'password' ? 'password' : 'text'}
-                value={inboxForm[k]}
-                onChange={(ev) => setInboxForm({ ...inboxForm, [k]: ev.target.value })}
-                required
-              />
-            </label>
-          ))}
-          <button type="submit" className="btn">
-            Create Inbox
-          </button>
-        </form>
-      </div>
-    </>
+      <RecordTable
+        rows={inboxes}
+        rowKey={(i) => i.id}
+        onOpen={(i) => onOpen(i.id)}
+        empty="No inboxes yet."
+        columns={[
+          { key: 'name', label: 'Name' },
+          {
+            key: 'enabled',
+            label: 'Enabled',
+            render: (i) => (i.enabled ? 'Yes' : 'No'),
+          },
+          {
+            key: 'pollIntervalMinutes',
+            label: 'Poll Minutes',
+          },
+        ]}
+      />
+      <h3>All Mappings</h3>
+      <RecordTable
+        rows={mappings}
+        rowKey={(m) => m.id}
+        onOpen={(m) => onOpen(m.inboxId)}
+        empty="No mappings yet."
+        columns={[
+          { key: 'name', label: 'Name' },
+          {
+            key: 'listIds',
+            label: 'Lists',
+            render: (m) => (m.listIds || []).join(', ') || '—',
+          },
+          {
+            key: 'substituteFrom',
+            label: 'Substitute From',
+            render: (m) => m.substituteFrom || '—',
+          },
+        ]}
+      />
+    </div>
   )
 }
 
@@ -454,7 +466,7 @@ export function DropLogPage({ token, onError, inboxFilter, onFilterInbox }) {
   )
 }
 
-export function GlobalBlocksPage({ token, onError }) {
+export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [blocks, setBlocks] = useState([])
   const [blockEmail, setBlockEmail] = useState('')
   const [blockDomain, setBlockDomain] = useState('')
@@ -480,32 +492,12 @@ export function GlobalBlocksPage({ token, onError }) {
     }
   }
 
-  return (
-    <>
+  if (isCreatePage(detailId)) {
+    return (
       <div className="card">
-        <h2>Global Blocks</h2>
-        <RecordTable
-          rows={blocks}
-          rowKey={(b) => b.id}
-          empty="No global blocks."
-          columns={[
-            { key: 'kind', label: 'Kind' },
-            { key: 'value', label: 'Value' },
-            { key: 'source', label: 'Source' },
-            {
-              key: 'actions',
-              label: 'Actions',
-              stopRowClick: true,
-              render: (b) => (
-                <button type="button" className="btn secondary" onClick={() => unblock(b.id)}>
-                  Unblock
-                </button>
-              ),
-            },
-          ]}
-        />
-      </div>
-      <div className="card create-card">
+        <button type="button" className="btn secondary" onClick={onCloseDetail}>
+          ← Global Blocks
+        </button>
         <h2>Add Block</h2>
         <form
           onSubmit={async (e) => {
@@ -517,6 +509,7 @@ export function GlobalBlocksPage({ token, onError }) {
               })
               setBlockEmail('')
               await load()
+              onCloseDetail()
             } catch (err) {
               onError(err.message)
             }
@@ -540,6 +533,7 @@ export function GlobalBlocksPage({ token, onError }) {
               })
               setBlockDomain('')
               await load()
+              onCloseDetail()
             } catch (err) {
               onError(err.message)
             }
@@ -558,7 +552,38 @@ export function GlobalBlocksPage({ token, onError }) {
           </button>
         </form>
       </div>
-    </>
+    )
+  }
+
+  return (
+    <div className="card">
+      <div className="index-actions">
+        <h2>Global Blocks</h2>
+        <button type="button" className="btn" onClick={() => onOpen(CREATE_ID)}>
+          Add Block
+        </button>
+      </div>
+      <RecordTable
+        rows={blocks}
+        rowKey={(b) => b.id}
+        empty="No global blocks."
+        columns={[
+          { key: 'kind', label: 'Kind' },
+          { key: 'value', label: 'Value' },
+          { key: 'source', label: 'Source' },
+          {
+            key: 'actions',
+            label: 'Actions',
+            stopRowClick: true,
+            render: (b) => (
+              <button type="button" className="btn secondary" onClick={() => unblock(b.id)}>
+                Unblock
+              </button>
+            ),
+          },
+        ]}
+      />
+    </div>
   )
 }
 
