@@ -274,6 +274,56 @@ function Compose({ token, onError }) {
   )
 }
 
+function AttentionInbox({ token, onError }) {
+  const [rows, setRows] = useState([])
+  const [forbidden, setForbidden] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/attention', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (r) => {
+        if (r.status === 403) {
+          setForbidden(true)
+          return []
+        }
+        if (!r.ok) throw new Error(`${r.status}`)
+        return r.json()
+      })
+      .then(setRows)
+      .catch(() => setRows([]))
+  }, [token])
+
+  if (forbidden) {
+    return (
+      <section>
+        <h2>Attention</h2>
+        <p>Not available for this role (List senders have no Attention inbox).</p>
+      </section>
+    )
+  }
+
+  return (
+    <section>
+      <h2>Attention</h2>
+      <ul>
+        {rows.map((r) => (
+          <li
+            key={r.id}
+            style={{
+              background: r.opsHighlight ? '#fff3cd' : undefined,
+              borderLeft: r.opsHighlight ? '4px solid #c9a227' : undefined,
+              padding: '0.35rem 0.5rem',
+              marginBottom: '0.35rem',
+            }}
+          >
+            <strong>{r.title}</strong> — {r.detail}
+            {r.listId ? ` (list ${r.listId})` : ''}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 function OpsLogs({ token, onError }) {
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
@@ -532,6 +582,9 @@ function App() {
             </button>{' '}
             <button type="button" onClick={() => setView('ops')}>
               Ops Logs
+            </button>{' '}
+            <button type="button" onClick={() => setView('attention')}>
+              Attention
             </button>
           </p>
           {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
@@ -543,6 +596,7 @@ function App() {
           {view === 'compose' ? <Compose token={token} onError={setError} /> : null}
           {view === 'mts' ? <MtsInboxes token={token} onError={setError} /> : null}
           {view === 'ops' ? <OpsLogs token={token} onError={setError} /> : null}
+          {view === 'attention' ? <AttentionInbox token={token} onError={setError} /> : null}
           {view === 'parameters' ? (
             <section>
               <h2>Parameters</h2>

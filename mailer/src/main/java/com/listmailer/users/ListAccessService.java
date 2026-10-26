@@ -32,12 +32,32 @@ public class ListAccessService {
     return currentUser().map(u -> u.getRole() == UserRole.ADMIN).orElse(false);
   }
 
-  private java.util.Optional<UserListGrantEntity> grant(String listId) {
-    return currentUserId().flatMap(uid -> grants.findByUserIdAndListId(uid, listId));
+  public boolean isListManager() {
+    return currentUser().map(u -> u.getRole() == UserRole.LIST_MANAGER).orElse(false);
   }
 
-  private java.util.Optional<UserEntity> currentUser() {
+  public boolean isListSenderOnly() {
+    return currentUser().map(u -> u.getRole() == UserRole.LIST_SENDER).orElse(false);
+  }
+
+  /** List ids the current user may manage (Attention / Audit LM scope). */
+  public java.util.List<String> managedListIds() {
+    return currentUserId()
+        .map(
+            uid ->
+                grants.findByUserId(uid).stream()
+                    .filter(UserListGrantEntity::isCanManage)
+                    .map(UserListGrantEntity::getListId)
+                    .toList())
+        .orElse(java.util.List.of());
+  }
+
+  public java.util.Optional<UserEntity> currentUser() {
     return currentUserId().flatMap(users::findById);
+  }
+
+  private java.util.Optional<UserListGrantEntity> grant(String listId) {
+    return currentUserId().flatMap(uid -> grants.findByUserIdAndListId(uid, listId));
   }
 
   private java.util.Optional<String> currentUserId() {
