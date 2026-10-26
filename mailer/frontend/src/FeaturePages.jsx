@@ -4,9 +4,11 @@ import {
   BounceMailboxesPage,
   FootersPage,
   NoticePathPage,
+  ParametersPage,
   SendingPathsPage,
 } from './CatalogPages.jsx'
 import Placeholder from './Placeholder.jsx'
+import { UsersPage } from './UsersPages.jsx'
 
 export function Compose({ token, onError }) {
   const [lists, setLists] = useState([])
@@ -450,54 +452,6 @@ export function MtsInboxes({ token, onError }) {
   )
 }
 
-export function ParametersPage({ token, onError }) {
-  const [params, setParams] = useState([])
-  useEffect(() => {
-    fetch('/api/parameters', { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`${r.status}`)
-        return r.json()
-      })
-      .then(setParams)
-      .catch(() => setParams([]))
-  }, [token])
-
-  async function saveParam(key, value) {
-    onError('')
-    const res = await fetch(`/api/parameters/${encodeURIComponent(key)}`, {
-      method: 'PUT',
-      headers: authHeaders(token),
-      body: JSON.stringify({ value }),
-    })
-    if (!res.ok) {
-      onError(`Save failed for ${key} (${res.status})`)
-      return
-    }
-    const updated = await res.json()
-    setParams((prev) => prev.map((p) => (p.key === key ? updated : p)))
-  }
-
-  return (
-    <div className="card">
-      <h2>Parameters</h2>
-      {params.map((p) => (
-        <div key={p.key} style={{ marginBottom: '1.25rem' }}>
-          <label className="field">
-            {p.key}
-            <input
-              defaultValue={p.value}
-              onBlur={(ev) => {
-                if (ev.target.value !== p.value) saveParam(p.key, ev.target.value)
-              }}
-            />
-          </label>
-          <p className="hint">{p.description}</p>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export function MainView({ view, token, onError, detailId, onOpenDetail, onCloseDetail }) {
   switch (view) {
     case 'compose':
@@ -544,6 +498,16 @@ export function MainView({ view, token, onError, detailId, onOpenDetail, onClose
       )
     case 'notice-path':
       return <NoticePathPage token={token} onError={onError} />
+    case 'users':
+      return (
+        <UsersPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
     case 'home':
       return (
         <Placeholder

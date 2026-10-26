@@ -611,6 +611,76 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   )
 }
 
+export function ParametersPage({ token, onError }) {
+  const [params, setParams] = useState([])
+  const [drafts, setDrafts] = useState({})
+  const [forbidden, setForbidden] = useState(false)
+
+  useEffect(() => {
+    apiJson(token, '/api/parameters')
+      .then((rows) => {
+        setParams(rows)
+        setDrafts(Object.fromEntries(rows.map((p) => [p.key, p.value])))
+        setForbidden(false)
+      })
+      .catch((e) => {
+        if (e.status === 403) {
+          setForbidden(true)
+          setParams([])
+          return
+        }
+        onError(e.message)
+      })
+  }, [token])
+
+  async function save(key) {
+    onError('')
+    try {
+      const updated = await apiJson(token, `/api/parameters/${encodeURIComponent(key)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ value: drafts[key] ?? '' }),
+      })
+      setParams((prev) => prev.map((p) => (p.key === key ? updated : p)))
+      setDrafts((d) => ({ ...d, [key]: updated.value }))
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
+  if (forbidden) {
+    return (
+      <div className="card">
+        <h2>Parameters</h2>
+        <p>Not available for this role.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card">
+      <h2>Parameters</h2>
+      <p className="hint">Admin runtime settings — no SMTP/IMAP passwords or signing secrets here.</p>
+      {params.map((p) => (
+        <div key={p.key} style={{ marginBottom: '1.5rem' }}>
+          <label className="field">
+            {p.key}
+            <input
+              value={drafts[p.key] ?? ''}
+              onChange={(ev) => setDrafts((d) => ({ ...d, [p.key]: ev.target.value }))}
+            />
+          </label>
+          <p className="hint" style={{ marginTop: 0 }}>
+            {p.description}
+          </p>
+          <button type="button" className="btn secondary" onClick={() => save(p.key)}>
+            Save
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function NoticePathPage({ token, onError }) {
   const [paths, setPaths] = useState([])
   const [pathId, setPathId] = useState('')
