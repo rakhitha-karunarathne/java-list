@@ -12,7 +12,7 @@ public class BounceCorrelationProcessor {
     this.correlation = correlation;
   }
 
-  @Scheduled(fixedDelayString = "${mailer.bounce.correlate-tick-ms:30000}")
+  @Scheduled(fixedDelayString = "${mailer.bounce.correlate-tick-ms:60000}")
   public void tick() {
     correlation.correlatePending();
   }

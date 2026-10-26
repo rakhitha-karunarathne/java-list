@@ -37,4 +37,12 @@ mailer:
   opaque-token:
     # AES-GCM key material (≥32 bytes). Env only — never Parameters (AD-18 / C6).
     secret: ${MAILER_OPAQUE_TOKEN_SECRET:dev-only-opaque-token-32chars-min!!}
+  # Fixed delay after each run finishes. Tests override these to stay quiet.
+  send-queue:
+    tick-ms: 60000
+  bounce:
+    poll-tick-ms: 60000
+    correlate-tick-ms: 60000
+  mts:
+    poll-tick-ms: 60000
 

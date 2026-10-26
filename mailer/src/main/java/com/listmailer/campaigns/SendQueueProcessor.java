@@ -26,7 +26,7 @@ public class SendQueueProcessor {
     this.parameters = parameters;
   }
 
-  @Scheduled(fixedDelayString = "${mailer.send-queue.tick-ms:2000}")
+  @Scheduled(fixedDelayString = "${mailer.send-queue.tick-ms:60000}")
   public void tick() {
     if (!running.compareAndSet(false, true)) {
       return; // same schedule class non-overlap
