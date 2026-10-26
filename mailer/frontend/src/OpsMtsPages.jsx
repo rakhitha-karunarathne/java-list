@@ -273,18 +273,24 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   function inboxAccountFields({ requirePassword }) {
     return (
       <>
-        {['name', 'host', 'username', 'password'].map((k) => (
-          <label className="field" key={k}>
-            {fieldLabel(k === 'password' && !requirePassword ? 'password (leave blank to keep)' : k)}
-            <input
-              type={k === 'password' ? 'password' : 'text'}
-              value={inboxForm[k]}
-              onChange={(ev) => setInboxForm({ ...inboxForm, [k]: ev.target.value })}
-              required={k !== 'password' || requirePassword}
-              {...dirtyControlProps(!valuesEqual(inboxForm[k], inboxBase(k)))}
-            />
-          </label>
-        ))}
+        <label className="field">
+          {fieldLabel('name')}
+          <input
+            value={inboxForm.name}
+            onChange={(ev) => setInboxForm({ ...inboxForm, name: ev.target.value })}
+            required
+            {...dirtyControlProps(!valuesEqual(inboxForm.name, inboxBase('name')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('host')}
+          <input
+            value={inboxForm.host}
+            onChange={(ev) => setInboxForm({ ...inboxForm, host: ev.target.value })}
+            required
+            {...dirtyControlProps(!valuesEqual(inboxForm.host, inboxBase('host')))}
+          />
+        </label>
         <label className="field">
           {fieldLabel('port')}
           <input
@@ -292,6 +298,27 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             value={inboxForm.port}
             onChange={(ev) => setInboxForm({ ...inboxForm, port: Number(ev.target.value) })}
             {...dirtyControlProps(!valuesEqual(inboxForm.port, inboxBase('port')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('username')}
+          <input
+            value={inboxForm.username}
+            onChange={(ev) => setInboxForm({ ...inboxForm, username: ev.target.value })}
+            required
+            {...dirtyControlProps(!valuesEqual(inboxForm.username, inboxBase('username')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel(
+            requirePassword ? 'password' : 'password (leave blank to keep)',
+          )}
+          <input
+            type="password"
+            value={inboxForm.password}
+            onChange={(ev) => setInboxForm({ ...inboxForm, password: ev.target.value })}
+            required={requirePassword}
+            {...dirtyControlProps(!valuesEqual(inboxForm.password, inboxBase('password')))}
           />
         </label>
         <label className="field">

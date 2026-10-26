@@ -8,6 +8,7 @@ after: [6]
 hitl: false
 risk: low
 refined: true
+status: done
 ---
 
 # Connection field order and Bounce Test Connection
@@ -48,3 +49,19 @@ Align connection forms so **Port** follows **Host**, and **Password** follows **
 ## Notes
 
 - Decision: 2026-10-26 — Host then Port; Username then Password; Bounce gets Test Connection.
+
+## Dev Agent Record
+
+### Completion Notes
+
+- Sending Path create/edit: Name → Host → Port → Username → Password → From…
+- Bounce create/edit: Host → Port → Username → Password; `POST /api/bounce-mailboxes/test-connection`
+- MTS inbox account fields: Host → Port → Username → Password
+
+### Code Review (adversarial)
+
+| Severity | Finding | Disposition |
+|---|---|---|
+| low | Bounce Test Connection was deferred from story #6 | Delivered here |
+| low | Edit Sending Path previously put Port after From fields | Fixed to match create |
+| info | Three page commits as requested | Sending Path; Bounce; MTS |
