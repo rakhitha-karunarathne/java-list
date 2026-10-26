@@ -1,0 +1,37 @@
+# Epic FE-1 — Shell & auth. Tracer: Clearwater login + role sidebar.
+
+[[entry]]
+id = 1
+type = "story"
+title = "Clearwater shell and role-aware sidebar tracer"
+description = "Clearwater chrome; sidebar indexes/tools only; role-hide categories; C8."
+verify = "Admin sees Attention/Campaigns/Lists/… indexes; no detail in sidebar; List sender lacks Attention."
+covers = ["R1", "R2", "R4"]
+after = ["epic-ops-attention-audit"]
+hitl = true
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 2
+type = "story"
+title = "Sign-in and MFA step-up UI"
+description = "Email+password login; TOTP/backup challenge; sessionStorage JWT."
+verify = "Login succeeds; MFA enrolled path challenges; JWT stored; logout clears."
+covers = ["R3"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 3
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only; no new scope."
+verify = "Shell + login smokes still pass."
+covers = []
+after = [1, 2]
+hitl = false
+risk = "low"
+refine = true

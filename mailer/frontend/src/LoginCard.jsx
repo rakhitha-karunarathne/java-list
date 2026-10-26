@@ -116,18 +116,24 @@ export default function LoginCard({ onToken, onError }) {
           </form>
         ) : (
           <form onSubmit={submitMfa}>
-            <p className="hint">Enter the authenticator code from your app (or a backup code).</p>
+            <p className="hint">
+              Enter your authenticator code. A backup code also works if your Admin provided one.
+            </p>
             <label className="field">
               Authenticator code
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode="text"
                 autoComplete="one-time-code"
                 value={code}
                 onChange={(ev) => setCode(ev.target.value)}
                 required
+                aria-describedby="mfa-hint"
               />
             </label>
+            <p id="mfa-hint" className="hint">
+              Backup code accepted when authenticator is unavailable.
+            </p>
             <p style={{ marginTop: '1rem' }}>
               <button type="submit" className="btn" disabled={busy}>
                 Verify
