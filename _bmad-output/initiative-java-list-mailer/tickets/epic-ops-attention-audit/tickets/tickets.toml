@@ -83,3 +83,15 @@ after = [1]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 8
+type = "story"
+title = "Queue Sending Log"
+description = "Admin log of queue drain: start/end, sending-path connect/disconnect, each message sent. Retention default 90 days."
+verify = "Pending batch writes START/CONNECT/SEND/DISCONNECT/END; Admin page lists SEND rows; parameter defaults to 90."
+covers = ["R2"]
+after = [7]
+hitl = false
+risk = "medium"
+refine = true

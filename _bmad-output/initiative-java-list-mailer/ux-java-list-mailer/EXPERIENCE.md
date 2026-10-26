@@ -47,6 +47,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | My Account | Yes (every role) | Header user id and last item in the scrollable sidebar | Self-service: **Password** then **MFA** |
 | Ops Logs | Yes (Admin) | Sidebar | Send / bounce poll / MTS poll logs |
 | Bounce Processing Log | Yes (Admin) | Sidebar | Bounce poll and process: start/end, connect/disconnect, fetch, correlate, disable |
+| Queue Sending Log | Yes (Admin) | Sidebar | Queue drain: start/end, sending-path connect/disconnect, each message sent |
 | Audit | As specified in mock/IA | Sidebar or Admin group | Append-only audit (scoped) |
 
 **Catalogs:** no delete while referenced; detail shows navigable **Used By**.

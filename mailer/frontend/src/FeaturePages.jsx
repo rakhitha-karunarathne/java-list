@@ -589,6 +589,16 @@ export function MainView({
           hint="Process start and end, inbox connect and disconnect, each fetched and correlated message, and member disables. Newest 500. Retention: bounce.process.log.retention.days (default 90 days)."
         />
       )
+    case 'queue-send-log':
+      return (
+        <ActivityLogPage
+          token={token}
+          onError={onError}
+          kind="SEND"
+          title="Queue Sending Log"
+          hint="Process start and end, sending-path connect and disconnect, and each message sent. Newest 500. Retention: send.queue.log.retention.days (default 90 days)."
+        />
+      )
     case 'attention':
       return <AttentionInbox token={token} onError={onError} />
     case 'audit':

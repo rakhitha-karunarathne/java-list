@@ -53,6 +53,7 @@ class CampaignSendServiceTest {
   @Mock RemoteImageFetchService imageFetch;
   @Mock OpaqueTokenHelper opaqueTokens;
   @Mock SendingPathRepository sendingPaths;
+  @Mock com.listmailer.ops.ActivityLogService activity;
   @InjectMocks CampaignSendService service;
 
   @BeforeEach
