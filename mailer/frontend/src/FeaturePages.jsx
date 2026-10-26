@@ -21,7 +21,7 @@ import {
   MtsPage,
 } from './OpsMtsPages.jsx'
 import Placeholder from './Placeholder.jsx'
-import { UsersPage } from './UsersPages.jsx'
+import { MyAccountPage, UsersPage } from './UsersPages.jsx'
 
 export function Compose({ token, onError }) {
   const [lists, setLists] = useState([])
@@ -637,6 +637,8 @@ export function MainView({
       )
     case 'notice-path':
       return <NoticePathPage token={token} onError={onError} />
+    case 'account':
+      return <MyAccountPage token={token} onError={onError} />
     case 'users':
       return (
         <UsersPage

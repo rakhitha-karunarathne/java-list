@@ -19,8 +19,8 @@ export async function apiJson(token, path, options = {}) {
   }
   if (!res.ok) {
     const err = new Error(
-      typeof body === 'object' && body?.message
-        ? body.message
+      typeof body === 'object' && (body?.message || body?.detail)
+        ? body.message || body.detail
         : typeof body === 'string'
           ? body
           : `${res.status}`,

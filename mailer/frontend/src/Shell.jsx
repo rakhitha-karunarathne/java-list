@@ -19,6 +19,7 @@ const TITLES = {
   'notice-path': 'Notice Sending Path',
   parameters: 'Parameters',
   users: 'Users & Grants',
+  account: 'My Account',
   ops: 'Ops Logs',
   audit: 'Audit Log',
   home: 'Home',
@@ -44,29 +45,40 @@ export default function Shell({ role, view, onNavigate, onLogout, email, childre
   return (
     <div className="app">
       <div className="backdrop" onClick={closeNav} aria-hidden="true" />
-      <aside className="sidebar" aria-label="Primary">
+      <aside className="sidebar">
         <div className="brand">
           List Mailer
           <small>Operator UI · Clearwater</small>
         </div>
-        <nav className="nav">
-          {sections.map((section) => (
-            <div className="nav-section" key={section.id}>
-              <button type="button" className="cat">
-                {section.label}
-              </button>
-              {section.items.map((item) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  className={`nav-item${view === item.id ? ' active' : ''}`}
-                  onClick={() => go(item.id)}
-                >
-                  {item.label}
+        <nav className="sidebar-nav" aria-label="Primary">
+          <div className="nav">
+            {sections.map((section) => (
+              <div className="nav-section" key={section.id}>
+                <button type="button" className="cat">
+                  {section.label}
                 </button>
-              ))}
-            </div>
-          ))}
+                {section.items.map((item) => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={`nav-item${view === item.id ? ' active' : ''}`}
+                    onClick={() => go(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="nav-footer">
+            <button
+              type="button"
+              className={`nav-item${view === 'account' ? ' active' : ''}`}
+              onClick={() => go('account')}
+            >
+              My Account
+            </button>
+          </div>
         </nav>
       </aside>
       <div className="main">
@@ -75,9 +87,10 @@ export default function Shell({ role, view, onNavigate, onLogout, email, childre
             ☰
           </button>
           <h1>{title}</h1>
-          <span className="hint">
-            {email || role} · {role}
-          </span>
+          <button type="button" className="user-chip" title="My Account" onClick={() => go('account')}>
+            {email || role}
+          </button>
+          <span className="hint">{role}</span>
           <button type="button" className="btn secondary" onClick={onLogout}>
             Sign out
           </button>

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
-import { decodeJwtPayload } from './auth.js'
 import { confirmDelete } from './confirmDelete.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
+import { passwordChangeProblem } from './passwordChange.js'
 import { RecordTable } from './RecordTable.jsx'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
@@ -46,8 +46,6 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [lists, setLists] = useState([])
   const [patch, setPatch] = useState({ role: 'LIST_MANAGER', enabled: true })
   const [savedPatch, setSavedPatch] = useState(null)
-  const me = useMemo(() => decodeJwtPayload(token), [token])
-  const isSelf = detail && me?.sub === detail.id
   const patchDirty = !!(savedPatch && !valuesEqual(patch.role, savedPatch.role)) ||
     !!(savedPatch && !valuesEqual(patch.enabled, savedPatch.enabled))
   const grantsDirty = grantsSig(grants) !== grantsSig(savedGrants)
@@ -303,10 +301,6 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             <p className="hint">List grants do not apply to Admin — full access.</p>
           )}
         </section>
-
-        <section className="card">
-          <SecurityMfaPanel token={token} onError={onError} self={isSelf} />
-        </section>
       </div>
     )
   }
@@ -338,21 +332,104 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   )
 }
 
-function SecurityMfaPanel({ token, onError, self }) {
+export function MyAccountPage({ token, onError }) {
+  const { form, setForm, dirty, blank, resetToBlank } = useDirtyForm(
+    { currentPassword: '', newPassword: '', confirmPassword: '' },
+    'account-password',
+    true,
+  )
+  const [msg, setMsg] = useState('')
+
+  async function changePassword(e) {
+    e.preventDefault()
+    const problem = passwordChangeProblem(
+      form.currentPassword,
+      form.newPassword,
+      form.confirmPassword,
+    )
+    if (problem) {
+      setMsg('')
+      onError(problem)
+      return
+    }
+    try {
+      await apiJson(token, '/api/me/password', {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: form.currentPassword,
+          newPassword: form.newPassword,
+        }),
+      })
+      resetToBlank()
+      onError('')
+      setMsg('Password changed.')
+    } catch (err) {
+      setMsg('')
+      onError(err.message)
+    }
+  }
+
+  return (
+    <div className="page-sections">
+      <section className="card">
+        <h3>Password</h3>
+        {msg ? <p className="hint">{msg}</p> : null}
+        <form onSubmit={changePassword}>
+          <label className="field">
+            {fieldLabel('current password')}
+            <input
+              type="password"
+              value={form.currentPassword}
+              autoComplete="current-password"
+              onChange={(ev) => setForm({ ...form, currentPassword: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.currentPassword, blank.currentPassword))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('new password')}
+            <input
+              type="password"
+              value={form.newPassword}
+              autoComplete="new-password"
+              onChange={(ev) => setForm({ ...form, newPassword: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.newPassword, blank.newPassword))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('confirm new password')}
+            <input
+              type="password"
+              value={form.confirmPassword}
+              autoComplete="new-password"
+              onChange={(ev) => setForm({ ...form, confirmPassword: ev.target.value })}
+              required
+              {...dirtyControlProps(!valuesEqual(form.confirmPassword, blank.confirmPassword))}
+            />
+          </label>
+          <button
+            type="submit"
+            className={btnDirtyClass(dirty)}
+            title={dirty ? 'Unsaved changes' : undefined}
+          >
+            Change Password
+          </button>
+        </form>
+      </section>
+      <section className="card">
+        <SecurityMfaPanel token={token} onError={onError} />
+      </section>
+    </div>
+  )
+}
+
+function SecurityMfaPanel({ token, onError }) {
   const [otpAuthUrl, setOtpAuthUrl] = useState('')
   const [code, setCode] = useState('')
   const [backupCodes, setBackupCodes] = useState(null)
   const [unenrollCode, setUnenrollCode] = useState('')
-  useRegisterUnsaved(!!code.trim() || !!unenrollCode.trim(), 'user-mfa')
-
-  if (!self) {
-    return (
-      <>
-        <h3>Security</h3>
-        <p className="hint">MFA enroll/unenroll is self-service via /api/me/mfa (open your own user).</p>
-      </>
-    )
-  }
+  useRegisterUnsaved(!!code.trim() || !!unenrollCode.trim(), 'account-mfa')
 
   async function setup() {
     onError('')
@@ -398,8 +475,8 @@ function SecurityMfaPanel({ token, onError, self }) {
 
   return (
     <>
-      <h3>Security</h3>
-      <p className="hint">MFA lives on user detail only — not a sidebar destination (C8).</p>
+      <h3>MFA</h3>
+      <p className="hint">Authenticator for this account. Backup codes are shown once.</p>
       <p>
         <button type="button" className="btn secondary" onClick={setup}>
           Enroll MFA
