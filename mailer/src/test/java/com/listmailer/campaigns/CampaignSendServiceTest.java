@@ -2,6 +2,7 @@ package com.listmailer.campaigns;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -234,6 +235,77 @@ class CampaignSendServiceTest {
     assertEquals(502, ex.getStatusCode().value());
     verify(ops).opsLog(org.mockito.ArgumentMatchers.eq("send.test"), org.mockito.ArgumentMatchers.contains("smtp down"));
     verify(ops).attentionAdmin(org.mockito.ArgumentMatchers.contains("Test send"), org.mockito.ArgumentMatchers.anyString());
+  }
+
+  @Test
+  void finishedRequeueRequiresListNotYetIncluded() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.FINISHED, Instant.now());
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    CampaignListEntity linked = new CampaignListEntity("c1", "list-a", 0);
+    linked.setIncludedInPass(true);
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1"))
+        .thenReturn(List.of(linked));
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> service.queueAndSend("c1"));
+    assertEquals(409, ex.getStatusCode().value());
+  }
+
+  @Test
+  void finishedRequeueSkipsAddressAlreadySentUnderOtherMember() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.FINISHED, Instant.now());
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    CampaignListEntity oldList = new CampaignListEntity("c1", "list-a", 0);
+    oldList.setIncludedInPass(true);
+    CampaignListEntity newList = new CampaignListEntity("c1", "list-b", 1);
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1"))
+        .thenReturn(List.of(oldList, newList));
+    when(lists.findById("list-a"))
+        .thenReturn(
+            Optional.of(
+                new ListEntity("list-a", "A", "path-1", null, null, null, null, Instant.now())));
+    when(lists.findById("list-b"))
+        .thenReturn(
+            Optional.of(
+                new ListEntity("list-b", "B", "path-1", null, null, null, null, Instant.now())));
+    when(listMembers.findByListId("list-a"))
+        .thenReturn(List.of(new ListMemberEntity("list-a", "m1", false, Instant.now())));
+    when(listMembers.findByListId("list-b"))
+        .thenReturn(
+            List.of(
+                new ListMemberEntity("list-b", "m2", false, Instant.now()),
+                new ListMemberEntity("list-b", "m3", false, Instant.now())));
+    when(members.findById("m1"))
+        .thenReturn(Optional.of(new MemberEntity("m1", "a@example.com", true, Instant.now())));
+    when(members.findById("m2"))
+        .thenReturn(Optional.of(new MemberEntity("m2", "a@example.com", true, Instant.now())));
+    when(members.findById("m3"))
+        .thenReturn(Optional.of(new MemberEntity("m3", "b@example.com", true, Instant.now())));
+    SendQueueEntity prior =
+        new SendQueueEntity("q1", "c1", "m1", "a@example.com", "path-1", "SENT");
+    List<SendQueueEntity> enqueued = new ArrayList<>();
+    enqueued.add(prior);
+    when(queue.save(any()))
+        .thenAnswer(
+            inv -> {
+              SendQueueEntity row = inv.getArgument(0);
+              if (enqueued.stream().noneMatch(e -> e.getId().equals(row.getId()))) {
+                enqueued.add(row);
+              }
+              return row;
+            });
+    when(queue.findByCampaignId("c1")).thenAnswer(inv -> List.copyOf(enqueued));
+    when(campaignLists.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    service.queueAndSend("c1");
+
+    assertEquals(2, enqueued.size());
+    assertEquals("m3", enqueued.get(1).getMemberId());
+    assertEquals(CampaignStatus.QUEUED, campaign.getStatus());
+    assertTrue(newList.isIncludedInPass());
   }
 
   @Test

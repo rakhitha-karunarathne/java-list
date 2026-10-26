@@ -114,6 +114,10 @@ public class CampaignsController {
 
   @PostMapping("/{id}/queue")
   public CampaignDetail queue(@PathVariable String id) {
+    CampaignEntity c = require(id);
+    if (c.getStatus() != CampaignStatus.DRAFT) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "queue only from Draft");
+    }
     return detail(sendService.queueAndSend(id));
   }
 
@@ -153,11 +157,41 @@ public class CampaignsController {
     return detail(campaigns.save(c));
   }
 
+  @PostMapping("/{id}/lists")
+  @Transactional
+  public CampaignDetail addList(@PathVariable String id, @RequestBody AddListBody body) {
+    if (body == null || !StringUtils.hasText(body.listId())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listId required");
+    }
+    CampaignEntity c = require(id);
+    if (c.getStatus() != CampaignStatus.DRAFT
+        && c.getStatus() != CampaignStatus.STOPPED
+        && c.getStatus() != CampaignStatus.FINISHED) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot add list while " + c.getStatus());
+    }
+    String listId = body.listId().trim();
+    if (!lists.existsById(listId)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown list");
+    }
+    if (!access.canSend(listId) && !access.canManage(listId) && !access.isAdmin()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "send grant required");
+    }
+    List<CampaignListEntity> linked =
+        campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(id);
+    if (linked.stream().anyMatch(cl -> listId.equals(cl.getListId()))) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "list already linked");
+    }
+    int pos = linked.isEmpty() ? 0 : linked.get(linked.size() - 1).getPosition() + 1;
+    campaignLists.save(new CampaignListEntity(id, listId, pos));
+    return detail(c);
+  }
+
   @PostMapping("/{id}/requeue")
   public CampaignDetail requeue(@PathVariable String id) {
     CampaignEntity c = require(id);
-    if (c.getStatus() != CampaignStatus.STOPPED) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "requeue only from Stopped");
+    if (c.getStatus() != CampaignStatus.STOPPED && c.getStatus() != CampaignStatus.FINISHED) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "requeue only from Stopped or Finished");
     }
     return detail(sendService.queueAndSend(id));
   }
@@ -279,6 +313,8 @@ public class CampaignsController {
         memberOpens,
         files);
   }
+
+  public record AddListBody(String listId) {}
 
   public record TestSendBody(List<String> addresses) {}
 

@@ -204,7 +204,8 @@ public class CampaignSendService {
             .findById(campaignId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
     if (campaign.getStatus() != CampaignStatus.DRAFT
-        && campaign.getStatus() != CampaignStatus.STOPPED) {
+        && campaign.getStatus() != CampaignStatus.STOPPED
+        && campaign.getStatus() != CampaignStatus.FINISHED) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "campaign not queueable");
     }
     if (!StringUtils.hasText(campaign.getHtmlBody())
@@ -215,6 +216,11 @@ public class CampaignSendService {
         campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(campaignId);
     if (linked.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "campaign has no lists");
+    }
+    if (campaign.getStatus() == CampaignStatus.FINISHED
+        && linked.stream().allMatch(CampaignListEntity::isIncludedInPass)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Finished requeue requires an added list");
     }
     // first ordered list determines sending path (AD)
     ListEntity firstList =
@@ -247,15 +253,22 @@ public class CampaignSendService {
                 m -> unique.putIfAbsent(m.getEmail().trim().toLowerCase(Locale.ROOT), m));
       }
     }
-    campaign.setStatus(CampaignStatus.QUEUED);
-    campaigns.save(campaign);
+    int enqueued = 0;
     for (MemberEntity member : unique.values()) {
+      String emailKey = member.getEmail().trim().toLowerCase(Locale.ROOT);
       boolean already =
           queue.findByCampaignId(campaignId).stream()
               .anyMatch(
-                  r ->
-                      member.getId().equals(r.getMemberId())
-                          && ("SENT".equals(r.getStatus()) || "PENDING".equals(r.getStatus())));
+                  r -> {
+                    if (!"SENT".equals(r.getStatus()) && !"PENDING".equals(r.getStatus())) {
+                      return false;
+                    }
+                    if (member.getId().equals(r.getMemberId())) {
+                      return true;
+                    }
+                    return r.getEmail() != null
+                        && emailKey.equals(r.getEmail().trim().toLowerCase(Locale.ROOT));
+                  });
       if (already) {
         continue;
       }
@@ -267,8 +280,21 @@ public class CampaignSendService {
               member.getEmail(),
               pathId,
               "PENDING"));
+      enqueued++;
     }
-    // Processor drains PENDING under throttle; leave Queued until first send.
+    for (CampaignListEntity cl : linked) {
+      cl.setIncludedInPass(true);
+      campaignLists.save(cl);
+    }
+    boolean anyPending =
+        queue.findByCampaignId(campaignId).stream()
+            .anyMatch(r -> "PENDING".equals(r.getStatus()));
+    if (!anyPending && enqueued == 0) {
+      // Finished requeue with no new addresses — stay Finished, not Queued limbo
+      campaign.setStatus(CampaignStatus.FINISHED);
+    } else {
+      campaign.setStatus(CampaignStatus.QUEUED);
+    }
     return campaigns.save(campaign);
   }
 

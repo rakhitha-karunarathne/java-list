@@ -24,12 +24,16 @@ public class CampaignListEntity {
   @Column(nullable = false)
   private int position;
 
+  @Column(name = "included_in_pass", nullable = false)
+  private boolean includedInPass;
+
   protected CampaignListEntity() {}
 
   public CampaignListEntity(String campaignId, String listId, int position) {
     this.campaignId = campaignId;
     this.listId = listId;
     this.position = position;
+    this.includedInPass = false;
   }
 
   public String getCampaignId() {
@@ -42,6 +46,14 @@ public class CampaignListEntity {
 
   public int getPosition() {
     return position;
+  }
+
+  public boolean isIncludedInPass() {
+    return includedInPass;
+  }
+
+  public void setIncludedInPass(boolean includedInPass) {
+    this.includedInPass = includedInPass;
   }
 
   public static final class Pk implements Serializable {

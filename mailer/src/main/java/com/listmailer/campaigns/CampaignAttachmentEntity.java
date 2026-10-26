@@ -24,7 +24,7 @@ public class CampaignAttachmentEntity {
   private String contentType;
 
   @Lob
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "LONGBLOB")
   private byte[] content;
 
   protected CampaignAttachmentEntity() {}

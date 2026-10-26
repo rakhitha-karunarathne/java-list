@@ -26,3 +26,14 @@ Store in env or a secret file — **never** as Parameters:
 | Test mail | `docker compose --profile test up -d` | + GreenMail (SMTP 3025, IMAP 3143) |
 
 Default Compose **does not** include GreenMail.
+
+## Campaigns end-to-end suite (story 5.10)
+
+Requires Docker (Testcontainers MariaDB) and runs an embedded GreenMail SMTP:
+
+```bash
+cd mailer
+mvn test -Dtest=CampaignsE2ETest
+```
+
+Failures are named by epic requirement (`R1/R8`, `R7`, `R8 Stop…`, `R8 Finished…`). Full `mvn test` also runs this suite. There is no separate CI workflow in-repo yet — treat this Maven target as the gate when Docker is available.
