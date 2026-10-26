@@ -87,20 +87,31 @@ public class ParametersProbeController {
         || ParameterKeys.AUDIT_RETENTION_DAYS.equals(key)
         || ParameterKeys.BOUNCE_PROCESS_LOG_RETENTION_DAYS.equals(key)
         || ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS.equals(key)
-        || ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS.equals(key)) {
-      try {
-        if (Integer.parseInt(body.value().trim()) < 1) {
-          throw new NumberFormatException();
-        }
-      } catch (NumberFormatException ex) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value must be an integer >= 1");
-      }
+        || ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS.equals(key)
+        || ParameterKeys.SEND_BATCH_SIZE.equals(key)
+        || ParameterKeys.SEND_BATCH_DURATION_MINUTES.equals(key)
+        || ParameterKeys.SEND_MESSAGES_PER_HOUR.equals(key)) {
+      requireInt(body.value(), 1);
+    }
+    if (ParameterKeys.SEND_DELAY_PER_EMAIL_MS.equals(key)) {
+      requireInt(body.value(), 0);
     }
     if (body.value().length() > 2000) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value too long");
     }
     parameters.set(key, body.value());
     return new ParameterView(key, body.value(), def.description());
+  }
+
+  private static void requireInt(String value, int min) {
+    try {
+      if (Integer.parseInt(value.trim()) < min) {
+        throw new NumberFormatException();
+      }
+    } catch (NumberFormatException ex) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "value must be an integer >= " + min);
+    }
   }
 
   public record ValueBody(String value) {}

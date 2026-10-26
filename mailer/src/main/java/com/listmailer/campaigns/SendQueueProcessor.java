@@ -2,6 +2,8 @@ package com.listmailer.campaigns;
 
 import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +20,14 @@ public class SendQueueProcessor {
   private static final Logger log = LoggerFactory.getLogger(SendQueueProcessor.class);
 
   private final CampaignSendService sendService;
+  private final SendQueueRepository queue;
   private final ParametersPort parameters;
   private final AtomicBoolean running = new AtomicBoolean(false);
 
-  public SendQueueProcessor(CampaignSendService sendService, ParametersPort parameters) {
+  public SendQueueProcessor(
+      CampaignSendService sendService, SendQueueRepository queue, ParametersPort parameters) {
     this.sendService = sendService;
+    this.queue = queue;
     this.parameters = parameters;
   }
 
@@ -32,17 +37,18 @@ public class SendQueueProcessor {
       return; // same schedule class non-overlap
     }
     try {
-      int perMinute = throttlePerMinute();
-      int batch = perMinute <= 0 ? 500 : Math.max(1, perMinute / 30);
-      int sent = sendService.processPendingBatch(batch);
-      if (sent > 0 && perMinute > 0) {
-        long sleepMs = Math.max(0, (60_000L * sent) / perMinute);
-        if (sleepMs > 0) {
-          Thread.sleep(Math.min(sleepMs, 5_000L));
-        }
+      int batch = positive(ParameterKeys.SEND_BATCH_SIZE, 600);
+      int minutes = positive(ParameterKeys.SEND_BATCH_DURATION_MINUTES, 10);
+      int perHour = positive(ParameterKeys.SEND_MESSAGES_PER_HOUR, 3600);
+      long delayMs = nonNegative(ParameterKeys.SEND_DELAY_PER_EMAIL_MS, 1000);
+      long sentInWindow =
+          queue.countByStatusAndSentAtAfter("SENT", Instant.now().minus(60, ChronoUnit.MINUTES));
+      int allowed = SendLimits.allowed(batch, perHour, sentInWindow);
+      if (allowed <= 0) {
+        return;
       }
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
+      Instant deadline = Instant.now().plus(minutes, ChronoUnit.MINUTES);
+      sendService.processPendingBatch(allowed, delayMs, deadline);
     } catch (RuntimeException ex) {
       log.warn("send-queue tick: {}", ex.getMessage());
     } finally {
@@ -50,17 +56,33 @@ public class SendQueueProcessor {
     }
   }
 
-  private int throttlePerMinute() {
+  private int positive(String key, int fallback) {
     return parameters
-        .get(ParameterKeys.SEND_THROTTLE_PER_MINUTE)
+        .get(key)
         .map(
             v -> {
               try {
-                return Integer.parseInt(v.trim());
+                int n = Integer.parseInt(v.trim());
+                return n >= 1 ? n : fallback;
               } catch (NumberFormatException e) {
-                return 120;
+                return fallback;
               }
             })
-        .orElse(120);
+        .orElse(fallback);
+  }
+
+  private long nonNegative(String key, long fallback) {
+    return parameters
+        .get(key)
+        .map(
+            v -> {
+              try {
+                long n = Long.parseLong(v.trim());
+                return n >= 0 ? n : fallback;
+              } catch (NumberFormatException e) {
+                return fallback;
+              }
+            })
+        .orElse(fallback);
   }
 }

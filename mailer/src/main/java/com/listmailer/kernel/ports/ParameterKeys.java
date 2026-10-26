@@ -14,8 +14,10 @@ public final class ParameterKeys {
   public static final String MTS_PROCESS_LOG_RETENTION_DAYS = "mts.process.log.retention.days";
   public static final String MTS_PROCESS_LOG_ENABLED = "mts.process.log.enabled";
   public static final String AUDIT_RETENTION_DAYS = "audit.retention.days";
-  /** Max SMTP sends per minute system-wide; 0 = unlimited (tests). */
-  public static final String SEND_THROTTLE_PER_MINUTE = "send.queue.throttle.per.minute";
+  public static final String SEND_DELAY_PER_EMAIL_MS = "send.delay.per.email.ms";
+  public static final String SEND_BATCH_SIZE = "send.batch.size";
+  public static final String SEND_BATCH_DURATION_MINUTES = "send.batch.duration.minutes";
+  public static final String SEND_MESSAGES_PER_HOUR = "send.messages.per.hour";
   public static final String IMAGE_FETCH_MODE = "campaign.image.fetch.mode";
   public static final String CAMPAIGN_PAYLOAD_MAX_BYTES = "campaign.payload.max.bytes";
   public static final String CAMPAIGN_IMAGE_MAX_BYTES = "campaign.image.max.bytes";

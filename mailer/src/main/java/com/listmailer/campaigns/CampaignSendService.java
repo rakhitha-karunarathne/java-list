@@ -25,6 +25,8 @@ import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -49,6 +51,7 @@ public class CampaignSendService {
   private final OpaqueTokenHelper opaqueTokens;
   private final SendingPathRepository sendingPaths;
   private final ActivityLogService activity;
+  private final TransactionTemplate transactions;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -65,7 +68,8 @@ public class CampaignSendService {
       RemoteImageFetchService imageFetch,
       OpaqueTokenHelper opaqueTokens,
       SendingPathRepository sendingPaths,
-      ActivityLogService activity) {
+      ActivityLogService activity,
+      TransactionTemplate transactions) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -81,6 +85,7 @@ public class CampaignSendService {
     this.opaqueTokens = opaqueTokens;
     this.sendingPaths = sendingPaths;
     this.activity = activity;
+    this.transactions = transactions;
   }
 
   /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
@@ -318,12 +323,16 @@ public class CampaignSendService {
     return campaigns.save(campaign);
   }
 
-  /**
-   * Drain up to {@code maxSends} PENDING queue rows system-wide. Returns how many SMTP sends
-   * completed. Idempotent for empty queue.
-   */
-  @Transactional
+  /** Drain up to {@code maxSends} PENDING rows. Empty queue writes nothing. */
   public int processPendingBatch(int maxSends) {
+    return processPendingBatch(maxSends, 0L, null);
+  }
+
+  /**
+   * Each SMTP send commits on its own. {@code delayMs} is slept between sends, outside the
+   * transaction. A non-null {@code deadline} stops the run before the next send.
+   */
+  public int processPendingBatch(int maxSends, long delayMs, java.time.Instant deadline) {
     if (maxSends <= 0) {
       return 0;
     }
@@ -340,59 +349,34 @@ public class CampaignSendService {
         if (sent >= maxSends) {
           break;
         }
-        CampaignEntity campaign = campaigns.findById(row.getCampaignId()).orElse(null);
-        if (campaign == null
-            || campaign.getStatus() == CampaignStatus.STOPPED
-            || campaign.getStatus() == CampaignStatus.DRAFT) {
+        if (deadline != null && !java.time.Instant.now().isBefore(deadline)) {
+          break;
+        }
+        CampaignEntity peek = campaigns.findById(row.getCampaignId()).orElse(null);
+        if (peek == null
+            || peek.getStatus() == CampaignStatus.STOPPED
+            || peek.getStatus() == CampaignStatus.DRAFT) {
           continue;
         }
-        if (campaign.getStatus() == CampaignStatus.QUEUED) {
-          campaign.setStatus(CampaignStatus.SENDING);
-          campaigns.save(campaign);
+        if (sent > 0 && delayMs > 0) {
+          long wait = delayMs;
+          if (deadline != null) {
+            long remain = java.time.Duration.between(java.time.Instant.now(), deadline).toMillis();
+            if (remain <= 0) {
+              break;
+            }
+            wait = Math.min(delayMs, remain);
+          }
+          try {
+            Thread.sleep(wait);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+          if (deadline != null && !java.time.Instant.now().isBefore(deadline)) {
+            break;
+          }
         }
-        List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaign.getId());
-        List<SmtpPort.Attachment> files =
-            blobs.stream()
-                .map(
-                    a ->
-                        new SmtpPort.Attachment(
-                            a.getFilename(), a.getContentType(), a.getContent()))
-                .toList();
-        String pixelToken = Guids.newGuid();
-        List<String> listSnapshot =
-            campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(campaign.getId()).stream()
-                .map(CampaignListEntity::getListId)
-                .toList();
-        String unsubToken =
-            opaqueTokens.seal(
-                UnsubTokenCodec.encode(
-                    new UnsubTokenCodec.Payload(
-                        row.getMemberId(), campaign.getId(), listSnapshot, row.getId())));
-        String corrToken = Guids.newGuid();
-        row.setPixelToken(pixelToken);
-        row.setUnsubToken(unsubToken);
-        row.setCorrelationToken(corrToken);
-        row.setSubject(campaign.getSubject());
-        String smtpId = "<" + Guids.newGuid() + "@listmailer>";
-        row.setSmtpMessageId(smtpId);
-        if (verpEnabled()) {
-          sendingPaths
-              .findById(row.getSendingPathId())
-              .ifPresent(
-                  path -> {
-                    String domain = path.getFromEmail();
-                    int at = domain.lastIndexOf('@');
-                    if (at > 0) {
-                      row.setVerpRcpt("bounce+" + corrToken + domain.substring(at));
-                    }
-                  });
-        }
-        String html = rewriteHtml(campaign.getId(), campaign.getHtmlBody(), blobs);
-        html = injectTracking(html, campaign.getId(), pixelToken, unsubToken);
-        String unsubUrl = publicBase() + "/unsubscribe/" + unsubToken;
-        java.util.Map<String, String> headers = new java.util.LinkedHashMap<>();
-        headers.put("X-JavaList-Token", corrToken);
-        headers.put("Message-ID", smtpId);
         if (openPath == null || !openPath.equals(row.getSendingPathId())) {
           if (openPath != null) {
             activity.write(ActivityLogService.SEND, "DISCONNECT", "path=" + pathLabel(openPath));
@@ -400,32 +384,10 @@ public class CampaignSendService {
           openPath = row.getSendingPathId();
           activity.write(ActivityLogService.SEND, "CONNECT", "path=" + pathLabel(openPath));
         }
-        smtp.send(
-            new SmtpPort.SmtpMessage(
-                row.getSendingPathId(),
-                row.getEmail(),
-                campaign.getSubject(),
-                campaign.getTextBody(),
-                html,
-                files,
-                unsubUrl,
-                headers));
-        row.setStatus("SENT");
-        row.setSentAt(java.time.Instant.now());
-        queue.save(row);
-        sent++;
-        activity.write(
-            ActivityLogService.SEND,
-            "SEND",
-            "to=" + row.getEmail() + " campaign=" + campaign.getId() + " subject=" + campaign.getSubject());
-        boolean morePending =
-            queue.findByCampaignId(campaign.getId()).stream()
-                .anyMatch(r -> "PENDING".equals(r.getStatus()));
-        if (!morePending && campaign.getStatus() == CampaignStatus.SENDING) {
-          campaign.setStatus(CampaignStatus.FINISHED);
-          campaigns.save(campaign);
-          ops.audit("campaign.finished", "campaign=" + campaign.getId(), "system", null, null);
+        if (!Boolean.TRUE.equals(inTx(status -> deliver(row)))) {
+          continue;
         }
+        sent++;
       }
       return sent;
     } finally {
@@ -434,6 +396,103 @@ public class CampaignSendService {
       }
       activity.write(ActivityLogService.SEND, "END", "queue send sent=" + sent);
     }
+  }
+
+  /** One message. Returns false when the campaign must be skipped. */
+  private boolean deliver(SendQueueEntity row) {
+    CampaignEntity campaign = campaigns.findById(row.getCampaignId()).orElse(null);
+    if (campaign == null
+        || campaign.getStatus() == CampaignStatus.STOPPED
+        || campaign.getStatus() == CampaignStatus.DRAFT) {
+      return false;
+    }
+    if (campaign.getStatus() == CampaignStatus.QUEUED) {
+      campaign.setStatus(CampaignStatus.SENDING);
+      campaigns.save(campaign);
+    }
+    List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaign.getId());
+    List<SmtpPort.Attachment> files =
+        blobs.stream()
+            .map(
+                a ->
+                    new SmtpPort.Attachment(
+                        a.getFilename(), a.getContentType(), a.getContent()))
+            .toList();
+    String pixelToken = Guids.newGuid();
+    List<String> listSnapshot =
+        campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(campaign.getId()).stream()
+            .map(CampaignListEntity::getListId)
+            .toList();
+    String unsubToken =
+        opaqueTokens.seal(
+            UnsubTokenCodec.encode(
+                new UnsubTokenCodec.Payload(
+                    row.getMemberId(), campaign.getId(), listSnapshot, row.getId())));
+    String corrToken = Guids.newGuid();
+    row.setPixelToken(pixelToken);
+    row.setUnsubToken(unsubToken);
+    row.setCorrelationToken(corrToken);
+    row.setSubject(campaign.getSubject());
+    String smtpId = "<" + Guids.newGuid() + "@listmailer>";
+    row.setSmtpMessageId(smtpId);
+    if (verpEnabled()) {
+      sendingPaths
+          .findById(row.getSendingPathId())
+          .ifPresent(
+              path -> {
+                String domain = path.getFromEmail();
+                int at = domain.lastIndexOf('@');
+                if (at > 0) {
+                  row.setVerpRcpt("bounce+" + corrToken + domain.substring(at));
+                }
+              });
+    }
+    String html = rewriteHtml(campaign.getId(), campaign.getHtmlBody(), blobs);
+    html = injectTracking(html, campaign.getId(), pixelToken, unsubToken);
+    String unsubUrl = publicBase() + "/unsubscribe/" + unsubToken;
+    java.util.Map<String, String> headers = new java.util.LinkedHashMap<>();
+    headers.put("X-JavaList-Token", corrToken);
+    headers.put("Message-ID", smtpId);
+    smtp.send(
+        new SmtpPort.SmtpMessage(
+            row.getSendingPathId(),
+            row.getEmail(),
+            campaign.getSubject(),
+            campaign.getTextBody(),
+            html,
+            files,
+            unsubUrl,
+            headers));
+    row.setStatus("SENT");
+    row.setSentAt(java.time.Instant.now());
+    queue.save(row);
+    activity.write(
+        ActivityLogService.SEND,
+        "SEND",
+        "to=" + row.getEmail() + " campaign=" + campaign.getId() + " subject=" + campaign.getSubject());
+    boolean morePending =
+        queue.findByCampaignId(campaign.getId()).stream()
+            .anyMatch(r -> "PENDING".equals(r.getStatus()));
+    if (!morePending && campaign.getStatus() == CampaignStatus.SENDING) {
+      campaign.setStatus(CampaignStatus.FINISHED);
+      campaigns.save(campaign);
+      ops.audit("campaign.finished", "campaign=" + campaign.getId(), "system", null, null);
+    }
+    return true;
+  }
+
+  private <T> T inTx(TransactionCallback<T> callback) {
+    if (transactions == null) {
+      try {
+        return callback.doInTransaction(
+            new org.springframework.transaction.support.SimpleTransactionStatus());
+      } catch (RuntimeException ex) {
+        throw ex;
+      } catch (Exception ex) {
+        throw new IllegalStateException(ex);
+      }
+    }
+    return transactions.execute(callback);
   }
 
   private String pathLabel(String pathId) {

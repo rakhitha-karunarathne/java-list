@@ -117,3 +117,15 @@ after = [9]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 11
+type = "story"
+title = "Send pacing parameters"
+description = "Replace per-minute throttle with delay per email, batch size, batch duration, and a rolling hourly cap. All four are Parameters."
+verify = "A full hour sends only the remaining room; a run stops at the duration even when the batch is not full."
+covers = ["R4"]
+after = [6]
+hitl = false
+risk = "high"
+refine = true

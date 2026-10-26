@@ -57,9 +57,21 @@ public final class ParameterDefinitions {
         "365",
         "Days to retain audit records. Integer >= 1. Default 365.");
     put(
-        ParameterKeys.SEND_THROTTLE_PER_MINUTE,
-        "120",
-        "System-wide max Campaign SMTP sends per minute. Integer >= 0 (0 = unlimited). Default 120.");
+        ParameterKeys.SEND_DELAY_PER_EMAIL_MS,
+        "1000",
+        "Pause after each SMTP send, in milliseconds. Integer >= 0. Default 1000.");
+    put(
+        ParameterKeys.SEND_BATCH_SIZE,
+        "600",
+        "Maximum SMTP sends in one schedule run. Integer >= 1. Default 600.");
+    put(
+        ParameterKeys.SEND_BATCH_DURATION_MINUTES,
+        "10",
+        "Stop the schedule run after this many minutes even if the batch is not full. Integer >= 1. Default 10.");
+    put(
+        ParameterKeys.SEND_MESSAGES_PER_HOUR,
+        "3600",
+        "Maximum messages sent in the last 60 minutes. A run sends only the remaining room, and never more than the batch size. Integer >= 1. Default 3600.");
     put(
         ParameterKeys.IMAGE_FETCH_MODE,
         "Off",

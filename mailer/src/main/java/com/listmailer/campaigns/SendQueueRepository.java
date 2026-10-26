@@ -21,4 +21,6 @@ public interface SendQueueRepository extends JpaRepository<SendQueueEntity, Stri
   List<SendQueueEntity> findByMemberIdAndStatus(String memberId, String status);
 
   List<SendQueueEntity> findByStatusAndSubjectIgnoreCase(String status, String subject);
+
+  long countByStatusAndSentAtAfter(String status, java.time.Instant sentAt);
 }

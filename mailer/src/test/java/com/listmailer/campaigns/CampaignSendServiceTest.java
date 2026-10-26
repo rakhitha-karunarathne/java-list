@@ -34,6 +34,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,10 +56,19 @@ class CampaignSendServiceTest {
   @Mock OpaqueTokenHelper opaqueTokens;
   @Mock SendingPathRepository sendingPaths;
   @Mock com.listmailer.ops.ActivityLogService activity;
+  @Mock TransactionTemplate transactions;
   @InjectMocks CampaignSendService service;
 
   @BeforeEach
   void stubPublicBase() {
+    lenient()
+        .when(transactions.execute(any()))
+        .thenAnswer(
+            inv -> {
+              TransactionCallback<?> callback = inv.getArgument(0);
+              return callback.doInTransaction(
+                  new org.springframework.transaction.support.SimpleTransactionStatus());
+            });
     lenient()
         .when(parameters.get(ParameterKeys.PUBLIC_BASE_URL))
         .thenReturn(Optional.of("https://mail.example"));
@@ -357,5 +368,16 @@ class CampaignSendServiceTest {
     assertEquals(1, cap.getValue().attachments().size());
     assertEquals("note.txt", cap.getValue().attachments().get(0).filename());
     assertEquals(3, cap.getValue().attachments().get(0).content().length);
+  }
+
+  @Test
+  void stopsWhenDeadlineAlreadyPassed() {
+    when(queue.findByStatus("PENDING"))
+        .thenReturn(
+            List.of(new SendQueueEntity("q1", "c1", "m1", "a@example.com", "path-1", "PENDING")));
+
+    assertEquals(0, service.processPendingBatch(10, 0, Instant.now().minusSeconds(1)));
+
+    verify(smtp, times(0)).send(any());
   }
 }
