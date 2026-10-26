@@ -3,9 +3,12 @@ package com.listmailer.members;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
 import com.listmailer.users.UserRole;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,12 +23,41 @@ public class ListMembersController {
   private final ListRepository lists;
   private final ListAccessService access;
   private final BulkAddMembersService bulkAdd;
+  private final ListMemberRepository listMembers;
+  private final MemberRepository members;
 
   public ListMembersController(
-      ListRepository lists, ListAccessService access, BulkAddMembersService bulkAdd) {
+      ListRepository lists,
+      ListAccessService access,
+      BulkAddMembersService bulkAdd,
+      ListMemberRepository listMembers,
+      MemberRepository members) {
     this.lists = lists;
     this.access = access;
     this.bulkAdd = bulkAdd;
+    this.listMembers = listMembers;
+    this.members = members;
+  }
+
+  @GetMapping
+  public List<MemberRow> index(@PathVariable String listId) {
+    lists
+        .findById(listId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "list not found"));
+    if (!access.canAccess(listId) && !access.isAdmin()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "list out of scope");
+    }
+    List<MemberRow> out = new ArrayList<>();
+    for (ListMemberEntity lm : listMembers.findByListId(listId)) {
+      members
+          .findById(lm.getMemberId())
+          .ifPresent(
+              m ->
+                  out.add(
+                      new MemberRow(
+                          m.getId(), m.getEmail(), m.isEnabled(), lm.isUnsubscribed())));
+    }
+    return out;
   }
 
   @PostMapping("/bulk")
@@ -54,4 +86,6 @@ public class ListMembersController {
   }
 
   public record BulkBody(String text) {}
+
+  public record MemberRow(String id, String email, boolean enabled, boolean unsubscribed) {}
 }
