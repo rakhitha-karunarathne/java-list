@@ -117,7 +117,9 @@ class CampaignSendServiceTest {
     verify(smtp, times(1)).send(cap.capture());
     assertEquals("Same@Example.com", cap.getValue().toEmail());
     assertEquals("path-1", cap.getValue().sendingPathId());
-    assertEquals("<p>x</p>", cap.getValue().htmlBody());
+    org.junit.jupiter.api.Assertions.assertTrue(cap.getValue().htmlBody().contains("/t/"));
+    org.junit.jupiter.api.Assertions.assertTrue(
+        cap.getValue().htmlBody().contains("/unsubscribe/"));
     assertEquals(CampaignStatus.FINISHED, campaign.getStatus());
   }
 

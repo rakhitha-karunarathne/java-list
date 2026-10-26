@@ -32,6 +32,7 @@ public class CampaignsController {
   private final ListAccessService access;
   private final CampaignSendService sendService;
   private final SendQueueRepository queue;
+  private final CampaignOpenRepository opens;
 
   public CampaignsController(
       CampaignRepository campaigns,
@@ -40,7 +41,8 @@ public class CampaignsController {
       ListRepository lists,
       ListAccessService access,
       CampaignSendService sendService,
-      SendQueueRepository queue) {
+      SendQueueRepository queue,
+      CampaignOpenRepository opens) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -48,6 +50,7 @@ public class CampaignsController {
     this.access = access;
     this.sendService = sendService;
     this.queue = queue;
+    this.opens = opens;
   }
 
   @GetMapping
@@ -237,6 +240,28 @@ public class CampaignsController {
             .toList();
     long sent =
         queue.findByCampaignId(c.getId()).stream().filter(r -> "SENT".equals(r.getStatus())).count();
+    List<CampaignOpenEntity> openRows = opens.findByCampaignId(c.getId());
+    long totalOpens = openRows.size();
+    long uniqueOpens = openRows.stream().map(CampaignOpenEntity::getMemberId).distinct().count();
+    List<MemberOpenStat> memberOpens =
+        openRows.stream()
+            .collect(
+                java.util.stream.Collectors.groupingBy(
+                    CampaignOpenEntity::getMemberId,
+                    java.util.LinkedHashMap::new,
+                    java.util.stream.Collectors.toList()))
+            .entrySet()
+            .stream()
+            .map(
+                e ->
+                    new MemberOpenStat(
+                        e.getKey(),
+                        e.getValue().stream()
+                            .map(CampaignOpenEntity::getOpenedAt)
+                            .min(java.time.Instant::compareTo)
+                            .orElse(null),
+                        e.getValue().size()))
+            .toList();
     List<AttachmentOut> files =
         attachments.findByCampaignId(c.getId()).stream()
             .map(a -> new AttachmentOut(a.getId(), a.getFilename(), a.getContentType(), a.getContent().length))
@@ -249,6 +274,9 @@ public class CampaignsController {
         c.getStatus().name(),
         listIds,
         sent,
+        uniqueOpens,
+        totalOpens,
+        memberOpens,
         files);
   }
 
@@ -273,6 +301,8 @@ public class CampaignsController {
     }
   }
 
+  public record MemberOpenStat(String memberId, java.time.Instant firstOpenAt, long openCount) {}
+
   public record CampaignDetail(
       String id,
       String subject,
@@ -281,5 +311,8 @@ public class CampaignsController {
       String status,
       List<String> listIds,
       long sentCount,
+      long uniqueOpens,
+      long totalOpens,
+      List<MemberOpenStat> memberOpens,
       List<AttachmentOut> attachments) {}
 }

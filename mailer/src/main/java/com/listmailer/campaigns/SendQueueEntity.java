@@ -28,6 +28,15 @@ public class SendQueueEntity {
   @Column(nullable = false, length = 32)
   private String status;
 
+  @Column(name = "pixel_token", length = 36)
+  private String pixelToken;
+
+  @Column(name = "unsub_token", length = 36)
+  private String unsubToken;
+
+  @Column(name = "smtp_message_id", length = 255)
+  private String smtpMessageId;
+
   protected SendQueueEntity() {}
 
   public SendQueueEntity(
@@ -71,5 +80,29 @@ public class SendQueueEntity {
 
   public void setStatus(String status) {
     this.status = status;
+  }
+
+  public String getPixelToken() {
+    return pixelToken;
+  }
+
+  public void setPixelToken(String pixelToken) {
+    this.pixelToken = pixelToken;
+  }
+
+  public String getUnsubToken() {
+    return unsubToken;
+  }
+
+  public void setUnsubToken(String unsubToken) {
+    this.unsubToken = unsubToken;
+  }
+
+  public String getSmtpMessageId() {
+    return smtpMessageId;
+  }
+
+  public void setSmtpMessageId(String smtpMessageId) {
+    this.smtpMessageId = smtpMessageId;
   }
 }

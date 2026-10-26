@@ -133,6 +133,37 @@ public class CampaignSendService {
     if (blobs == null || blobs.isEmpty()) {
       return html == null ? "" : html;
     }
+    return htmlRewriter.rewrite(
+        html,
+        campaignId,
+        publicBase(),
+        blobs.stream().map(CampaignAttachmentEntity::getFilename).toList());
+  }
+
+  private String injectTracking(
+      String html, String campaignId, String pixelToken, String unsubToken) {
+    String base = publicBase();
+    String pixel = base + "/t/" + pixelToken;
+    String unsub = base + "/unsubscribe/" + unsubToken;
+    String body = html == null ? "" : html;
+    if (!body.contains("/t/")) {
+      body =
+          body
+              + "<img src=\""
+              + pixel
+              + "\" width=\"1\" height=\"1\" alt=\"\" style=\"display:none\"/>";
+    }
+    if (!body.contains("/unsubscribe/")) {
+      body =
+          body
+              + "<p style=\"font-size:10px\"><a href=\""
+              + unsub
+              + "\">Unsubscribe</a></p>";
+    }
+    return body;
+  }
+
+  private String publicBase() {
     String base =
         parameters
             .get(ParameterKeys.PUBLIC_BASE_URL)
@@ -140,8 +171,7 @@ public class CampaignSendService {
                 () ->
                     new ResponseStatusException(
                         HttpStatus.INTERNAL_SERVER_ERROR, "public.base.url missing"));
-    return htmlRewriter.rewrite(
-        html, campaignId, base, blobs.stream().map(CampaignAttachmentEntity::getFilename).toList());
+    return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
   }
 
   private static List<String> normalizeAddresses(List<String> raw) {
@@ -275,7 +305,13 @@ public class CampaignSendService {
                       new SmtpPort.Attachment(
                           a.getFilename(), a.getContentType(), a.getContent()))
               .toList();
+      String pixelToken = Guids.newGuid();
+      String unsubToken = Guids.newGuid();
+      row.setPixelToken(pixelToken);
+      row.setUnsubToken(unsubToken);
+      row.setSmtpMessageId("<" + Guids.newGuid() + "@listmailer>");
       String html = rewriteHtml(campaign.getId(), campaign.getHtmlBody(), blobs);
+      html = injectTracking(html, campaign.getId(), pixelToken, unsubToken);
       smtp.send(
           new SmtpPort.SmtpMessage(
               row.getSendingPathId(),
