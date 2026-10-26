@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
+import { CONSENT_REQUEST_HINT } from './consentCopy.js'
 import { membersSearchPath } from './membersSearch.js'
 
 export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenMember }) {
@@ -351,9 +352,7 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
         method: 'POST',
         body: JSON.stringify({ listIds: consentLists }),
       })
-      setConsentMsg(
-        'Consent request accepted. Delivery only happens if Notice sending path is set; otherwise the backend skips notice mail.',
-      )
+      setConsentMsg(CONSENT_REQUEST_HINT)
     } catch (err) {
       onError(err.message)
     }
