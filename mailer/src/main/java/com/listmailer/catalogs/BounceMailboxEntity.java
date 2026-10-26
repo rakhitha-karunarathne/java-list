@@ -35,6 +35,12 @@ public class BounceMailboxEntity {
   @Column(name = "poll_interval_minutes", nullable = false)
   private int pollIntervalMinutes;
 
+  @Column(name = "last_polled_at")
+  private Instant lastPolledAt;
+
+  @Column(nullable = false)
+  private boolean enabled = true;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -58,6 +64,7 @@ public class BounceMailboxEntity {
     this.password = password;
     this.useSsl = useSsl;
     this.pollIntervalMinutes = pollIntervalMinutes;
+    this.enabled = true;
     this.createdAt = createdAt;
   }
 
@@ -119,5 +126,21 @@ public class BounceMailboxEntity {
 
   public void setPollIntervalMinutes(int pollIntervalMinutes) {
     this.pollIntervalMinutes = pollIntervalMinutes;
+  }
+
+  public Instant getLastPolledAt() {
+    return lastPolledAt;
+  }
+
+  public void setLastPolledAt(Instant lastPolledAt) {
+    this.lastPolledAt = lastPolledAt;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
   }
 }
