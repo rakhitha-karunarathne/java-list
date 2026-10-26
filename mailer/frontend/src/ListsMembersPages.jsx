@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { CONSENT_REQUEST_HINT } from './consentCopy.js'
 import { emptyHint } from './emptyHint.js'
+import { fieldLabel } from './fieldLabel.js'
 import { membersSearchPath } from './membersSearch.js'
 
 export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenMember }) {
@@ -137,14 +138,14 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
         {detail.canManage ? (
           <form onSubmit={save}>
             <label className="field">
-              name
+              {fieldLabel('name')}
               <input
                 value={form.name}
                 onChange={(ev) => setForm({ ...form, name: ev.target.value })}
               />
             </label>
             <label className="field">
-              sending path
+              {fieldLabel('sending path')}
               <select
                 value={form.sendingPathId}
                 onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
@@ -157,12 +158,12 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               </select>
             </label>
             <label className="field">
-              footer
+              {fieldLabel('footer')}
               <select
                 value={form.footerId}
                 onChange={(ev) => setForm({ ...form, footerId: ev.target.value })}
               >
-                <option value="">— none —</option>
+                <option value="">— None —</option>
                 {footers.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
@@ -171,7 +172,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               </select>
             </label>
             <label className="field">
-              spamThreshold
+              {fieldLabel('spamThreshold')}
               <input
                 value={form.spamThreshold}
                 onChange={(ev) => setForm({ ...form, spamThreshold: ev.target.value })}
@@ -203,10 +204,10 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
 
         {detail.canManage ? (
           <>
-            <h3>Bulk add</h3>
+            <h3>Bulk Add</h3>
             <form onSubmit={bulkAdd}>
               <label className="field">
-                addresses (newline, comma, or semicolon)
+                Addresses (Newline, Comma, Or Semicolon)
                 <textarea
                   rows={5}
                   style={{ maxWidth: '100%' }}
@@ -248,7 +249,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
       <h3>Create</h3>
       <form onSubmit={create}>
         <label className="field">
-          name
+          {fieldLabel('name')}
           <input
             value={form.name}
             onChange={(ev) => setForm({ ...form, name: ev.target.value })}
@@ -256,13 +257,13 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
           />
         </label>
         <label className="field">
-          sending path
+          {fieldLabel('sending path')}
           <select
             value={form.sendingPathId}
             onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
             required
           >
-            <option value="">— select —</option>
+            <option value="">— Select —</option>
             {paths.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -383,7 +384,7 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
         {detail.enabled ? (
           <>
             <label className="field">
-              disable reason
+              {fieldLabel('disable reason')}
               <input
                 value={disableReason}
                 onChange={(ev) => setDisableReason(ev.target.value)}
@@ -441,7 +442,7 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
             setQ(ev.target.value)
             search(ev.target.value)
           }}
-          placeholder="email contains…"
+          placeholder="Email Contains…"
         />
       </label>
       {!rows.length ? (

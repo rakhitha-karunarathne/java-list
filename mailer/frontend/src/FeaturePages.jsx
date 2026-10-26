@@ -142,7 +142,7 @@ export function Compose({ token, onError }) {
         <input value={subject} onChange={(e) => setSubject(e.target.value)} />
       </label>
       <fieldset>
-        <legend>Lists (order = first Sending path)</legend>
+        <legend>Lists (Order = First Sending Path)</legend>
         {lists.map((l) => (
           <div key={l.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <label>
@@ -207,7 +207,7 @@ export function Compose({ token, onError }) {
         <input type="file" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
       </label>
       <label className="field">
-        Test send addresses (comma or newline)
+        Test Send Addresses (Comma Or Newline)
         <textarea
           value={testAddresses}
           onChange={(e) => setTestAddresses(e.target.value)}
@@ -215,7 +215,7 @@ export function Compose({ token, onError }) {
           style={{ maxWidth: '100%' }}
         />
       </label>
-      <p className="hint">Test send ignores bounce-disable.</p>
+      <p className="hint">Test Send Ignores Bounce-Disable.</p>
       <p>
         <button type="button" className="btn" onClick={saveDraft}>
           Save Draft

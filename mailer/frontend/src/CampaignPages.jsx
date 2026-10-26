@@ -139,9 +139,9 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail 
         (detail.status || '').toUpperCase() === 'FINISHED' ? (
           <form onSubmit={addList} style={{ marginTop: '1rem' }}>
             <label className="field">
-              Add list
+              Add List
               <select value={addListId} onChange={(ev) => setAddListId(ev.target.value)} required>
-                <option value="">— select —</option>
+                <option value="">— Select —</option>
                 {lists.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name}
@@ -162,7 +162,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail 
     <div className="card">
       <h2>Campaigns</h2>
       <label className="field">
-        Status filter
+        Status Filter
         <select value={filter} onChange={(ev) => setFilter(ev.target.value)}>
           <option value="">All</option>
           {CAMPAIGN_STATUSES.map((s) => (

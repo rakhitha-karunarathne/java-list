@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { DeleteBlocked, UsedByList } from './catalogUi.jsx'
+import { fieldLabel } from './fieldLabel.js'
 
 export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [rows, setRows] = useState([])
@@ -121,7 +122,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         <form onSubmit={save}>
           {['name', 'host', 'username', 'fromEmail', 'fromName'].map((k) => (
             <label className="field" key={k}>
-              {k}
+              {fieldLabel(k)}
               <input
                 value={form[k]}
                 onChange={(ev) => setForm({ ...form, [k]: ev.target.value })}
@@ -130,7 +131,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
             </label>
           ))}
           <label className="field">
-            port
+            {fieldLabel('port')}
             <input
               type="number"
               value={form.port}
@@ -138,7 +139,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
             />
           </label>
           <label className="field">
-            password (blank = keep)
+            {fieldLabel('password')} (Blank = Keep)
             <input
               type="password"
               value={form.password}
@@ -152,7 +153,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               checked={form.useTls}
               onChange={(ev) => setForm({ ...form, useTls: ev.target.checked })}
             />{' '}
-            useTls
+            {fieldLabel('useTls')}
           </label>
           <p>
             <button type="submit" className="btn">
@@ -179,7 +180,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
             <button type="button" className="btn secondary" onClick={() => onOpen(r.id)}>
               {r.name}
             </button>{' '}
-            {r.host}:{r.port} · {r.fromEmail}
+            {r.host}:{r.port} � {r.fromEmail}
           </li>
         ))}
       </ul>
@@ -187,7 +188,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
       <form onSubmit={create}>
         {['name', 'host', 'username', 'password', 'fromEmail', 'fromName'].map((k) => (
           <label className="field" key={k}>
-            {k}
+            {fieldLabel(k)}
             <input
               type={k === 'password' ? 'password' : 'text'}
               value={form[k]}
@@ -197,7 +198,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
           </label>
         ))}
         <label className="field">
-          port
+          {fieldLabel('port')}
           <input
             type="number"
             value={form.port}
@@ -300,11 +301,11 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
         <h2>{detail.name}</h2>
         <form onSubmit={save}>
           <label className="field">
-            name
+            {fieldLabel('name')}
             <input value={form.name} onChange={(ev) => setForm({ ...form, name: ev.target.value })} />
           </label>
           <label className="field">
-            htmlBody
+            {fieldLabel('htmlBody')}
             <textarea
               rows={6}
               style={{ maxWidth: '100%' }}
@@ -313,7 +314,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
             />
           </label>
           <label className="field">
-            textBody
+            {fieldLabel('textBody')}
             <textarea
               rows={4}
               style={{ maxWidth: '100%' }}
@@ -352,11 +353,11 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
       <h3>Create</h3>
       <form onSubmit={create}>
         <label className="field">
-          name
+          {fieldLabel('name')}
           <input value={form.name} onChange={(ev) => setForm({ ...form, name: ev.target.value })} required />
         </label>
         <label className="field">
-          htmlBody
+          {fieldLabel('htmlBody')}
           <textarea
             rows={4}
             style={{ maxWidth: '100%' }}
@@ -365,7 +366,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
           />
         </label>
         <label className="field">
-          textBody
+          {fieldLabel('textBody')}
           <textarea
             rows={3}
             style={{ maxWidth: '100%' }}
@@ -477,12 +478,12 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         <form onSubmit={save}>
           {['name', 'host', 'username'].map((k) => (
             <label className="field" key={k}>
-              {k}
+              {fieldLabel(k)}
               <input value={form[k]} onChange={(ev) => setForm({ ...form, [k]: ev.target.value })} />
             </label>
           ))}
           <label className="field">
-            password (blank = keep)
+            {fieldLabel('password')} (Blank = Keep)
             <input
               type="password"
               value={form.password}
@@ -491,7 +492,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             />
           </label>
           <label className="field">
-            port
+            {fieldLabel('port')}
             <input
               type="number"
               value={form.port}
@@ -499,7 +500,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             />
           </label>
           <label className="field">
-            pollIntervalMinutes
+            {fieldLabel('pollIntervalMinutes')}
             <input
               type="number"
               value={form.pollIntervalMinutes}
@@ -512,7 +513,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
               checked={form.useSsl}
               onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
             />{' '}
-            useSsl
+            {fieldLabel('useSsl')}
           </label>
           <p>
             <button type="submit" className="btn">
@@ -536,7 +537,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             <button type="button" className="btn secondary" onClick={() => onOpen(r.id)}>
               {r.name}
             </button>{' '}
-            {r.host} · poll {r.pollIntervalMinutes}m
+            {r.host} � poll {r.pollIntervalMinutes}m
           </li>
         ))}
       </ul>
@@ -544,7 +545,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
       <form onSubmit={create}>
         {['name', 'host', 'username', 'password'].map((k) => (
           <label className="field" key={k}>
-            {k}
+            {fieldLabel(k)}
             <input
               type={k === 'password' ? 'password' : 'text'}
               value={form[k]}
@@ -554,7 +555,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           </label>
         ))}
         <label className="field">
-          port
+          {fieldLabel('port')}
           <input
             type="number"
             value={form.port}
@@ -562,7 +563,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           />
         </label>
         <label className="field">
-          pollIntervalMinutes
+          {fieldLabel('pollIntervalMinutes')}
           <input
             type="number"
             value={form.pollIntervalMinutes}
@@ -575,7 +576,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             checked={form.useSsl}
             onChange={(ev) => setForm({ ...form, useSsl: ev.target.checked })}
           />{' '}
-          useSsl
+          {fieldLabel('useSsl')}
         </label>
         <button type="submit" className="btn">
           Create
@@ -637,7 +638,7 @@ export function ParametersPage({ token, onError }) {
       {params.map((p) => (
         <div key={p.key} style={{ marginBottom: '1.5rem' }}>
           <label className="field">
-            {p.key}
+            {fieldLabel(p.key)}
             <input
               value={drafts[p.key] ?? ''}
               onChange={(ev) => setDrafts((d) => ({ ...d, [p.key]: ev.target.value }))}
@@ -696,9 +697,9 @@ export function NoticePathPage({ token, onError }) {
       {!loaded ? <p className="hint">Loading…</p> : null}
       <form onSubmit={save}>
         <label className="field">
-          Sending path
+          Sending Path
           <select value={pathId} onChange={(ev) => setPathId(ev.target.value)}>
-            <option value="">— unset (no notice mail) —</option>
+            <option value="">— Unset (No Notice Mail) —</option>
             {paths.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}

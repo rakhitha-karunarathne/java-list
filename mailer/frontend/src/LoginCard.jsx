@@ -120,7 +120,7 @@ export default function LoginCard({ onToken, onError }) {
               Enter your authenticator code. A backup code also works if your Admin provided one.
             </p>
             <label className="field">
-              Authenticator code
+              Authenticator Code
               <input
                 type="text"
                 inputMode="text"

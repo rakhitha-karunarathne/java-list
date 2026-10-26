@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
+import { fieldLabel } from './fieldLabel.js'
 
 export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [inboxes, setInboxes] = useState([])
@@ -137,7 +138,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </ul>
         <form onSubmit={addSender}>
           <label className="field">
-            sender email
+            {fieldLabel('sender email')}
             <input
               value={senderEmail}
               onChange={(ev) => setSenderEmail(ev.target.value)}
@@ -160,7 +161,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </ul>
         <form onSubmit={addMapping}>
           <label className="field">
-            mapping name
+            {fieldLabel('mapping name')}
             <input
               value={mapForm.name}
               onChange={(ev) => setMapForm({ ...mapForm, name: ev.target.value })}
@@ -188,19 +189,19 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             ))}
           </fieldset>
           <label className="field">
-            substitute From email
+            {fieldLabel('substitute From email')}
             <input
               value={mapForm.substituteFrom}
               onChange={(ev) => setMapForm({ ...mapForm, substituteFrom: ev.target.value })}
             />
           </label>
           <label className="field">
-            footer override
+            {fieldLabel('footer override')}
             <select
               value={mapForm.footerId}
               onChange={(ev) => setMapForm({ ...mapForm, footerId: ev.target.value })}
             >
-              <option value="">— none —</option>
+              <option value="">— None —</option>
               {footers.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -244,7 +245,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       <form onSubmit={createInbox}>
         {['name', 'host', 'username', 'password'].map((k) => (
           <label className="field" key={k}>
-            {k}
+            {fieldLabel(k)}
             <input
               type={k === 'password' ? 'password' : 'text'}
               value={inboxForm[k]}
@@ -436,11 +437,11 @@ export function GlobalBlocksPage({ token, onError }) {
         }}
       >
         <label className="field">
-          Block sender
+          Block Sender
           <input value={blockEmail} onChange={(ev) => setBlockEmail(ev.target.value)} required />
         </label>
         <button type="submit" className="btn secondary">
-          Block sender
+          Block Sender
         </button>
       </form>
       <form
@@ -459,11 +460,11 @@ export function GlobalBlocksPage({ token, onError }) {
         }}
       >
         <label className="field">
-          Block domain
+          Block Domain
           <input value={blockDomain} onChange={(ev) => setBlockDomain(ev.target.value)} required />
         </label>
         <button type="submit" className="btn secondary">
-          Block domain
+          Block Domain
         </button>
       </form>
     </div>

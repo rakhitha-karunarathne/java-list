@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiJson } from './api.js'
 import { decodeJwtPayload } from './auth.js'
+import { fieldLabel } from './fieldLabel.js'
 
 const ROLES = ['ADMIN', 'LIST_MANAGER', 'LIST_SENDER']
 
@@ -109,7 +110,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         <h2>{detail.email}</h2>
         <form onSubmit={savePatch}>
           <label className="field">
-            role
+            {fieldLabel('role')}
             <select
               value={patch.role}
               onChange={(ev) => setPatch({ ...patch, role: ev.target.value })}
@@ -127,7 +128,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               checked={patch.enabled}
               onChange={(ev) => setPatch({ ...patch, enabled: ev.target.checked })}
             />{' '}
-            enabled
+            {fieldLabel('enabled')}
           </label>
           <button type="submit" className="btn">
             Save user
@@ -148,7 +149,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                       checked={!!g.manage}
                       onChange={() => toggleGrant(l.id, 'manage')}
                     />{' '}
-                    manage
+                    Manage
                   </label>{' '}
                   <label>
                     <input
@@ -156,14 +157,14 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                       checked={!!g.send}
                       onChange={() => toggleGrant(l.id, 'send')}
                     />{' '}
-                    send
+                    Send
                   </label>
                 </li>
               )
             })}
           </ul>
           <button type="submit" className="btn secondary">
-            Save grants
+            Save Grants
           </button>
         </form>
 
@@ -188,7 +189,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       <h3>Create</h3>
       <form onSubmit={create}>
         <label className="field">
-          email
+          {fieldLabel('email')}
           <input
             value={form.email}
             onChange={(ev) => setForm({ ...form, email: ev.target.value })}
@@ -196,7 +197,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           />
         </label>
         <label className="field">
-          password
+          {fieldLabel('password')}
           <input
             type="password"
             value={form.password}
@@ -205,7 +206,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           />
         </label>
         <label className="field">
-          role
+          {fieldLabel('role')}
           <select value={form.role} onChange={(ev) => setForm({ ...form, role: ev.target.value })}>
             {ROLES.map((r) => (
               <option key={r} value={r}>
@@ -293,7 +294,7 @@ function SecurityMfaPanel({ token, onError, self }) {
           <code style={{ wordBreak: 'break-all' }}>{otpAuthUrl}</code>
           <form onSubmit={confirm}>
             <label className="field">
-              verification code
+              {fieldLabel('verification code')}
               <input value={code} onChange={(ev) => setCode(ev.target.value)} required />
             </label>
             <button type="submit" className="btn">
@@ -318,7 +319,7 @@ function SecurityMfaPanel({ token, onError, self }) {
       ) : null}
       <form onSubmit={unenroll}>
         <label className="field">
-          unenroll (TOTP or backup code)
+          {fieldLabel('unenroll')} (TOTP Or Backup Code)
           <input
             value={unenrollCode}
             onChange={(ev) => setUnenrollCode(ev.target.value)}
