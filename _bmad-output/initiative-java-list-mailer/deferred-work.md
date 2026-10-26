@@ -25,3 +25,8 @@
 - source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-blob-storage-and-public-dl-plan.md`
   summary: Campaign DELETE is not re-checked against list send grants.
   evidence: Same pattern as queue; tighten when campaign ACL story exists.
+
+- source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-image-fetch-modes-ssrf-and-payload-ceilings-plan.md`
+  summary: Blob CDN TTL restart on Finished Requeue not tracked yet.
+  evidence: R5 TTL clause; needs Finished timestamp + TTL field on blobs.
+

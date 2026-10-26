@@ -47,6 +47,7 @@ class CampaignSendServiceTest {
   @Mock OpsHooksPort ops;
   @Mock ParametersPort parameters;
   @Mock CampaignHtmlRewriter htmlRewriter;
+  @Mock RemoteImageFetchService imageFetch;
   @InjectMocks CampaignSendService service;
 
   @BeforeEach
@@ -55,8 +56,14 @@ class CampaignSendServiceTest {
         .when(parameters.get(ParameterKeys.PUBLIC_BASE_URL))
         .thenReturn(Optional.of("https://mail.example"));
     lenient()
+        .when(parameters.get(ParameterKeys.IMAGE_FETCH_MODE))
+        .thenReturn(Optional.of("Off"));
+    lenient()
         .when(htmlRewriter.rewrite(any(), anyString(), anyString(), any()))
         .thenAnswer(inv -> inv.getArgument(0));
+    lenient()
+        .when(imageFetch.ingest(anyString(), any(), any(), any()))
+        .thenAnswer(inv -> inv.getArgument(1));
   }
 
   @Test

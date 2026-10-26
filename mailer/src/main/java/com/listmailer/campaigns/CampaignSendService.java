@@ -41,6 +41,7 @@ public class CampaignSendService {
   private final OpsHooksPort ops;
   private final ParametersPort parameters;
   private final CampaignHtmlRewriter htmlRewriter;
+  private final RemoteImageFetchService imageFetch;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -53,7 +54,8 @@ public class CampaignSendService {
       SmtpPort smtp,
       OpsHooksPort ops,
       ParametersPort parameters,
-      CampaignHtmlRewriter htmlRewriter) {
+      CampaignHtmlRewriter htmlRewriter,
+      RemoteImageFetchService imageFetch) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -65,6 +67,7 @@ public class CampaignSendService {
     this.ops = ops;
     this.parameters = parameters;
     this.htmlRewriter = htmlRewriter;
+    this.imageFetch = imageFetch;
   }
 
   /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
@@ -189,6 +192,16 @@ public class CampaignSendService {
             .findById(linked.get(0).getListId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
     String pathId = firstList.getSendingPathId();
+    List<ListEntity> selectedLists = new ArrayList<>();
+    for (CampaignListEntity cl : linked) {
+      lists.findById(cl.getListId()).ifPresent(selectedLists::add);
+    }
+    ImageFetchMode mode =
+        ImageFetchMode.from(parameters.get(ParameterKeys.IMAGE_FETCH_MODE).orElse("Off"));
+    String rewrittenHtml =
+        imageFetch.ingest(campaignId, campaign.getHtmlBody(), mode, selectedLists);
+    campaign.setHtmlBody(rewrittenHtml);
+    campaigns.save(campaign);
 
     // address-level dedupe (R1): same email → one queue row
     Map<String, MemberEntity> unique = new LinkedHashMap<>();
