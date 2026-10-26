@@ -17,3 +17,11 @@
 - source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-test-send-from-compose-plan.md`
   summary: Queue-path SMTP failures do not yet emit OpsHooksPort (only test-send does).
   evidence: Intent caveat; epic-ops will complete persistence; consider wiring queue failures when Ops Logs land.
+
+- source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-blob-storage-and-public-dl-plan.md`
+  summary: HTML rewriter only covers quoted img src forms, not href/srcset/CSS urls.
+  evidence: Review of CampaignHtmlRewriter; expand when compose image UX matures.
+
+- source_plan: `_bmad-output/initiative-java-list-mailer/tickets/epic-campaigns-send/tickets/story-blob-storage-and-public-dl-plan.md`
+  summary: Campaign DELETE is not re-checked against list send grants.
+  evidence: Same pattern as queue; tighten when campaign ACL story exists.

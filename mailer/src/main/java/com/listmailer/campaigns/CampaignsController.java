@@ -10,12 +10,14 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -121,6 +123,20 @@ public class CampaignsController {
     return new TestSendResult(sent);
   }
 
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Transactional
+  public void delete(@PathVariable String id) {
+    CampaignEntity c = require(id);
+    if (c.getStatus() == CampaignStatus.SENDING || c.getStatus() == CampaignStatus.QUEUED) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot delete while Queued/Sending");
+    }
+    attachments.deleteByCampaignId(id);
+    queue.findByCampaignId(id).forEach(queue::delete);
+    campaignLists.deleteByCampaignId(id);
+    campaigns.delete(c);
+  }
+
   @PostMapping("/{id}/stop")
   @Transactional
   public CampaignDetail stop(@PathVariable String id) {
@@ -189,6 +205,10 @@ public class CampaignsController {
       if (a == null || !StringUtils.hasText(a.filename()) || !StringUtils.hasText(a.contentBase64())) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid attachment");
       }
+      String name = a.filename().trim();
+      if (name.contains("..") || name.contains("/") || name.contains("\\")) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid attachment filename");
+      }
       byte[] bytes;
       try {
         bytes = Base64.getDecoder().decode(a.contentBase64());
@@ -196,8 +216,7 @@ public class CampaignsController {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid attachment encoding");
       }
       String ct = StringUtils.hasText(a.contentType()) ? a.contentType() : "application/octet-stream";
-      attachments.save(
-          new CampaignAttachmentEntity(Guids.newGuid(), campaignId, a.filename().trim(), ct, bytes));
+      attachments.save(new CampaignAttachmentEntity(Guids.newGuid(), campaignId, name, ct, bytes));
     }
   }
 

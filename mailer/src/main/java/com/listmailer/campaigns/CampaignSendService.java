@@ -2,6 +2,8 @@ package com.listmailer.campaigns;
 
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.kernel.ports.OpsHooksPort;
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
@@ -37,6 +39,8 @@ public class CampaignSendService {
   private final MemberRepository members;
   private final SmtpPort smtp;
   private final OpsHooksPort ops;
+  private final ParametersPort parameters;
+  private final CampaignHtmlRewriter htmlRewriter;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -47,7 +51,9 @@ public class CampaignSendService {
       ListMemberRepository listMembers,
       MemberRepository members,
       SmtpPort smtp,
-      OpsHooksPort ops) {
+      OpsHooksPort ops,
+      ParametersPort parameters,
+      CampaignHtmlRewriter htmlRewriter) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -57,6 +63,8 @@ public class CampaignSendService {
     this.members = members;
     this.smtp = smtp;
     this.ops = ops;
+    this.parameters = parameters;
+    this.htmlRewriter = htmlRewriter;
   }
 
   /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
@@ -86,13 +94,15 @@ public class CampaignSendService {
             .findById(linked.get(0).getListId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
     String pathId = firstList.getSendingPathId();
+    List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaignId);
     List<SmtpPort.Attachment> files =
-        attachments.findByCampaignId(campaignId).stream()
+        blobs.stream()
             .map(
                 a ->
                     new SmtpPort.Attachment(
                         a.getFilename(), a.getContentType(), a.getContent()))
             .toList();
+    String html = rewriteHtml(campaignId, campaign.getHtmlBody(), blobs);
     int sent = 0;
     for (String to : addresses) {
       try {
@@ -102,7 +112,7 @@ public class CampaignSendService {
                 to,
                 "[TEST] " + campaign.getSubject(),
                 campaign.getTextBody(),
-                campaign.getHtmlBody(),
+                html,
                 files));
         sent++;
       } catch (RuntimeException ex) {
@@ -113,6 +123,22 @@ public class CampaignSendService {
       }
     }
     return sent;
+  }
+
+  private String rewriteHtml(
+      String campaignId, String html, List<CampaignAttachmentEntity> blobs) {
+    if (blobs == null || blobs.isEmpty()) {
+      return html == null ? "" : html;
+    }
+    String base =
+        parameters
+            .get(ParameterKeys.PUBLIC_BASE_URL)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "public.base.url missing"));
+    return htmlRewriter.rewrite(
+        html, campaignId, base, blobs.stream().map(CampaignAttachmentEntity::getFilename).toList());
   }
 
   private static List<String> normalizeAddresses(List<String> raw) {
@@ -190,13 +216,15 @@ public class CampaignSendService {
               pathId,
               "PENDING"));
     }
+    List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaignId);
     List<SmtpPort.Attachment> files =
-        attachments.findByCampaignId(campaignId).stream()
+        blobs.stream()
             .map(
                 a ->
                     new SmtpPort.Attachment(
                         a.getFilename(), a.getContentType(), a.getContent()))
             .toList();
+    String html = rewriteHtml(campaignId, campaign.getHtmlBody(), blobs);
     campaign.setStatus(CampaignStatus.SENDING);
     campaigns.save(campaign);
     for (SendQueueEntity row : queue.findByCampaignId(campaignId)) {
@@ -209,7 +237,7 @@ public class CampaignSendService {
               row.getEmail(),
               campaign.getSubject(),
               campaign.getTextBody(),
-              campaign.getHtmlBody(),
+              html,
               files));
       row.setStatus("SENT");
       queue.save(row);

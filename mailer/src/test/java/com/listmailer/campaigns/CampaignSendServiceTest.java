@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.listmailer.kernel.ports.OpsHooksPort;
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
@@ -16,9 +18,13 @@ import com.listmailer.members.ListMemberRepository;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
 import java.time.Instant;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -39,7 +45,19 @@ class CampaignSendServiceTest {
   @Mock MemberRepository members;
   @Mock SmtpPort smtp;
   @Mock OpsHooksPort ops;
+  @Mock ParametersPort parameters;
+  @Mock CampaignHtmlRewriter htmlRewriter;
   @InjectMocks CampaignSendService service;
+
+  @BeforeEach
+  void stubPublicBase() {
+    lenient()
+        .when(parameters.get(ParameterKeys.PUBLIC_BASE_URL))
+        .thenReturn(Optional.of("https://mail.example"));
+    lenient()
+        .when(htmlRewriter.rewrite(any(), anyString(), anyString(), any()))
+        .thenAnswer(inv -> inv.getArgument(0));
+  }
 
   @Test
   void dedupesSameAddressAcrossListsToOneQueueRow() {
