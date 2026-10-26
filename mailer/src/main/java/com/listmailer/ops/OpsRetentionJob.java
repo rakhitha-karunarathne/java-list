@@ -22,23 +22,8 @@ public class OpsRetentionJob {
   @Scheduled(cron = "${mailer.ops.retention-cron:0 30 3 * * *}")
   @Transactional
   public int purge() {
-    int days = intParam(ParameterKeys.OPS_LOG_RETENTION_DAYS, 90);
+    int days = RetentionDays.read(parameters, ParameterKeys.OPS_LOG_RETENTION_DAYS, 90);
     Instant cutoff = Instant.now().minus(days, ChronoUnit.DAYS);
     return opsLogs.deleteOlderThan(cutoff);
-  }
-
-  private int intParam(String key, int def) {
-    return parameters
-        .get(key)
-        .map(
-            v -> {
-              try {
-                int x = Integer.parseInt(v.trim());
-                return x > 0 ? x : def;
-              } catch (NumberFormatException e) {
-                return def;
-              }
-            })
-        .orElse(def);
   }
 }
