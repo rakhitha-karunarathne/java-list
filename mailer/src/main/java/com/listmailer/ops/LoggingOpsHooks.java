@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-/** In-memory + log sink until epic-ops-attention-audit persists Ops/Attention. */
-@Component
+/**
+ * In-memory sink for non-Spring unit tests. Production/test profile uses {@link
+ * PersistingOpsHooks}.
+ */
 public class LoggingOpsHooks implements OpsHooksPort {
 
   private static final Logger log = LoggerFactory.getLogger(LoggingOpsHooks.class);

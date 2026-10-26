@@ -21,7 +21,7 @@ import com.listmailer.members.ListMemberEntity;
 import com.listmailer.members.ListMemberRepository;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
-import com.listmailer.ops.LoggingOpsHooks;
+import com.listmailer.ops.PersistingOpsHooks;
 import jakarta.mail.internet.MimeMessage;
 import java.time.Instant;
 import java.util.UUID;
@@ -84,7 +84,7 @@ class UnsubscribeTracerTest {
   @Autowired ListRepository lists;
   @Autowired MemberRepository members;
   @Autowired ListMemberRepository listMembers;
-  @Autowired LoggingOpsHooks ops;
+  @Autowired PersistingOpsHooks ops;
 
   private String pathId;
 

@@ -48,7 +48,8 @@ public class SecurityConfig {
                         "/api/bounce-mailboxes/**",
                         "/api/footers/**",
                         "/api/notice-sending-path/**",
-                        "/api/mts/**")
+                        "/api/mts/**",
+                        "/api/ops-logs/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/api/**")
                     .authenticated()

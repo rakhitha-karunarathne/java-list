@@ -274,6 +274,60 @@ function Compose({ token, onError }) {
   )
 }
 
+function OpsLogs({ token, onError }) {
+  const [rows, setRows] = useState([])
+  const [detail, setDetail] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/ops-logs', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`)
+        return r.json()
+      })
+      .then(setRows)
+      .catch(() => setRows([]))
+  }, [token])
+
+  async function openRow(id) {
+    onError('')
+    const res = await fetch(`/api/ops-logs/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      onError(`ops ${res.status}`)
+      return
+    }
+    setDetail(await res.json())
+  }
+
+  return (
+    <section>
+      <h2>Ops Logs</h2>
+      <p style={{ color: '#555' }}>Index — open a row for detail (C8).</p>
+      <ul>
+        {rows.map((r) => (
+          <li key={r.id}>
+            <button type="button" onClick={() => openRow(r.id)}>
+              [{r.severity}] {r.category}
+            </button>{' '}
+            {r.message?.slice(0, 80)}
+          </li>
+        ))}
+      </ul>
+      {detail ? (
+        <div style={{ borderTop: '1px solid #ddd', marginTop: '1rem', paddingTop: '1rem' }}>
+          <h3>{detail.category}</h3>
+          <p>{detail.message}</p>
+          <p style={{ fontSize: '0.85rem' }}>{detail.createdAt}</p>
+          <button type="button" onClick={() => setDetail(null)}>
+            Close
+          </button>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
 function MtsInboxes({ token, onError }) {
   const [inboxes, setInboxes] = useState([])
   const [mappings, setMappings] = useState([])
@@ -475,6 +529,9 @@ function App() {
             </button>{' '}
             <button type="button" onClick={() => setView('mts')}>
               Inboxes &amp; mappings
+            </button>{' '}
+            <button type="button" onClick={() => setView('ops')}>
+              Ops Logs
             </button>
           </p>
           {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
@@ -485,6 +542,7 @@ function App() {
           ) : null}
           {view === 'compose' ? <Compose token={token} onError={setError} /> : null}
           {view === 'mts' ? <MtsInboxes token={token} onError={setError} /> : null}
+          {view === 'ops' ? <OpsLogs token={token} onError={setError} /> : null}
           {view === 'parameters' ? (
             <section>
               <h2>Parameters</h2>
