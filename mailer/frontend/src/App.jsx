@@ -37,6 +37,12 @@ export default function App() {
     setError('')
   }
 
+  function openInView(nextView, id) {
+    setView(nextView)
+    setDetailId(id)
+    setError('')
+  }
+
   if (!token) {
     return <LoginCard onToken={acceptToken} onError={setError} />
   }
@@ -62,6 +68,7 @@ export default function App() {
           detailId={detailId}
           onOpenDetail={setDetailId}
           onCloseDetail={() => setDetailId(null)}
+          openInView={openInView}
         />
       </Shell>
     </>

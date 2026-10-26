@@ -7,6 +7,7 @@ import {
   ParametersPage,
   SendingPathsPage,
 } from './CatalogPages.jsx'
+import { ListsPage, MembersPage } from './ListsMembersPages.jsx'
 import Placeholder from './Placeholder.jsx'
 import { UsersPage } from './UsersPages.jsx'
 
@@ -452,7 +453,15 @@ export function MtsInboxes({ token, onError }) {
   )
 }
 
-export function MainView({ view, token, onError, detailId, onOpenDetail, onCloseDetail }) {
+export function MainView({
+  view,
+  token,
+  onError,
+  detailId,
+  onOpenDetail,
+  onCloseDetail,
+  openInView,
+}) {
   switch (view) {
     case 'compose':
       return <Compose token={token} onError={onError} />
@@ -466,6 +475,27 @@ export function MainView({ view, token, onError, detailId, onOpenDetail, onClose
       return <AuditLog token={token} />
     case 'parameters':
       return <ParametersPage token={token} onError={onError} />
+    case 'lists':
+      return (
+        <ListsPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+          onOpenMember={(id) => openInView?.('members', id)}
+        />
+      )
+    case 'members':
+      return (
+        <MembersPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
     case 'sending-paths':
       return (
         <SendingPathsPage
