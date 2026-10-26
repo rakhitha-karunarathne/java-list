@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { CONSENT_REQUEST_HINT } from './consentCopy.js'
+import { emptyHint } from './emptyHint.js'
 import { membersSearchPath } from './membersSearch.js'
 
 export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenMember }) {
@@ -444,7 +445,7 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
         />
       </label>
       {!rows.length ? (
-        <p className="hint">No members match this search in your scope.</p>
+        <p className="hint">{emptyHint('members')}</p>
       ) : (
         <ul>
           {rows.map((r) => (
