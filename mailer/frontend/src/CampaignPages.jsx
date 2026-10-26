@@ -87,6 +87,17 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
     }
   }
 
+  async function queue(id) {
+    try {
+      const updated = await apiJson(token, `/api/campaigns/${id}/queue`, { method: 'POST' })
+      await load()
+      if (detailId === id) setDetail(updated)
+      setMsg('Queued')
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
   async function requeue() {
     try {
       setDetail(await apiJson(token, `/api/campaigns/${detailId}/requeue`, { method: 'POST' }))
@@ -136,9 +147,14 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
             </button>
           ) : null}{' '}
           {(detail.status || '').toUpperCase() === 'DRAFT' ? (
-            <button type="button" className="btn" onClick={() => onEdit(detailId)}>
-              Edit
-            </button>
+            <>
+              <button type="button" className="btn" onClick={() => onEdit(detailId)}>
+                Edit
+              </button>{' '}
+              <button type="button" className="btn" onClick={() => queue(detailId)}>
+                Queue
+              </button>
+            </>
           ) : null}{' '}
           {canRequeue(detail.status) ? (
             <button type="button" className="btn" onClick={requeue}>
@@ -273,9 +289,14 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
               return (
                 <>
                   {draft ? (
-                    <button type="button" className="btn secondary" onClick={() => onEdit(r.id)}>
-                      Edit
-                    </button>
+                    <>
+                      <button type="button" className="btn secondary" onClick={() => onEdit(r.id)}>
+                        Edit
+                      </button>{' '}
+                      <button type="button" className="btn" onClick={() => queue(r.id)}>
+                        Queue
+                      </button>
+                    </>
                   ) : null}{' '}
                   {showStop ? (
                     <button type="button" className="btn secondary" onClick={() => stop(r.id)}>
