@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
+import { ConnectionTestBanner, testImapConnection } from './ConnectionTest.jsx'
 import { btnDirtyClass, dirtyControlProps, isFormDirty, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
+import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
 
@@ -40,8 +42,32 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [mapForm, setMapForm] = useState({ ...MAP_BLANK })
   const senderDirty = !!senderEmail.trim()
   const mapDirty = isFormDirty(mapForm, MAP_BLANK)
+  const [connTest, setConnTest] = useState(null)
+  const [testing, setTesting] = useState(false)
   useRegisterUnsaved(senderDirty, `mts-sender-${detailId || 'x'}`)
   useRegisterUnsaved(mapDirty, `mts-map-${detailId || 'x'}`)
+
+  async function runImapTest() {
+    setTesting(true)
+    setConnTest(null)
+    onError('')
+    try {
+      setConnTest(
+        await testImapConnection(token, {
+          host: inboxForm.host,
+          port: inboxForm.port,
+          username: inboxForm.username,
+          password: inboxForm.password,
+          useSsl: !!inboxForm.useSsl,
+          inboxId: null,
+        }),
+      )
+    } catch (err) {
+      setConnTest({ ok: false, message: err.message })
+    } finally {
+      setTesting(false)
+    }
+  }
 
   async function load() {
     try {
@@ -67,6 +93,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       setDetail(null)
       setSenderEmail('')
       setMapForm({ ...MAP_BLANK })
+      setConnTest(null)
       if (isCreatePage(detailId)) resetInbox()
       return
     }
@@ -158,13 +185,37 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               />
             </label>
           ))}
-          <button
-            type="submit"
-            className={btnDirtyClass(inboxDirty)}
-            title={inboxDirty ? 'Unsaved changes' : undefined}
-          >
-            Add Mail Box
-          </button>
+          <label className="field">
+            {fieldLabel('port')}
+            <input
+              type="number"
+              value={inboxForm.port}
+              onChange={(ev) => setInboxForm({ ...inboxForm, port: Number(ev.target.value) })}
+              {...dirtyControlProps(!valuesEqual(inboxForm.port, inboxBlank.port))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('useSsl')}
+            <Toggle
+              checked={!!inboxForm.useSsl}
+              dirty={!valuesEqual(inboxForm.useSsl, inboxBlank.useSsl)}
+              aria-label={fieldLabel('useSsl')}
+              onChange={(on) => setInboxForm({ ...inboxForm, useSsl: on })}
+            />
+          </label>
+          <ConnectionTestBanner result={connTest} />
+          <p>
+            <button type="button" className="btn secondary" disabled={testing} onClick={runImapTest}>
+              {testing ? 'Testing…' : 'Test Connection'}
+            </button>{' '}
+            <button
+              type="submit"
+              className={btnDirtyClass(inboxDirty)}
+              title={inboxDirty ? 'Unsaved changes' : undefined}
+            >
+              Add Mail Box
+            </button>
+          </p>
         </form>
       </div>
     )

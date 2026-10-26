@@ -1,6 +1,7 @@
 package com.listmailer.catalogs;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.mailbox.MailConnectionProbe;
 import com.listmailer.mts.MtsFromDomainService;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -28,14 +29,31 @@ public class SendingPathsController {
   private final SendingPathRepository paths;
   private final CatalogReferenceService references;
   private final MtsFromDomainService fromDomain;
+  private final MailConnectionProbe probe;
 
   public SendingPathsController(
       SendingPathRepository paths,
       CatalogReferenceService references,
-      MtsFromDomainService fromDomain) {
+      MtsFromDomainService fromDomain,
+      MailConnectionProbe probe) {
     this.paths = paths;
     this.references = references;
     this.fromDomain = fromDomain;
+    this.probe = probe;
+  }
+
+  @PostMapping("/test-connection")
+  public ConnectionTestResponse testConnection(@RequestBody ConnectionTestRequest body) {
+    if (body == null || !StringUtils.hasText(body.host()) || body.port() <= 0 || !StringUtils.hasText(body.username())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "host, port, and username are required");
+    }
+    String password = body.password();
+    if (!StringUtils.hasText(password) && StringUtils.hasText(body.pathId())) {
+      password = require(body.pathId()).getPassword();
+    }
+    MailConnectionProbe.Result result =
+        probe.testSmtp(body.host(), body.port(), body.username(), password, body.useTls());
+    return new ConnectionTestResponse(result.ok(), result.message());
   }
 
   @GetMapping
@@ -145,6 +163,11 @@ public class SendingPathsController {
       String fromEmail,
       String fromName,
       boolean useTls) {}
+
+  public record ConnectionTestRequest(
+      String host, int port, String username, String password, boolean useTls, String pathId) {}
+
+  public record ConnectionTestResponse(boolean ok, String message) {}
 
   public record PathSummary(String id, String name, String host, int port, String fromEmail) {
     static PathSummary from(SendingPathEntity p) {

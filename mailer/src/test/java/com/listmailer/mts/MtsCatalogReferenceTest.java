@@ -8,6 +8,7 @@ import com.listmailer.catalogs.CatalogReferenceService;
 import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
+import com.listmailer.mailbox.MailConnectionProbe;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,7 @@ class MtsCatalogReferenceTest {
   @Mock MtsFromDomainService fromDomain;
   @Mock MtsDropService drops;
   @Mock CatalogReferenceService references;
+  @Mock MailConnectionProbe probe;
   @InjectMocks MtsAdminController controller;
 
   @Test

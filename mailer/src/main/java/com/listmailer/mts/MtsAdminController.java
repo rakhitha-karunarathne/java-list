@@ -4,6 +4,7 @@ import com.listmailer.catalogs.CatalogReferenceService;
 import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.lists.ListRepository;
+import com.listmailer.mailbox.MailConnectionProbe;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ public class MtsAdminController {
   private final MtsFromDomainService fromDomain;
   private final MtsDropService drops;
   private final CatalogReferenceService references;
+  private final MailConnectionProbe probe;
 
   public MtsAdminController(
       MtsInboxRepository inboxes,
@@ -45,7 +47,8 @@ public class MtsAdminController {
       ListRepository lists,
       MtsFromDomainService fromDomain,
       MtsDropService drops,
-      CatalogReferenceService references) {
+      CatalogReferenceService references,
+      MailConnectionProbe probe) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.mappings = mappings;
@@ -54,6 +57,7 @@ public class MtsAdminController {
     this.fromDomain = fromDomain;
     this.drops = drops;
     this.references = references;
+    this.probe = probe;
   }
 
   @GetMapping("/drop-log")
@@ -132,6 +136,20 @@ public class MtsAdminController {
     return inboxes.findAll().stream()
         .map(i -> new InboxSummary(i.getId(), i.getName(), i.isEnabled(), i.getPollIntervalMinutes()))
         .toList();
+  }
+
+  @PostMapping("/inboxes/test-connection")
+  public ConnectionTestResponse testInboxConnection(@RequestBody ConnectionTestRequest body) {
+    if (body == null || !StringUtils.hasText(body.host()) || body.port() <= 0 || !StringUtils.hasText(body.username())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "host, port, and username are required");
+    }
+    String password = body.password();
+    if (!StringUtils.hasText(password) && StringUtils.hasText(body.inboxId())) {
+      password = requireInbox(body.inboxId()).getPassword();
+    }
+    MailConnectionProbe.Result result =
+        probe.testImap(body.host(), body.port(), body.username(), password, body.useSsl());
+    return new ConnectionTestResponse(result.ok(), result.message());
   }
 
   @PostMapping("/inboxes")
@@ -338,6 +356,11 @@ public class MtsAdminController {
       boolean useSsl,
       int pollIntervalMinutes,
       Boolean enabled) {}
+
+  public record ConnectionTestRequest(
+      String host, int port, String username, String password, boolean useSsl, String inboxId) {}
+
+  public record ConnectionTestResponse(boolean ok, String message) {}
 
   public record SenderBody(String email) {}
 

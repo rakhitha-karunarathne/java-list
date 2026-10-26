@@ -59,3 +59,15 @@ after = [1, 2, 3, 4]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 6
+type = "story"
+title = "Mail server connection test for Sending Paths and MTS Inboxes"
+description = "Test Connection probes SMTP (Sending Path) and IMAP (MTS inbox); success or error detail."
+verify = "Test Connection on path and inbox forms; success and failure messages; blank password uses stored secret on edit."
+covers = ["R1"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true

@@ -7,6 +7,7 @@ import {
   isBooleanString,
   parseBooleanString,
 } from './booleanValue.js'
+import { ConnectionTestBanner, testSmtpConnection } from './ConnectionTest.jsx'
 import { btnDirtyClass, dirtyControlProps, isFormDirty, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
@@ -30,11 +31,35 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
   const [form, setForm] = useState(() => ({ ...blank.current }))
   const [saved, setSaved] = useState(null)
   const [delErr, setDelErr] = useState(null)
+  const [connTest, setConnTest] = useState(null)
+  const [testing, setTesting] = useState(false)
   const creating = isCreatePage(detailId)
   const dirty = creating
     ? isFormDirty(form, blank.current)
     : !!(detailId && saved && isFormDirty(form, saved))
   useRegisterUnsaved(dirty, creating ? 'sending-path-create' : `sending-path-${detailId || 'x'}`)
+
+  async function runSmtpTest() {
+    setTesting(true)
+    setConnTest(null)
+    onError('')
+    try {
+      setConnTest(
+        await testSmtpConnection(token, {
+          host: form.host,
+          port: form.port,
+          username: form.username,
+          password: form.password,
+          useTls: !!form.useTls,
+          pathId: creating ? null : detailId,
+        }),
+      )
+    } catch (err) {
+      setConnTest({ ok: false, message: err.message })
+    } finally {
+      setTesting(false)
+    }
+  }
 
   async function load() {
     try {
@@ -52,6 +77,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     if (!detailId || isCreatePage(detailId)) {
       setDetail(null)
       setSaved(null)
+      setConnTest(null)
       if (isCreatePage(detailId)) setForm({ ...blank.current })
       return
     }
@@ -175,9 +201,29 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               {...dirtyControlProps(!valuesEqual(form.port, base.port))}
             />
           </label>
-          <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
-            Create Sending Path
-          </button>
+          <label className="field">
+            {fieldLabel('useTls')}
+            <Toggle
+              checked={!!form.useTls}
+              dirty={!valuesEqual(form.useTls, base.useTls)}
+              aria-label={fieldLabel('useTls')}
+              onChange={(on) => setForm({ ...form, useTls: on })}
+            />
+          </label>
+          <ConnectionTestBanner result={connTest} />
+          <p>
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={testing}
+              onClick={runSmtpTest}
+            >
+              {testing ? 'Testing…' : 'Test Connection'}
+            </button>{' '}
+            <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
+              Create Sending Path
+            </button>
+          </p>
         </form>
       </div>
     )
@@ -230,7 +276,16 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               onChange={(on) => setForm({ ...form, useTls: on })}
             />
           </label>
+          <ConnectionTestBanner result={connTest} />
           <p>
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={testing}
+              onClick={runSmtpTest}
+            >
+              {testing ? 'Testing…' : 'Test Connection'}
+            </button>{' '}
             <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Save
             </button>{' '}
