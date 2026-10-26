@@ -43,7 +43,19 @@ title = "Refactor sweep"
 description = "Cleanup only."
 verify = "Campaigns/Compose smokes still pass."
 covers = []
-after = [1, 2, 3]
+after = [1, 2, 3, 5]
+hitl = false
+risk = "low"
+refine = true
+
+[[entry]]
+id = 5
+type = "story"
+title = "Compose attachments and testing sections"
+description = "Attachments card under content; Testing card immediately before Actions."
+verify = "Order: Content, Attachments, Preview, Lists, Testing, Actions."
+covers = ["R3"]
+after = [3]
 hitl = false
 risk = "low"
 refine = true

@@ -76,6 +76,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Compose preview | HTML / Text tabs; live sync from editors |
 | Compose body editors | HTML Body and Text Body stack vertically (label above each field) — not side-by-side on one horizontal line |
 | Compose lists | **HTML table** (Include / Name / Order / Reorder) — not a stack of checkbox rows; first included list sets the sending path |
+| Compose sections | Content · **Attachments** (immediately under content) · Preview · Lists · **Testing** · Actions (Save Draft / Queue) |
 | Test send | Paste addresses; uses first list path; ignores bounce-disable; failures → Ops Logs / Admin Attention |
 | Campaign status badge | Exact label Draft / Queued / Sending / Finished / Stopped (text + color; never color alone) |
 | Stop | Available on Draft, Queued, Sending (index row and detail); not on Finished/Stopped |
@@ -89,7 +90,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Unsaved edits | Changed controls + their Save/Create button use `{colors.warning}` treatment (not accent alone); title/hint “Unsaved changes” so color is not the only cue |
 | Attention error rows | Visually highlighted for Admin ops failures |
 | MFA Security panel | On User detail only: enroll QR, verify, backup codes, unenroll |
-| Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title when that page asks for it. Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants · Security); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Preview · Lists · Actions); List detail (Settings through Save · Members table · Bulk Add) |
+| Page sections | Multi-job pages: stack `.card` panels in `.page-sections`. **Everything is a card** — including the record title when that page asks for it. Never leave page content on bare canvas. One job per card; break the white box between jobs. **Used By** is always its own card on catalog detail. Exemplars: User (Title · Account · List Grants · Security); Sending Path / Footer (Form · Used By); MTS inbox (Title · Account · Senders · List Grants); Compose (Content · Attachments · Preview · Lists · Testing · Actions); List detail (Settings through Save · Members table · Bulk Add) |
 
 ## State Patterns
 

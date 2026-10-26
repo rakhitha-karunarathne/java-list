@@ -195,6 +195,18 @@ export function Compose({ token, onError }) {
       </section>
 
       <section className="card">
+        <h3>Attachments</h3>
+        <label className="field">
+          Attachment
+          <input
+            type="file"
+            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+            {...dirtyControlProps(!!attachment !== saved.current.hasFile)}
+          />
+        </label>
+      </section>
+
+      <section className="card">
         <h3>Preview</h3>
         <p>
           <button type="button" className="btn secondary" onClick={() => setPreview('html')}>
@@ -276,15 +288,7 @@ export function Compose({ token, onError }) {
       </section>
 
       <section className="card">
-        <h3>Actions</h3>
-        <label className="field">
-          Attachment
-          <input
-            type="file"
-            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-            {...dirtyControlProps(!!attachment !== saved.current.hasFile)}
-          />
-        </label>
+        <h3>Testing</h3>
         <label className="field">
           Test Send Addresses (Comma Or Newline)
           <textarea
@@ -295,6 +299,48 @@ export function Compose({ token, onError }) {
           />
         </label>
         <p className="hint">Test Send Ignores Bounce-Disable.</p>
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={busy}
+          onClick={async () => {
+            if (busy) return
+            onError('')
+            setMsg('')
+            if (!campaignId) {
+              onError('Save a Draft first')
+              return
+            }
+            setBusy(true)
+            try {
+              const addresses = testAddresses
+                .split(/[\n,;]+/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+              const res = await fetch(`/api/campaigns/${campaignId}/test-send`, {
+                method: 'POST',
+                headers: authHeaders(token),
+                body: JSON.stringify({ addresses }),
+              })
+              if (!res.ok) {
+                onError(`Test send failed (${res.status}): ${await res.text()}`)
+                return
+              }
+              const body = await res.json()
+              setMsg(`Test send OK (${body.sent})`)
+            } catch (e) {
+              onError(e.message || String(e))
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          Test send
+        </button>
+      </section>
+
+      <section className="card">
+        <h3>Actions</h3>
         <p>
           <button
             type="button"
@@ -303,44 +349,6 @@ export function Compose({ token, onError }) {
             onClick={saveDraft}
           >
             Save Draft
-          </button>{' '}
-          <button
-            type="button"
-            className="btn secondary"
-            disabled={busy}
-            onClick={async () => {
-              if (busy) return
-              onError('')
-              setMsg('')
-              if (!campaignId) {
-                onError('Save a Draft first')
-                return
-              }
-              setBusy(true)
-              try {
-                const addresses = testAddresses
-                  .split(/[\n,;]+/)
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                const res = await fetch(`/api/campaigns/${campaignId}/test-send`, {
-                  method: 'POST',
-                  headers: authHeaders(token),
-                  body: JSON.stringify({ addresses }),
-                })
-                if (!res.ok) {
-                  onError(`Test send failed (${res.status}): ${await res.text()}`)
-                  return
-                }
-                const body = await res.json()
-                setMsg(`Test send OK (${body.sent})`)
-              } catch (e) {
-                onError(e.message || String(e))
-              } finally {
-                setBusy(false)
-              }
-            }}
-          >
-            Test send
           </button>{' '}
           <button type="button" className="btn" onClick={queueCampaign}>
             Queue
