@@ -274,6 +274,35 @@ function Compose({ token, onError }) {
   )
 }
 
+function AuditLog({ token, onError }) {
+  const [rows, setRows] = useState([])
+
+  useEffect(() => {
+    fetch('/api/audit', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`)
+        return r.json()
+      })
+      .then(setRows)
+      .catch(() => setRows([]))
+  }, [token])
+
+  return (
+    <section>
+      <h2>Audit</h2>
+      <p style={{ color: '#555' }}>Append-only history (read-only).</p>
+      <ul>
+        {rows.map((r) => (
+          <li key={r.id}>
+            <code>{r.action}</code> {r.detail}{' '}
+            <span style={{ color: '#666' }}>{r.actor}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 function AttentionInbox({ token, onError }) {
   const [rows, setRows] = useState([])
   const [forbidden, setForbidden] = useState(false)
@@ -585,6 +614,9 @@ function App() {
             </button>{' '}
             <button type="button" onClick={() => setView('attention')}>
               Attention
+            </button>{' '}
+            <button type="button" onClick={() => setView('audit')}>
+              Audit
             </button>
           </p>
           {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
@@ -597,6 +629,7 @@ function App() {
           {view === 'mts' ? <MtsInboxes token={token} onError={setError} /> : null}
           {view === 'ops' ? <OpsLogs token={token} onError={setError} /> : null}
           {view === 'attention' ? <AttentionInbox token={token} onError={setError} /> : null}
+          {view === 'audit' ? <AuditLog token={token} onError={setError} /> : null}
           {view === 'parameters' ? (
             <section>
               <h2>Parameters</h2>

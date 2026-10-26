@@ -21,12 +21,15 @@ public class PersistingOpsHooks implements OpsHooksPort {
 
   private final OpsLogRepository opsLogs;
   private final AttentionItemRepository attention;
+  private final AuditLogRepository auditLogs;
 
   private final List<String> auditEntries = Collections.synchronizedList(new ArrayList<>());
 
-  public PersistingOpsHooks(OpsLogRepository opsLogs, AttentionItemRepository attention) {
+  public PersistingOpsHooks(
+      OpsLogRepository opsLogs, AttentionItemRepository attention, AuditLogRepository auditLogs) {
     this.opsLogs = opsLogs;
     this.attention = attention;
+    this.auditLogs = auditLogs;
   }
 
   @Override
@@ -54,14 +57,23 @@ public class PersistingOpsHooks implements OpsHooksPort {
   }
 
   @Override
-  public void audit(String action, String detail) {
-    String line = action + ": " + safe(detail);
+  @Transactional
+  public void audit(String action, String detail, String actor, String listId, String memberId) {
+    String safeDetail = safe(detail);
+    String line = action + ": " + safeDetail;
     auditEntries.add(line);
     while (auditEntries.size() > 500) {
       auditEntries.remove(0);
     }
-    opsLog("audit." + action, safe(detail));
+    auditLogs.save(
+        new AuditLogEntity(
+            Guids.newGuid(), action, safeDetail, actor, listId, memberId, Instant.now()));
     log.info("AUDIT {}", line);
+  }
+
+  @Override
+  public void audit(String action, String detail) {
+    audit(action, detail, null, null, null);
   }
 
   public List<String> opsSnapshot() {

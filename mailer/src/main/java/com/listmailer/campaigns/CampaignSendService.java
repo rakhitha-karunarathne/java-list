@@ -402,6 +402,7 @@ public class CampaignSendService {
       if (!morePending && campaign.getStatus() == CampaignStatus.SENDING) {
         campaign.setStatus(CampaignStatus.FINISHED);
         campaigns.save(campaign);
+        ops.audit("campaign.finished", "campaign=" + campaign.getId(), "system", null, null);
       }
     }
     return sent;

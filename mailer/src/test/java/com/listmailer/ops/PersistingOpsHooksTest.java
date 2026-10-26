@@ -18,6 +18,7 @@ class PersistingOpsHooksTest {
 
   @Mock OpsLogRepository opsLogs;
   @Mock AttentionItemRepository attention;
+  @Mock AuditLogRepository auditLogs;
   @InjectMocks PersistingOpsHooks hooks;
 
   @Test

@@ -1,6 +1,7 @@
 package com.listmailer.campaigns;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
 import java.time.Instant;
@@ -33,6 +34,7 @@ public class CampaignsController {
   private final CampaignSendService sendService;
   private final SendQueueRepository queue;
   private final CampaignOpenRepository opens;
+  private final OpsHooksPort ops;
 
   public CampaignsController(
       CampaignRepository campaigns,
@@ -42,12 +44,14 @@ public class CampaignsController {
       ListAccessService access,
       CampaignSendService sendService,
       SendQueueRepository queue,
-      CampaignOpenRepository opens) {
+      CampaignOpenRepository opens,
+      OpsHooksPort ops) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
     this.lists = lists;
     this.access = access;
+    this.ops = ops;
     this.sendService = sendService;
     this.queue = queue;
     this.opens = opens;
@@ -118,7 +122,9 @@ public class CampaignsController {
     if (c.getStatus() != CampaignStatus.DRAFT) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "queue only from Draft");
     }
-    return detail(sendService.queueAndSend(id));
+    CampaignDetail out = detail(sendService.queueAndSend(id));
+    ops.audit("campaign.queue", "campaign=" + id, actor(), null, null);
+    return out;
   }
 
   @PostMapping("/{id}/test-send")
@@ -154,7 +160,9 @@ public class CampaignsController {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot stop from " + c.getStatus());
     }
     c.setStatus(CampaignStatus.STOPPED);
-    return detail(campaigns.save(c));
+    CampaignDetail out = detail(campaigns.save(c));
+    ops.audit("campaign.stop", "campaign=" + id, actor(), null, null);
+    return out;
   }
 
   @PostMapping("/{id}/lists")
@@ -183,6 +191,7 @@ public class CampaignsController {
     }
     int pos = linked.isEmpty() ? 0 : linked.get(linked.size() - 1).getPosition() + 1;
     campaignLists.save(new CampaignListEntity(id, listId, pos));
+    ops.audit("campaign.list_added", "campaign=" + id + " list=" + listId, actor(), listId, null);
     return detail(c);
   }
 
@@ -193,7 +202,13 @@ public class CampaignsController {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "requeue only from Stopped or Finished");
     }
-    return detail(sendService.queueAndSend(id));
+    CampaignDetail out = detail(sendService.queueAndSend(id));
+    ops.audit("campaign.requeue", "campaign=" + id, actor(), null, null);
+    return out;
+  }
+
+  private String actor() {
+    return access.currentUser().map(u -> u.getEmail()).orElse("system");
   }
 
   private void validateCompose(
