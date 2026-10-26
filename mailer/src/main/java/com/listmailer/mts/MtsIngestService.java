@@ -25,6 +25,7 @@ public class MtsIngestService {
   private final MailboxPort mailbox;
   private final MtsGateService gates;
   private final MtsCampaignFactory campaigns;
+  private final MtsFromDomainService fromDomain;
   private final OpsHooksPort ops;
   private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -35,6 +36,7 @@ public class MtsIngestService {
       MailboxPort mailbox,
       MtsGateService gates,
       MtsCampaignFactory campaigns,
+      MtsFromDomainService fromDomain,
       OpsHooksPort ops) {
     this.inboxes = inboxes;
     this.mappings = mappings;
@@ -42,6 +44,7 @@ public class MtsIngestService {
     this.mailbox = mailbox;
     this.gates = gates;
     this.campaigns = campaigns;
+    this.fromDomain = fromDomain;
     this.ops = ops;
   }
 
@@ -102,6 +105,13 @@ public class MtsIngestService {
                       .map(MtsMappingListEntity::getListId)
                       .toList();
               if (listIds.isEmpty()) {
+                return true;
+              }
+              String sender = MtsGateService.extractEmail(raw.from());
+              var issue =
+                  fromDomain.validateOrOpenIssue(box, map, listIds, sender, raw.subject());
+              if (issue != null) {
+                // no Campaign — Issues ≠ Drop log
                 return true;
               }
               String html = extractHtml(raw);

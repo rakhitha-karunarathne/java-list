@@ -1,6 +1,7 @@
 package com.listmailer.catalogs;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.mts.MtsFromDomainService;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,10 +27,15 @@ public class SendingPathsController {
 
   private final SendingPathRepository paths;
   private final CatalogReferenceService references;
+  private final MtsFromDomainService fromDomain;
 
-  public SendingPathsController(SendingPathRepository paths, CatalogReferenceService references) {
+  public SendingPathsController(
+      SendingPathRepository paths,
+      CatalogReferenceService references,
+      MtsFromDomainService fromDomain) {
     this.paths = paths;
     this.references = references;
+    this.fromDomain = fromDomain;
   }
 
   @GetMapping
@@ -80,7 +86,9 @@ public class SendingPathsController {
     path.setFromName(body.fromName().trim());
     path.setUseTls(body.useTls());
     try {
-      return PathDetail.from(paths.save(path), usedBy(id));
+      SendingPathEntity saved = paths.save(path);
+      fromDomain.revalidateForSendingPath(id);
+      return PathDetail.from(saved, usedBy(id));
     } catch (DataIntegrityViolationException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "name already exists");
     }

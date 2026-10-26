@@ -31,18 +31,45 @@ public class MtsAdminController {
   private final MtsMappingRepository mappings;
   private final MtsMappingListRepository mappingLists;
   private final ListRepository lists;
+  private final MtsFromDomainService fromDomain;
 
   public MtsAdminController(
       MtsInboxRepository inboxes,
       MtsAuthorizedSenderRepository senders,
       MtsMappingRepository mappings,
       MtsMappingListRepository mappingLists,
-      ListRepository lists) {
+      ListRepository lists,
+      MtsFromDomainService fromDomain) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.mappings = mappings;
     this.mappingLists = mappingLists;
     this.lists = lists;
+    this.fromDomain = fromDomain;
+  }
+
+  @GetMapping("/from-domain-issues")
+  public List<IssueView> issues() {
+    return fromDomain.openIssues().stream()
+        .map(
+            i ->
+                new IssueView(
+                    i.getId(),
+                    i.getInboxId(),
+                    i.getMappingId(),
+                    i.getSenderEmail(),
+                    i.getSubject(),
+                    i.getStatus(),
+                    i.getResolution(),
+                    i.getDetail(),
+                    i.getCreatedAt().toString()))
+        .toList();
+  }
+
+  @PostMapping("/from-domain-issues/{id}/clear")
+  public Map<String, String> clearIssue(@PathVariable String id) {
+    fromDomain.clear(id);
+    return Map.of("status", "CLEARED");
   }
 
   @GetMapping("/inboxes")
@@ -238,4 +265,15 @@ public class MtsAdminController {
       String substituteFrom,
       String footerId,
       List<String> listIds) {}
+
+  public record IssueView(
+      String id,
+      String inboxId,
+      String mappingId,
+      String senderEmail,
+      String subject,
+      String status,
+      String resolution,
+      String detail,
+      String createdAt) {}
 }
