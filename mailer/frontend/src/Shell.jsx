@@ -1,5 +1,7 @@
 import { visibleSections } from './navConfig.js'
 
+export { default as Placeholder } from './Placeholder.jsx'
+
 const TITLES = {
   attention: 'Attention',
   lists: 'Lists',
@@ -20,15 +22,6 @@ const TITLES = {
   ops: 'Ops Logs',
   audit: 'Audit Log',
   home: 'Home',
-}
-
-export function Placeholder({ title, hint }) {
-  return (
-    <div className="card">
-      <h2>{title}</h2>
-      <p className="hint">{hint || 'Coming in a later frontend epic. Index only — detail pages open from rows, not the sidebar (C8).'}</p>
-    </div>
-  )
 }
 
 export default function Shell({ role, view, onNavigate, onLogout, email, children }) {

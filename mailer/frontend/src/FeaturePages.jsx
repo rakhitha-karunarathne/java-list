@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { authHeaders } from './auth.js'
-import { Placeholder } from './Shell.jsx'
+import Placeholder from './Placeholder.jsx'
 
 export function Compose({ token, onError }) {
   const [lists, setLists] = useState([])
