@@ -1,6 +1,6 @@
 package com.listmailer.kernel.token;
 
-/** Opaque member-token helper stub (AD-18). Real AES-GCM in a later story. */
+/** Opaque member-link tokens (AD-18). Implemented by AesGcmOpaqueTokenHelper. */
 public interface OpaqueTokenHelper {
 
   String seal(byte[] payload);

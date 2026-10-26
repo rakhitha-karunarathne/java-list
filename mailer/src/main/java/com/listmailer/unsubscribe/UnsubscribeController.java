@@ -1,5 +1,6 @@
 package com.listmailer.unsubscribe;
 
+import com.listmailer.kernel.web.PublicHtmlPage;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,28 +46,19 @@ public class UnsubscribeController {
   }
 
   static String page(UnsubscribeService.Outcome outcome) {
-    String title;
-    String body;
-    switch (outcome) {
-      case UNSUBSCRIBED -> {
-        title = "Unsubscribed";
-        body = "You have been unsubscribed from the list(s) for this message.";
-      }
-      case ALREADY -> {
-        title = "Already unsubscribed";
-        body = "You were already unsubscribed from the list(s) for this message.";
-      }
-      default -> {
-        title = "Unable to unsubscribe";
-        body = "This unsubscribe link is invalid or no longer available.";
-      }
-    }
-    return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>"
-        + title
-        + "</title></head><body><h1>"
-        + title
-        + "</h1><p>"
-        + body
-        + "</p></body></html>";
+    return switch (outcome) {
+      case UNSUBSCRIBED ->
+          PublicHtmlPage.simple(
+              "Unsubscribed",
+              "You have been unsubscribed from the list(s) for this message.");
+      case ALREADY ->
+          PublicHtmlPage.simple(
+              "Already unsubscribed",
+              "You were already unsubscribed from the list(s) for this message.");
+      default ->
+          PublicHtmlPage.simple(
+              "Unable to unsubscribe",
+              "This unsubscribe link is invalid or no longer available.");
+    };
   }
 }

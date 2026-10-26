@@ -1,5 +1,6 @@
 package com.listmailer.consent;
 
+import com.listmailer.kernel.web.PublicHtmlPage;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,32 +23,23 @@ public class ApproveController {
   }
 
   static String page(ConsentService.ApproveOutcome outcome) {
-    String title;
-    String body;
-    switch (outcome) {
-      case CLEARED -> {
-        title = "Confirmed";
-        body = "Your unsubscribe has been cleared. You may receive mail from these lists again.";
-      }
-      case ALREADY_CLEAR -> {
-        title = "Already confirmed";
-        body = "Your unsubscribe was already cleared for these lists.";
-      }
-      case EXPIRED -> {
-        title = "Link expired";
-        body = "This confirmation link has expired. Ask the list operator to send a new one.";
-      }
-      default -> {
-        title = "Unable to confirm";
-        body = "This confirmation link is invalid or no longer available.";
-      }
-    }
-    return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>"
-        + title
-        + "</title></head><body><h1>"
-        + title
-        + "</h1><p>"
-        + body
-        + "</p></body></html>";
+    return switch (outcome) {
+      case CLEARED ->
+          PublicHtmlPage.simple(
+              "Confirmed",
+              "Your unsubscribe has been cleared. You may receive mail from these lists again.");
+      case ALREADY_CLEAR ->
+          PublicHtmlPage.simple(
+              "Already confirmed",
+              "Your unsubscribe was already cleared for these lists.");
+      case EXPIRED ->
+          PublicHtmlPage.simple(
+              "Link expired",
+              "This confirmation link has expired. Ask the list operator to send a new one.");
+      default ->
+          PublicHtmlPage.simple(
+              "Unable to confirm",
+              "This confirmation link is invalid or no longer available.");
+    };
   }
 }

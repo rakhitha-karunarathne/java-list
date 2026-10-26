@@ -4,7 +4,6 @@ import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.token.OpaqueTokenHelper;
 import com.listmailer.members.ListMemberEntity;
 import com.listmailer.members.ListMemberRepository;
-import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -47,11 +46,9 @@ public class UnsubscribeService {
     } catch (RuntimeException ex) {
       return Outcome.INVALID;
     }
-    Optional<MemberEntity> member = members.findById(payload.memberId());
-    if (member.isEmpty()) {
+    if (members.findById(payload.memberId()).isEmpty()) {
       return Outcome.INVALID;
     }
-    boolean wasEnabled = member.get().isEnabled();
     int changed = 0;
     int already = 0;
     for (String listId : payload.listIds()) {
@@ -65,15 +62,10 @@ public class UnsubscribeService {
         already++;
         continue;
       }
+      // C3: only flip per-list unsubscribed — never Member.enabled
       lm.setUnsubscribed(true);
       listMembers.save(lm);
       changed++;
-    }
-    // C3: never flip global Enabled/Disabled
-    MemberEntity refreshed = members.findById(payload.memberId()).orElseThrow();
-    if (refreshed.isEnabled() != wasEnabled) {
-      refreshed.setEnabled(wasEnabled);
-      members.save(refreshed);
     }
     if (changed == 0 && already == 0 && !payload.listIds().isEmpty()) {
       // member not on any snapshot lists — treat as invalid/non-enumerating
