@@ -8,6 +8,7 @@ export default function App() {
   const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY) || '')
   const [error, setError] = useState('')
   const [view, setView] = useState('attention')
+  const [detailId, setDetailId] = useState(null)
 
   const role = useMemo(() => roleFromToken(token), [token])
   const email = useMemo(() => decodeJwtPayload(token)?.email || '', [token])
@@ -16,6 +17,7 @@ export default function App() {
     sessionStorage.setItem(TOKEN_KEY, t)
     setToken(t)
     setError('')
+    setDetailId(null)
     const r = roleFromToken(t)
     setView(r === 'LIST_SENDER' ? 'compose' : 'attention')
   }
@@ -24,8 +26,15 @@ export default function App() {
     sessionStorage.removeItem(TOKEN_KEY)
     setToken('')
     setView('attention')
+    setDetailId(null)
     setError('')
     document.body.classList.remove('nav-open')
+  }
+
+  function onNavigate(id) {
+    setView(id)
+    setDetailId(null)
+    setError('')
   }
 
   if (!token) {
@@ -43,10 +52,17 @@ export default function App() {
         role={role}
         view={view}
         email={email}
-        onNavigate={setView}
+        onNavigate={onNavigate}
         onLogout={onLogout}
       >
-        <MainView view={view} token={token} onError={setError} />
+        <MainView
+          view={view}
+          token={token}
+          onError={setError}
+          detailId={detailId}
+          onOpenDetail={setDetailId}
+          onCloseDetail={() => setDetailId(null)}
+        />
       </Shell>
     </>
   )

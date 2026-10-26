@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { authHeaders } from './auth.js'
+import { FootersPage, SendingPathsPage } from './CatalogPages.jsx'
 import Placeholder from './Placeholder.jsx'
 
 export function Compose({ token, onError }) {
@@ -492,7 +493,7 @@ export function ParametersPage({ token, onError }) {
   )
 }
 
-export function MainView({ view, token, onError }) {
+export function MainView({ view, token, onError, detailId, onOpenDetail, onCloseDetail }) {
   switch (view) {
     case 'compose':
       return <Compose token={token} onError={onError} />
@@ -506,6 +507,26 @@ export function MainView({ view, token, onError }) {
       return <AuditLog token={token} />
     case 'parameters':
       return <ParametersPage token={token} onError={onError} />
+    case 'sending-paths':
+      return (
+        <SendingPathsPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
+    case 'footers':
+      return (
+        <FootersPage
+          token={token}
+          onError={onError}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
+        />
+      )
     case 'home':
       return (
         <Placeholder
