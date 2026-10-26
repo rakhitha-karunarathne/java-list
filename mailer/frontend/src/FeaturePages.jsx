@@ -230,28 +230,26 @@ export function Compose({ token, onError }) {
           },
         ]}
       />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-        <label className="field">
-          HTML
-          <textarea
-            value={htmlBody}
-            onChange={(e) => setHtmlBody(e.target.value)}
-            rows={10}
-            style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
-            {...dirtyControlProps(!valuesEqual(htmlBody, saved.current.htmlBody))}
-          />
-        </label>
-        <label className="field">
-          Text
-          <textarea
-            value={textBody}
-            onChange={(e) => setTextBody(e.target.value)}
-            rows={10}
-            style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
-            {...dirtyControlProps(!valuesEqual(textBody, saved.current.textBody))}
-          />
-        </label>
-      </div>
+      <label className="field">
+        HTML Body
+        <textarea
+          value={htmlBody}
+          onChange={(e) => setHtmlBody(e.target.value)}
+          rows={10}
+          style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
+          {...dirtyControlProps(!valuesEqual(htmlBody, saved.current.htmlBody))}
+        />
+      </label>
+      <label className="field">
+        Text Body
+        <textarea
+          value={textBody}
+          onChange={(e) => setTextBody(e.target.value)}
+          rows={10}
+          style={{ fontFamily: 'var(--mono)', maxWidth: '100%' }}
+          {...dirtyControlProps(!valuesEqual(textBody, saved.current.textBody))}
+        />
+      </label>
       <p>
         Preview:{' '}
         <button type="button" className="btn secondary" onClick={() => setPreview('html')}>

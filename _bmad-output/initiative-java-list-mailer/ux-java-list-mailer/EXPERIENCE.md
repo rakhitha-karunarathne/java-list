@@ -71,6 +71,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Create form | **Own page** (not on the index): index shows table + Create/Add action only; opens a dedicated page with back to index (not a second card under the table; not a sidebar item) |
 | Add Mail Box | Mail-to-Send and Bounce: label is **Add Mail Box** (not Create) — mailbox already exists on the mail server; we only add it to the polling list |
 | Compose preview | HTML / Text tabs; live sync from editors |
+| Compose body editors | HTML Body and Text Body stack vertically (label above each field) — not side-by-side on one horizontal line |
 | Compose lists | **HTML table** (Include / Name / Order / Reorder) — not a stack of checkbox rows; first included list sets the sending path |
 | Test send | Paste addresses; uses first list path; ignores bounce-disable; failures → Ops Logs / Admin Attention |
 | Campaign status badge | Exact label Draft / Queued / Sending / Finished / Stopped (text + color; never color alone) |
