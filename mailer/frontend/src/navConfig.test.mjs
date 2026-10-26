@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { visibleSections } from './navConfig.js'
+
+const FORBIDDEN_SIDEBAR_LABELS = [
+  'Campaign detail',
+  'List detail',
+  'Member detail',
+  'User detail',
+  'Sending path detail',
+  'Bounce mailbox detail',
+  'Ops log detail',
+  'Inbox detail',
+]
+
+test('admin sees Attention and Parameters', () => {
+  const ids = visibleSections('ADMIN').flatMap((s) => s.items.map((i) => i.id))
+  assert.ok(ids.includes('attention'))
+  assert.ok(ids.includes('parameters'))
+  assert.ok(ids.includes('users'))
+})
+
+test('list sender has no Attention or Admin catalogs', () => {
+  const ids = visibleSections('LIST_SENDER').flatMap((s) => s.items.map((i) => i.id))
+  assert.ok(!ids.includes('attention'))
+  assert.ok(!ids.includes('parameters'))
+  assert.ok(!ids.includes('users'))
+  assert.ok(ids.includes('compose'))
+  assert.ok(ids.includes('campaigns'))
+})
+
+test('list manager sees Attention but not Parameters', () => {
+  const ids = visibleSections('LIST_MANAGER').flatMap((s) => s.items.map((i) => i.id))
+  assert.ok(ids.includes('attention'))
+  assert.ok(!ids.includes('parameters'))
+  assert.ok(ids.includes('lists'))
+})
+
+test('C8 forbidden detail labels not used in nav config', () => {
+  const labels = visibleSections('ADMIN').flatMap((s) => s.items.map((i) => i.label))
+  for (const bad of FORBIDDEN_SIDEBAR_LABELS) {
+    assert.ok(!labels.includes(bad), bad)
+  }
+})

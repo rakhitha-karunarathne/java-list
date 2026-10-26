@@ -15,14 +15,11 @@ class NavIaC8Test {
   @Test
   @DisplayName("App shell primary buttons are indexes/tools only")
   void sidebarHasNoDetailDestinations() throws Exception {
-    Path app = Path.of("frontend/src/App.jsx");
-    if (!Files.exists(app)) {
-      app = Path.of("../frontend/src/App.jsx");
+    Path nav = Path.of("frontend/src/navConfig.js");
+    if (!Files.exists(nav)) {
+      nav = Path.of("../frontend/src/navConfig.js");
     }
-    String src = Files.readString(app);
-    // primary setView buttons in signed-in chrome
-    int chromeEnd = src.indexOf("{view === 'home'");
-    String chrome = chromeEnd > 0 ? src.substring(0, chromeEnd) : src;
+    String src = Files.readString(nav);
 
     List<String> forbiddenLabels =
         List.of(
@@ -35,12 +32,12 @@ class NavIaC8Test {
             "Ops log detail",
             "Inbox detail");
     for (String label : forbiddenLabels) {
-      assertFalse(chrome.contains(">" + label + "<"), "sidebar must not contain " + label);
+      assertFalse(src.contains("'" + label + "'") || src.contains("\"" + label + "\""), label);
     }
 
-    assertTrue(chrome.contains("Compose") || chrome.contains("setView('compose')"));
-    assertTrue(chrome.contains("Ops Logs") || chrome.contains("setView('ops')"));
-    assertTrue(chrome.contains("Attention") || chrome.contains("setView('attention')"));
-    assertTrue(chrome.contains("Inboxes") || chrome.contains("setView('mts')"));
+    assertTrue(src.contains("Compose"));
+    assertTrue(src.contains("Ops Logs"));
+    assertTrue(src.contains("Attention"));
+    assertTrue(src.contains("Inboxes"));
   }
 }
