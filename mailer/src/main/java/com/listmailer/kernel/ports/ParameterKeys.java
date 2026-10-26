@@ -13,6 +13,9 @@ public final class ParameterKeys {
   public static final String IMAGE_FETCH_MODE = "campaign.image.fetch.mode";
   public static final String CAMPAIGN_PAYLOAD_MAX_BYTES = "campaign.payload.max.bytes";
   public static final String CAMPAIGN_IMAGE_MAX_BYTES = "campaign.image.max.bytes";
+  public static final String BOUNCE_HARD_LIMIT = "bounce.hard.limit";
+  public static final String BOUNCE_SOFT_LIMIT = "bounce.soft.limit";
+  public static final String BOUNCE_HOLDBACK_MULTIPLIER = "bounce.holdback.multiplier";
 
   private ParameterKeys() {}
 }

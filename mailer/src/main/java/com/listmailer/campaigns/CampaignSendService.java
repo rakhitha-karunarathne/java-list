@@ -393,6 +393,7 @@ public class CampaignSendService {
               unsubUrl,
               headers));
       row.setStatus("SENT");
+      row.setSentAt(java.time.Instant.now());
       queue.save(row);
       sent++;
       boolean morePending =

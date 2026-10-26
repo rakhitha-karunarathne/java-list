@@ -48,6 +48,18 @@ public final class ParameterDefinitions {
         ParameterKeys.CAMPAIGN_IMAGE_MAX_BYTES,
         "512000",
         "Hard upper for a single fetched/stored Campaign image. Integer >= 1. Default 512000.");
+    put(
+        ParameterKeys.BOUNCE_HARD_LIMIT,
+        "3",
+        "Consecutive hard bounce limit before Member Disabled. Integer >= 1. Default 3.");
+    put(
+        ParameterKeys.BOUNCE_SOFT_LIMIT,
+        "6",
+        "Consecutive soft bounce limit before Member Disabled. Integer >= 1. Seeded 2× hard; independent after. Default 6.");
+    put(
+        ParameterKeys.BOUNCE_HOLDBACK_MULTIPLIER,
+        "2",
+        "Holdback = multiplier × class limit newest sends when below limit. Integer >= 1. Default 2.");
   }
 
   private ParameterDefinitions() {}

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 
 @Entity
 @Table(name = "send_queue")
@@ -45,6 +46,9 @@ public class SendQueueEntity {
 
   @Column(length = 255)
   private String subject;
+
+  @Column(name = "sent_at")
+  private Instant sentAt;
 
   protected SendQueueEntity() {}
 
@@ -137,5 +141,13 @@ public class SendQueueEntity {
 
   public void setSubject(String subject) {
     this.subject = subject;
+  }
+
+  public Instant getSentAt() {
+    return sentAt;
+  }
+
+  public void setSentAt(Instant sentAt) {
+    this.sentAt = sentAt;
   }
 }
