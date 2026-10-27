@@ -150,13 +150,23 @@ public class CampaignsController {
   @Transactional
   public void delete(@PathVariable String id) {
     CampaignEntity c = require(id);
-    if (c.getStatus() == CampaignStatus.SENDING || c.getStatus() == CampaignStatus.QUEUED) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot delete while Queued/Sending");
+    if (c.getStatus() != CampaignStatus.DRAFT
+        && c.getStatus() != CampaignStatus.FINISHED
+        && c.getStatus() != CampaignStatus.STOPPED) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "can only delete Draft, Finished, or Stopped campaigns");
     }
+    List<String> queueIds =
+        queue.findByCampaignId(id).stream().map(SendQueueEntity::getId).toList();
+    if (!queueIds.isEmpty()) {
+      bounces.deleteBySendQueueIdIn(queueIds);
+    }
+    opens.deleteByCampaignId(id);
     attachments.deleteByCampaignId(id);
-    queue.findByCampaignId(id).forEach(queue::delete);
+    queue.deleteByCampaignId(id);
     campaignLists.deleteByCampaignId(id);
     campaigns.delete(c);
+    ops.audit("campaign.delete", "campaign=" + id, actor(), null, null);
   }
 
   @PostMapping("/{id}/stop")

@@ -8,6 +8,8 @@ public interface SendQueueRepository extends JpaRepository<SendQueueEntity, Stri
 
   List<SendQueueEntity> findByCampaignId(String campaignId);
 
+  void deleteByCampaignId(String campaignId);
+
   List<SendQueueEntity> findByStatus(String status);
 
   Optional<SendQueueEntity> findByPixelToken(String pixelToken);

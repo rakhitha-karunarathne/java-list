@@ -40,3 +40,8 @@ export function canPauseCampaign(status) {
 export function canResumeCampaign(status) {
   return (status || '').toUpperCase() === 'PAUSED'
 }
+
+export function canDeleteCampaign(status) {
+  const s = (status || '').toUpperCase()
+  return s === 'DRAFT' || s === 'FINISHED' || s === 'STOPPED'
+}

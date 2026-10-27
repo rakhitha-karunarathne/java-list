@@ -3,11 +3,13 @@ import { apiJson } from './api.js'
 import {
   CAMPAIGN_STATUSES,
   campaignStatusLabel,
+  canDeleteCampaign,
   canPauseCampaign,
   canResumeCampaign,
   canStopCampaign,
   filterCampaigns,
 } from './campaignStatus.js'
+import { confirmDelete } from './confirmDelete.js'
 import { RecordTable } from './RecordTable.jsx'
 
 const BADGE = {
@@ -142,6 +144,17 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
     }
   }
 
+  async function remove(id, subject) {
+    if (!confirmDelete(`campaign “${subject || id}” and all of its send data`)) return
+    try {
+      await apiJson(token, `/api/campaigns/${id}`, { method: 'DELETE' })
+      await load()
+      if (detailId === id) onCloseDetail()
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
   async function addList(e) {
     e.preventDefault()
     try {
@@ -238,6 +251,15 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
               }}
             >
               Retry failed
+            </button>
+          ) : null}{' '}
+          {canDeleteCampaign(detail.status) ? (
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => remove(detailId, detail.subject)}
+            >
+              Delete
             </button>
           ) : null}
         </section>
@@ -420,7 +442,8 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
               const showPause = canPauseCampaign(r.status)
               const showResume = canResumeCampaign(r.status)
               const showStop = canStopCampaign(r.status)
-              if (!draft && !showPause && !showResume && !showStop) return '—'
+              const showDelete = canDeleteCampaign(r.status)
+              if (!draft && !showPause && !showResume && !showStop && !showDelete) return '—'
               return (
                 <>
                   {draft ? (
@@ -446,6 +469,15 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
                   {showStop ? (
                     <button type="button" className="btn secondary" onClick={() => stop(r.id)}>
                       Stop
+                    </button>
+                  ) : null}{' '}
+                  {showDelete ? (
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => remove(r.id, r.subject)}
+                    >
+                      Delete
                     </button>
                   ) : null}
                 </>
