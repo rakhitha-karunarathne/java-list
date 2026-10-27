@@ -142,6 +142,49 @@ class BounceEventsControllerTest {
     assertEquals("u1", rows.get(0).id());
   }
 
+  @Test
+  void getReturnsPayloadAndHeaders() {
+    when(access.isListSenderOnly()).thenReturn(false);
+    when(access.isAdmin()).thenReturn(true);
+    BounceEventEntity ev =
+        new BounceEventEntity(
+            "b9",
+            "mb",
+            Instant.parse("2026-05-01T00:00:00Z"),
+            "<id@x>",
+            "subj",
+            "from@x",
+            "{\"Return-Path\":\"<>\"}",
+            "RFC822 bounce body".getBytes(StandardCharsets.UTF_8),
+            "UNCORRELATED");
+    ev.setErrorText("550 fail");
+    ev.setClassification("SOFT");
+    when(events.findById("b9")).thenReturn(Optional.of(ev));
+
+    BounceEventsController.BounceMessageDetail d = controller.get("b9");
+
+    assertEquals("b9", d.summary().id());
+    assertEquals("{\"Return-Path\":\"<>\"}", d.headers());
+    assertEquals("RFC822 bounce body", d.payload());
+    assertEquals("from@x", d.fromAddr());
+    assertEquals("<id@x>", d.messageId());
+  }
+
+  @Test
+  void getNotFoundWhenHiddenFromManager() {
+    when(access.isListSenderOnly()).thenReturn(false);
+    when(access.isAdmin()).thenReturn(false);
+    when(access.isListManager()).thenReturn(true);
+    when(access.managedListIds()).thenReturn(List.of("L1"));
+    when(listMembers.findByListIdIn(List.of("L1")))
+        .thenReturn(List.of(new ListMemberEntity("L1", "m1", false, Instant.now())));
+    BounceEventEntity other =
+        event("other", "CORRELATED", "m2", Instant.parse("2026-03-02T00:00:00Z"));
+    when(events.findById("other")).thenReturn(Optional.of(other));
+
+    assertThrows(ResponseStatusException.class, () -> controller.get("other"));
+  }
+
   private static BounceEventEntity event(
       String id, String status, String memberId, Instant receivedAt) {
     BounceEventEntity e =

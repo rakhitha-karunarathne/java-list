@@ -65,14 +65,14 @@ public class BounceEventsController {
 
   @GetMapping("/{id}")
   @Transactional
-  public BounceMessageView get(@PathVariable String id) {
+  public BounceMessageDetail get(@PathVariable String id) {
     requireOperator();
     BounceEventEntity ev =
         events.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     if (!visible(ev)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
-    return toView(ev);
+    return toDetail(ev);
   }
 
   private void requireOperator() {
@@ -168,6 +168,14 @@ public class BounceEventsController {
         ev.getMailboxId());
   }
 
+  private BounceMessageDetail toDetail(BounceEventEntity ev) {
+    BounceMessageView summary = toView(ev);
+    String headers = ev.getHeadersJson() == null ? "" : ev.getHeadersJson();
+    String payload =
+        ev.getRawBytes() == null ? "" : new String(ev.getRawBytes(), StandardCharsets.UTF_8);
+    return new BounceMessageDetail(summary, headers, payload, ev.getFromAddr(), ev.getMessageId());
+  }
+
   /** Backfill error_text for rows ingested before the column existed. */
   private void ensureErrorText(BounceEventEntity ev) {
     if (StringUtils.hasText(ev.getErrorText())) {
@@ -210,4 +218,12 @@ public class BounceEventsController {
       String correlationSignal,
       String subject,
       String mailboxId) {}
+
+  /** Detail includes stored headers and raw RFC822 payload from {@code bounce_events}. */
+  public record BounceMessageDetail(
+      BounceMessageView summary,
+      String headers,
+      String payload,
+      String fromAddr,
+      String messageId) {}
 }

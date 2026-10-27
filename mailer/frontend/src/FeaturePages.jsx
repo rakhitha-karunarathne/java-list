@@ -742,8 +742,9 @@ export function MainView({
         <BounceMessagesPage
           token={token}
           onError={onError}
-          focusId={detailId}
-          onClearFocus={onCloseDetail}
+          detailId={detailId}
+          onOpen={onOpenDetail}
+          onCloseDetail={onCloseDetail}
           onOpenMember={(id) => openInView('members', id)}
           onOpenCampaign={(id) => openInView('campaigns', id)}
         />

@@ -1042,16 +1042,24 @@ function whenBounce(value) {
   return String(value).replace('T', ' ').replace('Z', ' UTC')
 }
 
-/** Ingested bounce_events index (not Bounce Processing Log). */
-export function BounceMessagesPage({ token, onError, focusId, onOpenMember, onOpenCampaign, onClearFocus }) {
+/** Ingested bounce_events index + detail with stored payload (not Bounce Processing Log). */
+export function BounceMessagesPage({
+  token,
+  onError,
+  detailId,
+  onOpen,
+  onCloseDetail,
+  onOpenMember,
+  onOpenCampaign,
+}) {
   const [rows, setRows] = useState([])
   const [filter, setFilter] = useState('all')
   const [msg, setMsg] = useState('')
-  const [focus, setFocus] = useState(null)
+  const [detail, setDetail] = useState(null)
 
-  async function load(nextFilter = filter) {
+  async function load() {
     try {
-      const q = nextFilter && nextFilter !== 'all' ? `?filter=${encodeURIComponent(nextFilter)}` : ''
+      const q = filter && filter !== 'all' ? `?filter=${encodeURIComponent(filter)}` : ''
       setRows(await apiJson(token, `/api/bounce-events${q}`))
     } catch (e) {
       setRows([])
@@ -1064,17 +1072,26 @@ export function BounceMessagesPage({ token, onError, focusId, onOpenMember, onOp
   }, [token, filter])
 
   useEffect(() => {
-    if (!focusId) {
-      setFocus(null)
+    if (!detailId) {
+      setDetail(null)
       return
     }
-    apiJson(token, `/api/bounce-events/${focusId}`)
-      .then(setFocus)
-      .catch((e) => {
-        setFocus(null)
-        onError(e.message)
+    setDetail(null)
+    let cancelled = false
+    apiJson(token, `/api/bounce-events/${detailId}`)
+      .then((d) => {
+        if (!cancelled) setDetail(d)
       })
-  }, [token, focusId])
+      .catch((e) => {
+        if (cancelled) return
+        setDetail(null)
+        onError(e.message)
+        onCloseDetail?.()
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token, detailId])
 
   async function runProcess() {
     try {
@@ -1086,7 +1103,107 @@ export function BounceMessagesPage({ token, onError, focusId, onOpenMember, onOp
     }
   }
 
-  const visible = focusId && focus ? [focus, ...rows.filter((r) => r.id !== focus.id)] : rows
+  if (detailId) {
+    if (!detail?.summary || detail.summary.id !== detailId) {
+      return (
+        <div className="page-sections">
+          <section className="card">
+            <button type="button" className="btn secondary" onClick={onCloseDetail}>
+              ← Bounce Messages
+            </button>
+            <p className="hint">Loading…</p>
+          </section>
+        </div>
+      )
+    }
+    const s = detail.summary
+    return (
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Bounce Messages
+          </button>
+          <h2>Bounce message</h2>
+          <p className="hint">{whenBounce(s.receivedAt)}</p>
+          <dl className="stats">
+            <div>
+              <dt>Email</dt>
+              <dd>
+                {s.memberId && onOpenMember ? (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => onOpenMember(s.memberId)}
+                  >
+                    {s.email || s.memberId}
+                  </button>
+                ) : (
+                  s.email || '—'
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Campaign</dt>
+              <dd>
+                {s.campaignId && onOpenCampaign ? (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => onOpenCampaign(s.campaignId)}
+                  >
+                    {s.campaignSubject || s.campaignId}
+                  </button>
+                ) : (
+                  s.campaignSubject || '—'
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Class</dt>
+              <dd>{s.classification || '—'}</dd>
+            </div>
+            <div>
+              <dt>Error</dt>
+              <dd>{s.error || '—'}</dd>
+            </div>
+            <div>
+              <dt>Correlated?</dt>
+              <dd>{s.correlated ? 'Yes' : 'No'}</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>{s.status || '—'}</dd>
+            </div>
+            <div>
+              <dt>From</dt>
+              <dd>{detail.fromAddr || '—'}</dd>
+            </div>
+            <div>
+              <dt>Message-ID</dt>
+              <dd>{detail.messageId || '—'}</dd>
+            </div>
+            <div>
+              <dt>Subject</dt>
+              <dd>{s.subject || '—'}</dd>
+            </div>
+          </dl>
+        </section>
+        <section className="card">
+          <h3>Headers</h3>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--mono)' }}>
+            {detail.headers || '(none)'}
+          </pre>
+        </section>
+        <section className="card">
+          <h3>Payload</h3>
+          <p className="hint">Raw message bytes from bounce_events (UTF-8).</p>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--mono)' }}>
+            {detail.payload || '(empty)'}
+          </pre>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className="page-sections">
@@ -1111,29 +1228,21 @@ export function BounceMessagesPage({ token, onError, focusId, onOpenMember, onOp
             Run bounce processing
           </button>
         </p>
-        {focusId ? (
-          <p>
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={() => {
-                onClearFocus?.()
-                setFocus(null)
-              }}
-            >
-              Clear focus
-            </button>
-          </p>
-        ) : null}
         <RecordTable
-          rows={visible}
+          rows={rows}
           rowKey={(r) => r.id}
+          onOpen={(r) => onOpen?.(r.id)}
           empty="No bounce messages."
           columns={[
             {
               key: 'receivedAt',
               label: 'When',
-              render: (r) => whenBounce(r.receivedAt),
+              render: (r) => (
+                <button type="button" className="btn secondary" onClick={() => onOpen?.(r.id)}>
+                  {whenBounce(r.receivedAt)}
+                </button>
+              ),
+              stopRowClick: true,
             },
             {
               key: 'email',
