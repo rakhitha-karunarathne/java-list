@@ -119,3 +119,15 @@ after = [9]
 hitl = true
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 11
+type = "story"
+title = "Bounce Messages index UI"
+description = "Rename Bounce Log → Bounce Messages; Clearwater index of bounce events (When/Email/Campaign/Class/Error/Correlated); filters; Attention deep link."
+verify = "Nav says Bounce Messages; table lists API rows; filters work; distinct from Bounce Processing Log."
+covers = ["R4"]
+after = [10]
+hitl = false
+risk = "medium"
+refine = true

@@ -12,7 +12,7 @@ const TITLES = {
   'drop-log': 'Drop Log',
   blocks: 'Global Blocks',
   issues: 'Issues',
-  bounces: 'Bounce Log',
+  bounces: 'Bounce Messages',
   'bounce-mailboxes': 'Bounce Mailboxes',
   'sending-paths': 'Sending Paths',
   footers: 'Footers',

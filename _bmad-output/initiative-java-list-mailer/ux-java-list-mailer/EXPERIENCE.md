@@ -36,6 +36,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Inboxes (Mail-to-send) | Yes | Sidebar | Inboxes index only (no global mappings overview); **Add Mail Box** registers an existing server mailbox for polling (does not provision IMAP) |
 | MTS inbox detail | No | Inboxes row | Mail box account edit, authorized senders, list-grant overview |
 | MTS authorized sender | No | Sender email on inbox detail | Grant Lists (table); Substitute From + Footer per List |
+| Bounce Messages | Yes | Sidebar | Ingested bounce events index (When, Email, Campaign, Class, Error, Correlated?); filters; renamed from Bounce Log — not the Bounce Processing Log |
 | Bounce mailboxes | Yes | Sidebar | Mailbox index; **Add Mail Box** registers an existing server mailbox for bounce polling (does not provision IMAP) |
 | Bounce mailbox detail | No | Index row | IMAP / poll / credentials |
 | Sending paths | Yes | Sidebar | Path index |

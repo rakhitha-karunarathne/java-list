@@ -59,3 +59,15 @@ after = [1, 2, 3, 4]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 6
+type = "story"
+title = "Bounce messages list API"
+description = "List bounce_events for Bounce Messages UI: error, class, correlated; Admin all; LM scoped."
+verify = "GET list newest-first with extracted error; LM only managed members; sender forbidden."
+covers = ["R1"]
+after = [3, 4]
+hitl = false
+risk = "medium"
+refine = true

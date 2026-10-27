@@ -1037,31 +1037,158 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
   )
 }
 
-export function BounceLogPage({ token, onError }) {
+function whenBounce(value) {
+  if (!value) return '—'
+  return String(value).replace('T', ' ').replace('Z', ' UTC')
+}
+
+/** Ingested bounce_events index (not Bounce Processing Log). */
+export function BounceMessagesPage({ token, onError, focusId, onOpenMember, onOpenCampaign, onClearFocus }) {
+  const [rows, setRows] = useState([])
+  const [filter, setFilter] = useState('all')
   const [msg, setMsg] = useState('')
+  const [focus, setFocus] = useState(null)
+
+  async function load(nextFilter = filter) {
+    try {
+      const q = nextFilter && nextFilter !== 'all' ? `?filter=${encodeURIComponent(nextFilter)}` : ''
+      setRows(await apiJson(token, `/api/bounce-events${q}`))
+    } catch (e) {
+      setRows([])
+      onError(e.message)
+    }
+  }
+
+  useEffect(() => {
+    load()
+  }, [token, filter])
+
+  useEffect(() => {
+    if (!focusId) {
+      setFocus(null)
+      return
+    }
+    apiJson(token, `/api/bounce-events/${focusId}`)
+      .then(setFocus)
+      .catch((e) => {
+        setFocus(null)
+        onError(e.message)
+      })
+  }, [token, focusId])
 
   async function runProcess() {
     try {
       const r = await apiJson(token, '/api/bounce-process/run', { method: 'POST' })
       setMsg(r.message || 'process started')
+      await load()
     } catch (e) {
       onError(e.message)
     }
   }
 
+  const visible = focusId && focus ? [focus, ...rows.filter((r) => r.id !== focus.id)] : rows
+
   return (
-    <div className="card">
-      <h2>Bounce Log</h2>
-      <p className="hint">
-        Correlation index ships with bounce processing ops; mailbox config is under Bounce Mailboxes.
-      </p>
-      {msg ? <p>{msg}</p> : null}
-      <p>
-        <button type="button" className="btn" onClick={runProcess}>
-          Run bounce processing
-        </button>
-      </p>
+    <div className="page-sections">
+      <section className="card">
+        <h2>Bounce Messages</h2>
+        <p className="hint">
+          Ingested bounce mail from Bounce Mailboxes. Poll/process activity is on Bounce Processing Log.
+        </p>
+        {msg ? <p>{msg}</p> : null}
+        <label className="field">
+          Filter
+          <select value={filter} onChange={(ev) => setFilter(ev.target.value)}>
+            <option value="all">All</option>
+            <option value="correlated">Correlated</option>
+            <option value="uncorrelated">Uncorrelated</option>
+            <option value="hard">Hard</option>
+            <option value="soft">Soft</option>
+          </select>
+        </label>
+        <p>
+          <button type="button" className="btn" onClick={runProcess}>
+            Run bounce processing
+          </button>
+        </p>
+        {focusId ? (
+          <p>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => {
+                onClearFocus?.()
+                setFocus(null)
+              }}
+            >
+              Clear focus
+            </button>
+          </p>
+        ) : null}
+        <RecordTable
+          rows={visible}
+          rowKey={(r) => r.id}
+          empty="No bounce messages."
+          columns={[
+            {
+              key: 'receivedAt',
+              label: 'When',
+              render: (r) => whenBounce(r.receivedAt),
+            },
+            {
+              key: 'email',
+              label: 'Email',
+              stopRowClick: true,
+              render: (r) =>
+                r.memberId && onOpenMember ? (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => onOpenMember(r.memberId)}
+                  >
+                    {r.email || r.memberId}
+                  </button>
+                ) : (
+                  r.email || '—'
+                ),
+            },
+            {
+              key: 'campaignSubject',
+              label: 'Campaign',
+              stopRowClick: true,
+              render: (r) =>
+                r.campaignId && onOpenCampaign ? (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => onOpenCampaign(r.campaignId)}
+                  >
+                    {r.campaignSubject || r.campaignId}
+                  </button>
+                ) : (
+                  r.campaignSubject || '—'
+                ),
+            },
+            {
+              key: 'classification',
+              label: 'Class',
+              render: (r) => r.classification || '—',
+            },
+            {
+              key: 'error',
+              label: 'Error',
+              render: (r) => r.error || '—',
+            },
+            {
+              key: 'correlated',
+              label: 'Correlated?',
+              render: (r) => (r.correlated ? 'Yes' : 'No'),
+            },
+          ]}
+        />
+      </section>
     </div>
   )
 }
+
 

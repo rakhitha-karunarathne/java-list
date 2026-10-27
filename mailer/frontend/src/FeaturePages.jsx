@@ -16,7 +16,7 @@ import { CampaignsPage, StatusBadge } from './CampaignPages.jsx'
 import { ListsPage, MembersPage } from './ListsMembersPages.jsx'
 import { RecordTable } from './RecordTable.jsx'
 import {
-  BounceLogPage,
+  BounceMessagesPage,
   DropLogPage,
   GlobalBlocksPage,
   IssuesPage,
@@ -515,7 +515,13 @@ export function AuditLog({ token }) {
   )
 }
 
-export function AttentionInbox({ token, onError }) {
+function bounceIdFromAttention(row) {
+  if (!/uncorrelated bounce/i.test(row?.title || '')) return null
+  const m = String(row?.detail || '').match(/Bounce\s+([0-9a-fA-F-]{36})/i)
+  return m ? m[1] : null
+}
+
+export function AttentionInbox({ token, onError, onOpenBounce }) {
   const [rows, setRows] = useState([])
   const [forbidden, setForbidden] = useState(false)
 
@@ -574,11 +580,27 @@ export function AttentionInbox({ token, onError }) {
             key: 'actions',
             label: 'Actions',
             stopRowClick: true,
-            render: (r) => (
-              <button type="button" className="btn secondary" onClick={() => ack(r.id)}>
-                Ack
-              </button>
-            ),
+            render: (r) => {
+              const bounceId = bounceIdFromAttention(r)
+              return (
+                <>
+                  {bounceId && onOpenBounce ? (
+                    <>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => onOpenBounce(bounceId)}
+                      >
+                        Open Bounce
+                      </button>{' '}
+                    </>
+                  ) : null}
+                  <button type="button" className="btn secondary" onClick={() => ack(r.id)}>
+                    Ack
+                  </button>
+                </>
+              )
+            },
           },
         ]}
       />
@@ -716,7 +738,16 @@ export function MainView({
         />
       )
     case 'bounces':
-      return <BounceLogPage token={token} onError={onError} />
+      return (
+        <BounceMessagesPage
+          token={token}
+          onError={onError}
+          focusId={detailId}
+          onClearFocus={onCloseDetail}
+          onOpenMember={(id) => openInView('members', id)}
+          onOpenCampaign={(id) => openInView('campaigns', id)}
+        />
+      )
     case 'ops':
       return <OpsLogs token={token} onError={onError} />
     case 'bounce-process-log':
@@ -750,7 +781,13 @@ export function MainView({
         />
       )
     case 'attention':
-      return <AttentionInbox token={token} onError={onError} />
+      return (
+        <AttentionInbox
+          token={token}
+          onError={onError}
+          onOpenBounce={(id) => openInView('bounces', id)}
+        />
+      )
     case 'audit':
       return <AuditLog token={token} />
     case 'parameters':

@@ -37,7 +37,7 @@ export const NAV_SECTIONS = [
     id: 'bounces',
     label: 'BOUNCES',
     items: [
-      { id: 'bounces', label: 'Bounce Log', hideForSender: true },
+      { id: 'bounces', label: 'Bounce Messages', hideForSender: true },
       { id: 'bounce-mailboxes', label: 'Bounce Mailboxes', adminOnly: true },
       { id: 'bounce-process-log', label: 'Bounce Processing Log', adminOnly: true },
     ],

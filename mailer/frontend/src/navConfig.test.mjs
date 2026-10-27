@@ -36,6 +36,13 @@ test('list manager sees Attention but not Parameters', () => {
   assert.ok(ids.includes('lists'))
 })
 
+test('bounces nav label is Bounce Messages', () => {
+  const item = visibleSections('ADMIN')
+    .flatMap((s) => s.items)
+    .find((i) => i.id === 'bounces')
+  assert.equal(item?.label, 'Bounce Messages')
+})
+
 test('C8 forbidden detail labels not used in nav config', () => {
   const labels = visibleSections('ADMIN').flatMap((s) => s.items.map((i) => i.label))
   for (const bad of FORBIDDEN_SIDEBAR_LABELS) {
