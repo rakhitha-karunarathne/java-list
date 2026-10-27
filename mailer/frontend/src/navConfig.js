@@ -37,8 +37,8 @@ export const NAV_SECTIONS = [
     id: 'bounces',
     label: 'BOUNCES',
     items: [
-      { id: 'bounces', label: 'Bounce Messages', hideForSender: true },
       { id: 'bounce-mailboxes', label: 'Bounce Mailboxes', adminOnly: true },
+      { id: 'bounces', label: 'Bounce Messages', hideForSender: true },
       { id: 'bounce-process-log', label: 'Bounce Processing Log', adminOnly: true },
     ],
   },
@@ -49,13 +49,13 @@ export const NAV_SECTIONS = [
       { id: 'sending-paths', label: 'Sending Paths', adminOnly: true },
       { id: 'footers', label: 'Footers', adminOnly: true },
       { id: 'notice-path', label: 'Notice Sending Path', adminOnly: true },
-      { id: 'parameters', label: 'Parameters', adminOnly: true },
     ],
   },
   {
     id: 'system',
     label: 'SYSTEM',
     items: [
+      { id: 'parameters', label: 'Parameters', adminOnly: true },
       { id: 'users', label: 'Users & Grants', adminOnly: true },
       { id: 'ops', label: 'Ops Logs', adminOnly: true },
       { id: 'queue-send-log', label: 'Queue Sending Log', adminOnly: true },

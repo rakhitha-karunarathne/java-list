@@ -58,6 +58,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
   const [filter, setFilter] = useState('')
   const [detail, setDetail] = useState(null)
   const [lists, setLists] = useState([])
+  const [pathNames, setPathNames] = useState({})
   const [addListId, setAddListId] = useState('')
   const [msg, setMsg] = useState('')
   const [recipientQ, setRecipientQ] = useState('')
@@ -75,6 +76,13 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
     apiJson(token, '/api/lists')
       .then(setLists)
       .catch(() => setLists([]))
+    apiJson(token, '/api/sending-paths')
+      .then((paths) => {
+        const map = {}
+        for (const p of paths || []) map[p.id] = p.name
+        setPathNames(map)
+      })
+      .catch(() => setPathNames({}))
   }, [token])
 
   useEffect(() => {
@@ -201,6 +209,12 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
           <h2>{detail.subject}</h2>
           <p>
             <StatusBadge status={detail.status} />
+          </p>
+          <p className="hint">
+            Sending path:{' '}
+            {detail.sendingPathId
+              ? pathNames[detail.sendingPathId] || detail.sendingPathId
+              : 'Default (first list)'}
           </p>
           {msg ? <p>{msg}</p> : null}
           {canPauseCampaign(detail.status) ? (
@@ -483,8 +497,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
               const showPause = canPauseCampaign(r.status)
               const showResume = canResumeCampaign(r.status)
               const showStop = canStopCampaign(r.status)
-              const showDelete = canDeleteCampaign(r.status)
-              if (!draft && !showPause && !showResume && !showStop && !showDelete) return '—'
+              if (!draft && !showPause && !showResume && !showStop) return '—'
               return (
                 <>
                   {draft ? (
@@ -510,15 +523,6 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
                   {showStop ? (
                     <button type="button" className="btn secondary" onClick={() => stop(r.id)}>
                       Stop
-                    </button>
-                  ) : null}{' '}
-                  {showDelete ? (
-                    <button
-                      type="button"
-                      className="btn secondary"
-                      onClick={() => remove(r.id, r.subject)}
-                    >
-                      Delete
                     </button>
                   ) : null}
                 </>

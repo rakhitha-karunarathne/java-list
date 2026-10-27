@@ -1108,9 +1108,17 @@ export function BounceMessagesPage({
       return (
         <div className="page-sections">
           <section className="card">
-            <button type="button" className="btn secondary" onClick={onCloseDetail}>
-              ← Bounce Messages
-            </button>
+            <p>
+              <a
+                href="#bounces"
+                onClick={(ev) => {
+                  ev.preventDefault()
+                  onCloseDetail?.()
+                }}
+              >
+                ← Bounce Messages
+              </a>
+            </p>
             <p className="hint">Loading…</p>
           </section>
         </div>
@@ -1120,9 +1128,17 @@ export function BounceMessagesPage({
     return (
       <div className="page-sections">
         <section className="card">
-          <button type="button" className="btn secondary" onClick={onCloseDetail}>
-            ← Bounce Messages
-          </button>
+          <p>
+            <a
+              href="#bounces"
+              onClick={(ev) => {
+                ev.preventDefault()
+                onCloseDetail?.()
+              }}
+            >
+              ← Bounce Messages
+            </a>
+          </p>
           <h2>Bounce message</h2>
           <p className="hint">{whenBounce(s.receivedAt)}</p>
           <dl className="stats">
@@ -1130,13 +1146,15 @@ export function BounceMessagesPage({
               <dt>Email</dt>
               <dd>
                 {s.memberId && onOpenMember ? (
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => onOpenMember(s.memberId)}
+                  <a
+                    href={`#members/${s.memberId}`}
+                    onClick={(ev) => {
+                      ev.preventDefault()
+                      onOpenMember(s.memberId)
+                    }}
                   >
                     {s.email || s.memberId}
-                  </button>
+                  </a>
                 ) : (
                   s.email || '—'
                 )}
@@ -1146,13 +1164,15 @@ export function BounceMessagesPage({
               <dt>Campaign</dt>
               <dd>
                 {s.campaignId && onOpenCampaign ? (
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => onOpenCampaign(s.campaignId)}
+                  <a
+                    href={`#campaigns/${s.campaignId}`}
+                    onClick={(ev) => {
+                      ev.preventDefault()
+                      onOpenCampaign(s.campaignId)
+                    }}
                   >
                     {s.campaignSubject || s.campaignId}
-                  </button>
+                  </a>
                 ) : (
                   s.campaignSubject || '—'
                 )}
@@ -1237,12 +1257,7 @@ export function BounceMessagesPage({
             {
               key: 'receivedAt',
               label: 'When',
-              render: (r) => (
-                <button type="button" className="btn secondary" onClick={() => onOpen?.(r.id)}>
-                  {whenBounce(r.receivedAt)}
-                </button>
-              ),
-              stopRowClick: true,
+              render: (r) => whenBounce(r.receivedAt),
             },
             {
               key: 'email',
@@ -1250,13 +1265,15 @@ export function BounceMessagesPage({
               stopRowClick: true,
               render: (r) =>
                 r.memberId && onOpenMember ? (
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => onOpenMember(r.memberId)}
+                  <a
+                    href={`#members/${r.memberId}`}
+                    onClick={(ev) => {
+                      ev.preventDefault()
+                      onOpenMember(r.memberId)
+                    }}
                   >
                     {r.email || r.memberId}
-                  </button>
+                  </a>
                 ) : (
                   r.email || '—'
                 ),
@@ -1267,13 +1284,15 @@ export function BounceMessagesPage({
               stopRowClick: true,
               render: (r) =>
                 r.campaignId && onOpenCampaign ? (
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => onOpenCampaign(r.campaignId)}
+                  <a
+                    href={`#campaigns/${r.campaignId}`}
+                    onClick={(ev) => {
+                      ev.preventDefault()
+                      onOpenCampaign(r.campaignId)
+                    }}
                   >
                     {r.campaignSubject || r.campaignId}
-                  </button>
+                  </a>
                 ) : (
                   r.campaignSubject || '—'
                 ),

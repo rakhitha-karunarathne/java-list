@@ -42,7 +42,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Sending paths | Yes | Sidebar | Path index |
 | Sending path detail | No | Index row | SMTP/From, Used By |
 | Footers | Yes | Sidebar | Footer index + detail via row |
-| Parameters | Yes (Admin) | Sidebar | System tunables — stacked fields + descriptions |
+| Parameters | Yes (Admin) | Sidebar (System) | System tunables — stacked fields + descriptions |
 | Users | Yes (Admin) | Sidebar | User index; role and list grants only |
 | User detail | No | Users row | Page sections: **Title** · **Account** (Role, Enabled, Save) · **List Grants** — no MFA |
 | My Account | Yes (every role) | Header user id and last item in the scrollable sidebar | Self-service: **Password** then **MFA** |
@@ -80,7 +80,8 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 | Connection field order | Host then Port; Username then Password (then From / poll / Use SSL and Use TLS as applicable). SSL and TLS are separate; turning one on turns the other off |
 | Compose preview | HTML / Text tabs; live sync from editors |
 | Compose body editors | HTML Body and Text Body stack vertically (label above each field) — not side-by-side on one horizontal line |
-| Compose lists | **HTML table** (Include / Name / Order / Reorder) — not a stack of checkbox rows; first included list sets the sending path |
+| Compose lists | **HTML table** (Include / Name / Order / Reorder) — not a stack of checkbox rows; first included list sets the sending path unless the Campaign picks an override path |
+| Sending path Return-Path | Optional on Sending Path form; when set, SMTP envelope uses it and From domain must match Return-Path domain |
 | Compose sections | Content · **Attachments** (immediately under content) · Preview · Lists · **Testing** · Actions (Save Draft / Queue) |
 | Test send | Paste addresses; uses first list path; ignores bounce-disable; failures → Ops Logs / Admin Attention |
 | Campaign status badge | Exact label Draft / Queued / Sending / Finished / Stopped (text + color; never color alone) |
@@ -142,7 +143,7 @@ Sidebar shows **indexes and tools**, not entity detail pages. Hide a sidebar **c
 1. Ava signs in with **email** + password (MFA step-up if enrolled or mandatory).
 2. Opens **Parameters**.
 3. Sees each tunable as stacked field with description (purpose, values, range) — e.g. ops log retention default 90; MFA mandatory default off.
-4. Saves; confirmation is quiet and clear. **Climax:** catalogs/Parameters ready for lists.
+4. Saves; confirmation is quiet and clear. **Climax:** System/Parameters ready for lists.
 
 ### Flow 2 — Login with MFA step-up (Jordan, List manager)
 
