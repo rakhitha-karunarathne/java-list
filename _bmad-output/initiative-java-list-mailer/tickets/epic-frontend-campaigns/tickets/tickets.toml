@@ -83,3 +83,27 @@ after = [6]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 8
+type = "story"
+title = "Compose Queue opens the campaign"
+description = "Successful Queue on Compose opens that campaign's detail. Index Queue stays in place. Failed Queue stays on Compose."
+verify = "Queue a Draft from Compose, and from Edit, and land on that campaign's detail even if it is already Finished; a rejected Queue stays on Compose."
+covers = ["R3"]
+after = [7]
+hitl = false
+risk = "low"
+refine = true
+
+[[entry]]
+id = 9
+type = "story"
+title = "Search campaign recipients by email and status"
+description = "Recipients table lists every recipient with Status Pending, Failed-Retry Pending, Sent, Send Failed, Opened, or Bounced. Bounced wins over Opened. One search box matches email or status. Retry failed shows when any row is Send Failed."
+verify = "An opened and bounced recipient shows Bounced with first open and open count; typing an email or a status label filters the table."
+covers = ["R24"]
+after = [8]
+hitl = false
+risk = "medium"
+refine = true

@@ -30,7 +30,7 @@ R2 (prd FR-2, FR-34): Per-List manage and/or send grants are edited on User deta
 
 R3 (prd FR-3, FR-37): Sending paths (SMTP + From) are catalogued; detail shows navigable Used By; delete blocked while referenced.
 
-R4 (prd FR-4): Bounce mailboxes are catalogued with per-mailbox poll (default 15 min); edit on mailbox detail from the index.
+R4 (prd FR-4): Bounce mailboxes are catalogued with per-mailbox poll interval (default 15 min), last polled time, and last-poll Result (OK or Errors). The index columns are Name, Poll interval, Last polled, and Result; Host is not on the index. The poll job wakes every 60 seconds and polls enabled mailboxes that are due. Admin Poll is only on an enabled mailbox, starts that one mailbox, and returns at once with “process started”. A disabled mailbox has no Poll button. A per-mailbox lock blocks a second poll until it is released, broken, or Last Polling Update is older than 1 hour (`mailer.poll.lock-timeout`). Last Polling Update is set at polling start, after each message read, and when polling is done. While locked, detail shows a Polling section and hides it otherwise. Break lock is shown only when that time is at least 60 seconds old. Detail shows that mailbox’s Bounce Processing Log rows when logging is on. Those rows store the mailbox id and the screen shows the name. Existing Bounce and Mail-To-Send processing-log rows are deleted once.
 
 R5 (prd FR-5, FR-37): Footers are catalogued; detail shows Used By (Lists, mappings); delete blocked while referenced; UI campaigns use List footer only.
 
@@ -64,13 +64,13 @@ R19 (prd FR-17): Text + HTML, images, attachments; compose has HTML/Text preview
 
 R20 (prd FR-38): Test send from compose to pasted addresses; uses first List’s path; ignores bounce-disable; not campaign sent-stats; failures → Ops Logs / Admin Attention.
 
-R21 (prd FR-18, FR-19): System send-queue processor; system-wide pacing only (delay per email 1000 ms, batch size 600, batch duration 10 minutes, 3600 messages per rolling hour; a run sends only the room left in that hour); Lists only enqueue.
+R21 (prd FR-18, FR-19, FR-41, FR-45): System send-queue processor wakes every 60 seconds from application.yml; system-wide pacing only (delay per email 1000 ms, batch size 600, batch duration 10 minutes, 3600 messages per rolling hour; a run sends only the room left in that hour); Lists only enqueue. Parameter `send.paused` (default false) stops the queue before the next recipient; test sends and Notice-path mail still go out. One SMTP failure becomes Failed-Retry Pending and other recipients continue; after 3 further tries (`send.retry.count`, default 3), each delayed 5 minutes (`send.retry.delay.minutes`), the row is Send Failed. No button runs the send queue. Pause flags are cached and cleared in this process when set to paused. Multi-instance cache clear is V2+.
 
 R22 (prd FR-20, FR-21): Image-fetch Off / Best Effort / Mandatory + SSRF guards; rewritten images CDN TTL after campaign’s most recent Finished (Requeue that finishes again restarts TTL; Stopped does not).
 
 R23 (prd FR-22, FR-23): Email payload and stored-image hard uppers; per-List ≤ ceiling; multi-list strictest (TTL longest wins).
 
-R24 (prd FR-24): Campaign reporting: sent, unique opens (headline), total opens; per-member first open / count; HTML pixel only; signed tokens.
+R24 (prd FR-24): Campaign detail recipients table lists every recipient with Email, Status (Pending, Failed-Retry Pending, Sent, Send Failed, Opened, Bounced), First Open, and Opens. Bounced wins over Opened; first open and open count still show. One search box matches email or status. Retry failed requeues Send Failed rows. Stats: unique opens (headline), total opens, sent count; HTML pixel only.
 
 R25 (prd FR-39): Ops Logs for send / bounce poll / mail-to-send poll; errors on Admin Attention; retention via Parameters (default 90 days).
 
@@ -80,7 +80,7 @@ R27 (prd FR-26): Daily bounce-process; separate hard/soft walks + holdback; eith
 
 R28 (prd FR-27): VERP toggle on Parameters; default off.
 
-R29 (prd FR-28): IMAP-only mail-to-send; index + inbox detail; authorized senders; mappings; substitute From domain rule; footer override.
+R29 (prd FR-28): IMAP-only mail-to-send; index columns Name, Poll interval, Last polled, Result (Host and Enabled are not index columns); poll interval default 15 min; 60-second wake polls due enabled inboxes; Admin Poll is only on an enabled inbox and returns at once with “process started”; a disabled inbox has no Poll button; a per-inbox lock blocks a second poll until released, broken, or Last Polling Update is older than 1 hour; Last Polling Update is set at start, each message, and done; while locked, detail shows a Polling section and hides it otherwise; Break lock shows only when that time is at least 60 seconds old; detail shows that inbox’s Mail-To-Send Processing Log rows when logging is on, by inbox id, with the name on screen; authorized senders; mappings; substitute From domain rule; footer override.
 
 R30 (prd FR-29): From-domain Issues (not Drop log); all-or-nothing; hold or delete-and-notify.
 
@@ -92,7 +92,13 @@ R33 (prd FR-32): Single append-only Audit log; no raw secrets; Admin all / LM me
 
 R34 (prd FR-33): HTTPS only for UI, unsub, pixel, rewritten images, List-Unsubscribe; Public base URL; origin TLS Full or Full Strict only.
 
-R35 (prd FR-40): Campaign status is exactly one of Draft · Queued · Sending · Finished · Stopped. Compose until queue → Draft. Queue action → Queued; when the send-queue processor starts work → Sending; after the final recipient email for the current send pass is sent → Finished. Operator may Stop while Draft, Queued, or Sending → Stopped (remaining unsent rows are not sent while Stopped). **Requeue:** Stopped → Queued (resume: remaining unsent rows, plus any newly added List members whose addresses were not already sent for this Campaign). Finished may be Requeued only after at least one additional List is added → Queued; that pass enqueues addresses on the newly added List(s) only, excluding any address already sent for this Campaign.
+R35 (prd FR-40): Campaign status is exactly one of Draft · Queued · Sending · Paused · Finished · Stopped. Compose until queue → Draft. Queue, Requeue, or Resume → Queued; when the send-queue processor starts work → Sending; after the final recipient email for the current send pass is sent → Finished (Failed-Retry Pending keeps the pass unfinished; Send Failed does not). Operator may Pause while Queued or Sending → Paused. Resume → Queued without Requeue. Operator may Stop while Draft, Queued, or Sending → Stopped (remaining unsent rows are not sent while Stopped). **Requeue:** Stopped → Queued (resume: remaining unsent rows, plus any newly added List members whose addresses were not already sent for this Campaign). Finished may be Requeued only after at least one additional List is added → Queued; that pass enqueues addresses on the newly added List(s) only, excluding any address already sent for this Campaign.
+
+R36 (prd FR-42): Campaign Pause from Queued or Sending sets status Paused. Resume is an action, not a status, and sets Queued without Requeue. Admin, List manager, and List sender may do this on a campaign they can open.
+
+R37 (prd FR-43): Each List has Pause and Resume, a hold rather than a campaign status. Admin any List; List manager lists they manage; List sender cannot. Rows already queued for a paused List wait. An address queued under a List that is not paused still sends. Mail-to-send may still create a campaign for a paused List; those rows wait until the List is resumed.
+
+R38 (prd FR-44): Each of the Bounce, Queue Sending, and Mail-To-Send processing logs has its own age Parameter (default 30 days; a stored 90 is updated to 30) and its own keep-count Parameter (default 5000). The nightly job drops rows that are too old or outside the newest N. Ops log stays 90 days. Audit stays 365 days.
 
 ## Constraints
 

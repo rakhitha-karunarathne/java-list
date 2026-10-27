@@ -118,8 +118,17 @@ Admin can configure many Bounce mailboxes with per-mailbox poll interval (defaul
 
 **UI:** Sidebar **Bounce mailboxes** lists mailboxes. Edit IMAP/credentials/poll on a mailbox detail page opened only by clicking a mailbox (not a sidebar item).
 
+Each mailbox stores the time it was last polled and whether that poll finished without an error. The Bounce mailboxes index columns are Name, Poll interval, Last polled, and Result. Result is OK when the last poll finished, Errors when it failed, and blank when the mailbox has never been polled. Host is not an index column; it stays on the detail form. The detail page also shows last polled and Result. Poll interval is minutes, default 15. The bounce poll job wakes every 60 seconds from `mailer.bounce.poll-tick-ms` in application.yml (not a Parameter). A wake polls only enabled mailboxes whose interval has elapsed since last polled. An Admin can press **Poll** on that mailbox’s record only when it is enabled. A disabled mailbox shows no Poll button, and the poll endpoint rejects it. The 60-second wake still skips disabled mailboxes. The press starts a poll of that mailbox only and returns at once. The screen says the process started. Each mailbox has its own poll lock, shared by the button and the wake. A second poll of that mailbox does not start while the lock is held, and the screen still says the process started. The mailbox stores **Last Polling Update**. The poll sets that time at polling start, after each message read, and when polling is done. A recent time means the poll is still working. `mailer.poll.lock-timeout` in application.yml defaults to 1 hour. A Last Polling Update older than that is treated as released. While the lock is held, mailbox detail shows a **Polling** section and hides it otherwise. The section shows Last Polling Update. **Break lock** is shown only when that time is at least 60 seconds old. Break lock releases the lock so another poll can start. It does not stop a poll already talking to the mail server. Only an Admin can break the lock. Last polled updates when that poll finishes. The outcome is in the Bounce Processing Log when `bounce.process.log.enabled` is on. The mailbox detail page has a section listing that log’s rows for this mailbox (time, event, message, newest first). A row that belongs to a mailbox stores that mailbox’s id. The screen loads the name and shows the name. If the mailbox is gone, the id is shown. Rows written before this change are deleted once. When the log is off, the section says logging is off. There is no Execute Queues page.
+
 **Consequences (testable):**
 - Changing a mailbox’s poll interval affects only that mailbox’s next scheduled poll cadence.
+- A mailbox polled 1 minute ago with a 15-minute interval is not polled by the 60-second wake.
+- Poll is hidden on a disabled mailbox, and the poll endpoint rejects it. The 60-second wake still skips it.
+- A second poll of a mailbox does not start while its lock is held. A Last Polling Update older than 1 hour is treated as released.
+- While a mailbox is polling, its detail shows a Polling section. Break lock is shown only when Last Polling Update is at least 60 seconds old. The section is hidden when it is not polling.
+- The Bounce mailboxes index shows Name, Poll interval, Last polled, and Result, and does not show Host.
+- Result is OK after a finished poll and Errors after a failed poll. A rejected or ingested message does not by itself set Errors.
+- A non-Admin has no Poll button, and the poll endpoint rejects them.
 - Mailbox detail is reachable from the Bounce mailboxes index, not as its own nav entry.
 
 #### FR-5: Footers catalog
@@ -231,23 +240,30 @@ A Campaign may target multiple Lists. Same address on more than one selected Lis
 
 #### FR-40: Campaign lifecycle states
 
-A Campaign has exactly one status: **Draft**, **Queued**, **Sending**, **Finished**, or **Stopped**.
+A Campaign has exactly one status: **Draft**, **Queued**, **Sending**, **Paused**, **Finished**, or **Stopped**.
 
 - **Draft** — while composed and not yet queued (UI compose / save draft).
-- **Queued** — after Queue or Requeue; send-queue has work for this Campaign; processor has not started the current pass yet.
+- **Queued** — after Queue, Requeue, or Resume; send-queue has work for this Campaign; processor has not started the current pass yet.
 - **Sending** — send-queue processor has started work on the current pass.
-- **Finished** — the final recipient email for the current send pass has been sent.
+- **Paused** — operator paused the Campaign from Queued or Sending. Remaining unsent rows are not sent while Paused. Already-sent rows stay sent. There is no Resumed status.
+- **Finished** — the final recipient email for the current send pass has been sent. Rows still **Failed-Retry Pending** keep the pass unfinished. **Send Failed** rows do not.
 - **Stopped** — operator stopped the Campaign from Draft, Queued, or Sending. Remaining unsent rows are not sent while Stopped. Already-sent rows stay sent.
+
+**Pause and Resume**
+- **Pause** is an action on Queued or Sending. It sets **Paused**. Draft, Finished, and Stopped do not show Pause.
+- **Resume** is an action on Paused, not a status. It sets **Queued** without Requeue and without adding a List. The processor then follows Queued → Sending → Finished.
+- Admin, List manager, and List sender may pause and resume a campaign they can open. List managers and List senders only for a campaign that includes a List they can manage or send.
 
 **Requeue**
 - **Stopped → Queued:** operator may Requeue. Resume remaining unsent rows; if Lists were added while Stopped, also enqueue members of those Lists whose addresses were not already sent for this Campaign.
 - **Finished → Queued:** only after the operator adds at least one additional List to the Campaign. The new pass enqueues addresses on the **newly added List(s) only**, excluding any address already sent for this Campaign (test sends do not count as sent).
 
-**UI:** Campaigns index filters/badges show these five statuses; Campaign detail shows status, Stop while Draft/Queued/Sending, Requeue while Stopped, and Requeue while Finished once a new List has been added.
+**UI:** Campaigns index filters/badges show these six statuses; Campaign detail shows status, Pause while Queued or Sending, Resume while Paused, Stop while Draft/Queued/Sending, Requeue while Stopped, and Requeue while Finished once a new List has been added.
 
 **Consequences (testable):**
 - A new UI-composed Campaign is Draft until Queue.
-- Queue/Requeue → Queued; processor start → Sending; last recipient of the current pass → Finished.
+- Queue/Requeue/Resume → Queued; processor start → Sending; last recipient of the current pass → Finished.
+- Pause from Queued or Sending → Paused; Resume → Queued with the same unsent rows still queued.
 - Stop from Draft, Queued, or Sending → Stopped; no further production sends until Requeue.
 - Stopped can Requeue → Queued and continue unsent / newly eligible addresses.
 - Finished cannot Requeue until another List is added; after Requeue, only new-list addresses not already sent receive mail.
@@ -282,9 +298,19 @@ Admins have Ops Logs covering at least: **send issues** (production queue and te
 - A Campaign or test-send SMTP failure appears under send issues and on Admin Attention when severity is error.
 - Ops log retention is editable on Parameters; default value is 90 days.
 
+#### FR-44: Processing log size and age
+
+Each processing log has its own age Parameter and its own keep-count Parameter. The logs are the Bounce Processing Log, the Queue Sending Log, and the Mail-To-Send Processing Log. Age defaults are 30 days: `bounce.process.log.retention.days`, `send.queue.log.retention.days`, `mts.process.log.retention.days`. A stored value that is still the old default of 90 is updated to 30. Any other stored value is left as the Admin set it. Keep-count defaults are 5000: `bounce.process.log.max.rows`, `send.queue.log.max.rows`, `mts.process.log.max.rows`. Each value is an integer >= 1. The nightly retention job deletes a row when it is older than that log’s days or when it is outside that log’s newest N rows. Ops log retention stays 90 days. Audit retention stays 365 days. Bounce message TTLs stay 180 and 365 days.
+
+**Consequences (testable):**
+- A log with 5001 rows keeps the newest 5000 after the job runs.
+- A row older than that log’s days is deleted even when the log has fewer than 5000 rows.
+- Changing one log’s count does not change the other two.
+- A stored age that is still 90 becomes 30. A stored age other than 90 is unchanged.
+
 #### FR-18: Send queue processor
 
-A system-wide scheduled Send queue processor (interval on Parameters, default 15 minutes) sends queue rows. Lists/Campaigns only enqueue; they do not enforce send pacing. Send failures are recorded per FR-39.
+A system-wide Send queue processor wakes every 60 seconds from `mailer.send-queue.tick-ms` in application.yml (not a Parameter). Lists/Campaigns only enqueue; they do not enforce send pacing. Send failures are recorded per FR-39 and retried per FR-45. There is no button to run the send queue. Before each recipient the processor reads the cached pause flags (FR-41). A message already handed to SMTP may finish. The next recipient is not started when a pause applies.
 
 #### FR-19: Send pacing (Parameters only)
 
@@ -302,6 +328,34 @@ A run sends the smaller of the batch size and the room left in that rolling hour
 - If 3550 messages were sent in the last 60 minutes, the next run sends at most 50.
 - If 3600 or more were sent in the last 60 minutes, the next run sends none.
 - An Admin can change all four values on Parameters. `send.queue.throttle.per.minute` is not a Parameter.
+
+#### FR-45: Send retry
+
+A recipient SMTP failure is not left as Pending. The first failure sets that row to **Failed-Retry Pending**. Parameter `send.retry.count` (integer >= 0, default **3**) is how many further tries that row gets after the first failure. `send.retry.delay.minutes` (integer >= 0, default **5**) is how many minutes the row waits before the next try. While it waits, the processor sends other recipients. After the retry count is used and the row still fails, the status is **Send Failed** and it is not tried again until an operator uses **Retry failed** on that campaign. **Retry failed** shows when the campaign has at least one Send Failed recipient. It sets those rows back to Pending, clears their failure count, and if the campaign is Finished sets it to Queued. Failed-Retry Pending rows are not included; they already retry on their own. With the defaults, one failure is followed by up to 3 tries, each after 5 minutes.
+
+**Consequences (testable):**
+- One failure shows Failed-Retry Pending, and a later recipient in the same run is still sent.
+- With the defaults, the row is Send Failed after the first failure plus 3 failed tries, and each try waits 5 minutes.
+- After the retry count is exhausted the row is Send Failed and is skipped.
+- Retry failed sends those Send Failed recipients again and does not touch Failed-Retry Pending rows.
+
+#### FR-41: Send pause (Parameter)
+
+Admin can pause all campaign sending with one Parameter, `send.paused` (boolean, default false). The Parameters page shows it as a toggle. The processor checks it before each recipient. While true, it starts no further campaign messages. Pending rows stay pending. Campaign statuses do not change to Paused. Test sends still go out. Notice-path mail, including unsubscribe consent, still goes out. Setting it false lets the next check send again under FR-19. This does not Stop campaigns.
+
+The processor reads `send.paused`, campaign Paused, and List pause from a cache filled from the database. A change that sets any of them to paused clears that cache in this process before the response returns. The cache is also re-read from the database on each 60-second wake. Clearing that cache across more than one running instance is V2+ (§6.2), not V1.
+
+#### FR-42: Campaign pause and resume
+
+Pause and Resume are actions, separate from Stop and Requeue. Pause from Queued or Sending sets the campaign status to **Paused** (FR-40). Resume sets it back to **Queued** without Requeue and without adding a List. Unsent rows stay queued. Admin, List manager, and List sender may pause and resume a campaign they can open.
+
+The send loop sees the new status before the next recipient because the pause write clears the cache in this process (FR-41).
+
+#### FR-43: List pause and resume
+
+Each List has Pause and Resume. This is a hold on the List, not a campaign status. Admin may pause any List. A List manager may pause a List they manage. A List sender cannot pause a List.
+
+Rows already queued for a paused List wait. They send after Resume, on a later wake, without Requeue. An address queued once under a List that is not paused still sends when another selected List is paused. The row keeps the List it was queued under. Mail-to-send may still create a campaign for a paused List. Rows queued for that List wait until the List is resumed.
 
 #### FR-20: Image-fetch mode
 
@@ -321,7 +375,13 @@ Separate per-Campaign total of rewritten image bytes. Hard upper default 5 MB; p
 
 #### FR-24: Campaign reporting
 
-Campaign detail lists Members sent to with first open time and open count; campaign stats: unique opens (headline open rate = unique/sent), total opens, sent count. Open tracking is HTML tracking pixel only (no open signal on text-only). Pixel/unsubscribe/consent links use signed tokens; signing secret in env/secret file (key id rotation preferred).
+Campaign detail lists every recipient on that campaign, not only addresses already sent. The recipients table columns are Email, Status, First Open, and Opens. Status is one of **Pending**, **Failed-Retry Pending**, **Sent**, **Send Failed**, **Opened**, **Bounced**. **Bounced** wins over **Opened**. First Open and Opens still show for a bounced recipient. One search box filters the table: a row stays when the email contains the text or the status label contains the text, ignoring case. **Retry failed** is on this page when any row is Send Failed (FR-45). Campaign stats stay: unique opens (headline open rate = unique/sent), total opens, sent count. Open tracking is HTML tracking pixel only (no open signal on text-only). Pixel/unsubscribe/consent links use signed tokens; signing secret in env/secret file (key id rotation preferred).
+
+**Consequences (testable):**
+- A pending recipient appears in the table before any mail is sent.
+- A recipient who opened and bounced shows Bounced, and still shows first open time and open count.
+- Typing part of an email hides recipients whose email and status do not contain that text.
+- Typing “Bounced” shows recipients whose status is Bounced.
 
 ### 4.5 Bounce processing
 
@@ -349,7 +409,7 @@ Admin can enable/disable VERP on Parameters (default off). Use only when outboun
 
 #### FR-28: Inboxes and mappings
 
-Admin configures IMAP inboxes (no POP3) with per-inbox poll interval (default 15 minutes), authorized senders, and inbox→List mappings. Substitute From is per sender+inbox+List; empty → Sending path From. Substitute domain must match the domain of that List’s Sending-path From. Each accepted message → one Campaign; mapping Lists = Campaign Lists; dedupe inside Campaign. Two inbox copies → two Campaigns. Prefer IMAP CREATE for hold folders. Footer: mapping Footer wins over List Footer over none.
+Admin configures IMAP inboxes (no POP3) with per-inbox poll interval (default 15 minutes), authorized senders, and inbox→List mappings. Each inbox stores last polled time and whether that poll finished without an error. The Inboxes index columns are Name, Poll interval, Last polled, and Result. Result is OK when the last poll finished, Errors when it failed, and blank when the inbox has never been polled. Host is not an index column; it stays on the detail form. Enabled stays on the detail form and is not an index column. The detail page also shows last polled and Result. The mail-to-send poll job wakes every 60 seconds from `mailer.mts.poll-tick-ms` in application.yml and polls only enabled inboxes that are due. An Admin can press **Poll** on that inbox’s record only when it is enabled. A disabled inbox shows no Poll button, and the poll endpoint rejects it. The 60-second wake still skips disabled inboxes. The press starts a poll of that inbox only and returns at once. The screen says the process started. Each inbox has its own poll lock, shared by the button and the wake. A second poll of that inbox does not start while the lock is held, and the screen still says the process started. The inbox stores **Last Polling Update**. The poll sets that time at polling start, after each message read, and when polling is done. A recent time means the poll is still working. `mailer.poll.lock-timeout` in application.yml defaults to 1 hour. A Last Polling Update older than that is treated as released. While the lock is held, inbox detail shows a **Polling** section and hides it otherwise. The section shows Last Polling Update. **Break lock** is shown only when that time is at least 60 seconds old. Break lock releases the lock so another poll can start. It does not stop a poll already talking to the mail server. Only an Admin can break the lock. Last polled updates when that poll finishes. The outcome is in the Mail-To-Send Processing Log when `mts.process.log.enabled` is on. Inbox detail has a section listing that log’s rows for this inbox (time, event, message, newest first). A row that belongs to an inbox stores that inbox’s id. The screen loads the name and shows the name. If the inbox is gone, the id is shown. Rows written before this change are deleted once. When the log is off, the section says logging is off. Substitute From is per sender+inbox+List; empty → Sending path From. Substitute domain must match the domain of that List’s Sending-path From. Each accepted message → one Campaign; mapping Lists = Campaign Lists; dedupe inside Campaign. Two inbox copies → two Campaigns. Prefer IMAP CREATE for hold folders. Footer: mapping Footer wins over List Footer over none.
 
 **UI:** Sidebar **Inboxes & mappings** is an index of inboxes plus an all-mappings overview. Per-inbox settings, authorized senders, and that inbox’s mappings live on an inbox detail page opened only by clicking an inbox (or mapping row that targets it) — not a sidebar item.
 
@@ -428,6 +488,7 @@ Install produces an initial Admin. Admins can create/disable Users and assign ro
 - List **public / private** visibility and the post-V1 rules: private → Admin-only member add (Members may unsubscribe); public → public subscribe page
 - Per-list or per-path send-pacing overrides
 - Hourly auto-block cap
+- Pause-cache invalidation across multiple running instances. V1 clears the cache in the instance that saved the pause. Another instance may keep sending until its next database read or restart.
 
 ## 7. Success Metrics
 

@@ -129,3 +129,27 @@ after = [6]
 hitl = false
 risk = "high"
 refine = true
+
+[[entry]]
+id = 12
+type = "story"
+title = "Pause sending"
+description = "send.paused stops before the next recipient and does not stop tests. Campaign Pause is a status; Resume returns to Queued. List pause holds rows queued for that List. Cache clears in this process."
+verify = "Global pause stops the next recipient and a test still sends; Resume returns a Paused campaign to Queued; a row queued on an unpaused List still sends."
+covers = ["R21", "R35", "R36", "R37"]
+after = [11]
+hitl = true
+risk = "high"
+refine = true
+
+[[entry]]
+id = 13
+type = "story"
+title = "Retry a failed send"
+description = "First SMTP failure is Failed-Retry Pending. After send.retry.count further tries the row is Send Failed. Other recipients continue during the delay. Retry failed requeues Send Failed rows only."
+verify = "One failure does not stop the next recipient; exhausted retries stay Send Failed until Retry failed."
+covers = ["R21"]
+after = [12]
+hitl = false
+risk = "medium"
+refine = true

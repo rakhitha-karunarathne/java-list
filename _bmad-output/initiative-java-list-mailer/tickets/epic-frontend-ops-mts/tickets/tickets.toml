@@ -107,3 +107,15 @@ after = [8]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 10
+type = "story"
+title = "Poll one mailbox now"
+description = "Admin Poll starts that one enabled Bounce mailbox or Mail-To-Send inbox and says the process started. Detail shows that mailbox's processing-log rows when logging is on. Last Polling Update is set at start, each message, and done. A Polling section shows only while locked. Break lock shows only when that time is at least 60 seconds old. The lock times out after 1 hour without an update."
+verify = "A fresh poll hides Break lock; after 60 seconds without an update Break lock shows; start, each message, and done refresh Last Polling Update; an update older than 1 hour does not block."
+covers = ["R4", "R29"]
+after = [9]
+hitl = true
+risk = "medium"
+refine = true

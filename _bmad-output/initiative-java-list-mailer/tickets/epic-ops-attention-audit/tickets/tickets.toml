@@ -119,3 +119,15 @@ after = [9]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 11
+type = "story"
+title = "Cap each processing log"
+description = "Each of Bounce, Queue Sending, and Mail-To-Send logs has a keep-count Parameter default 5000. Age default becomes 30 days. Nightly job applies both. Ops and audit retention stay."
+verify = "5001 rows leave the newest 5000; a row older than the days is deleted under the count; a stored 90 becomes 30 and any other stored age stays."
+covers = ["R38"]
+after = [10]
+hitl = false
+risk = "low"
+refine = true

@@ -43,9 +43,15 @@ Open for architecture: which extra standard headers beyond Message-ID to parse i
 
 | Setting | Default |
 |--------|---------|
-| Bounce mailbox / mail-to-send poll | 15 minutes (per mailbox) |
+| Bounce mailbox / mail-to-send poll interval | 15 minutes (per mailbox) |
+| Bounce poll / mail-to-send poll wake | 60 seconds (`application.yml`, not a Parameter) |
+| Poll lock timeout | 1 hour (`mailer.poll.lock-timeout` in `application.yml`, not a Parameter) |
+| Release lock shown after | 60 seconds since Last Polling Update |
 | Bounce-process | 02:00 daily, timezone UTC |
-| Send queue interval | 15 minutes |
+| Send queue wake | 60 seconds (`application.yml`, not a Parameter) |
+| Send paused | false |
+| Send retry count | 3 further tries after the first failure |
+| Send retry delay | 5 minutes |
 | Delay per email | 1000 ms |
 | Send batch size | 600 |
 | Send batch duration | 10 minutes |
@@ -60,6 +66,8 @@ Open for architecture: which extra standard headers beyond Message-ID to parse i
 | Bounce log processed / unprocessed TTL | 180 / 365 days |
 | Audit retention | 365 days |
 | Ops log retention | 90 days |
+| Bounce / queue / mail-to-send processing log age | 30 days each |
+| Bounce / queue / mail-to-send processing log keep-count | 5000 rows each |
 | Consent invite expiry | 14 days |
 | Auto-block | 10 counted rejects / day (sender only) |
 | VERP | off |
