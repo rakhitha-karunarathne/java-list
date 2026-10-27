@@ -65,3 +65,15 @@ covers = []
 after = [1, 2, 3, 4, 5]
 hitl = false
 risk = "low"
+
+[[entry]]
+id = 7
+type = "story"
+title = "Sending path return-path email"
+description = "Optional Return-Path on sending path; envelope MAIL FROM when set; From domain must match Return-Path domain."
+verify = "Path with Return-Path saves only when domains match; SMTP envelope uses Return-Path; empty keeps legacy From envelope."
+covers = ["R1"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true

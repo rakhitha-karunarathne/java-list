@@ -28,7 +28,9 @@ import { MyAccountPage, UsersPage } from './UsersPages.jsx'
 export function Compose({ token, onError, editId, onBack, onQueued }) {
   const unsaved = useUnsavedGate()
   const [lists, setLists] = useState([])
+  const [paths, setPaths] = useState([])
   const [selected, setSelected] = useState([])
+  const [sendingPathId, setSendingPathId] = useState('')
   const [subject, setSubject] = useState('')
   const [htmlBody, setHtmlBody] = useState('<p>Hello</p>')
   const [textBody, setTextBody] = useState('Hello')
@@ -48,6 +50,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
     htmlBody: '<p>Hello</p>',
     textBody: 'Hello',
     listIds: [],
+    sendingPathId: '',
     hasFile: false,
   })
   const draftDirty =
@@ -55,6 +58,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
     !valuesEqual(htmlBody, saved.current.htmlBody) ||
     !valuesEqual(textBody, saved.current.textBody) ||
     !valuesEqual(selected, saved.current.listIds) ||
+    !valuesEqual(sendingPathId, saved.current.sendingPathId) ||
     !!attachment !== saved.current.hasFile
   useRegisterUnsaved(draftDirty, 'compose-draft')
 
@@ -76,6 +80,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         setHtmlBody(body.htmlBody || '')
         setTextBody(body.textBody || '')
         setSelected(listIds)
+        setSendingPathId(body.sendingPathId || '')
         setKeptAttachments(body.attachments || [])
         setAttachment(null)
         saved.current = {
@@ -83,6 +88,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
           htmlBody: body.htmlBody || '',
           textBody: body.textBody || '',
           listIds,
+          sendingPathId: body.sendingPathId || '',
           hasFile: false,
         }
         setLoaded(true)
@@ -103,6 +109,9 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
       })
       .then(setLists)
       .catch(() => setLists([]))
+    apiJson(token, '/api/sending-paths')
+      .then(setPaths)
+      .catch(() => setPaths([]))
   }, [token])
 
   function toggleList(id) {
@@ -153,7 +162,13 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
   }
 
   async function bodyPayload() {
-    const payload = { subject, htmlBody, textBody, listIds: selected }
+    const payload = {
+      subject,
+      htmlBody,
+      textBody,
+      listIds: selected,
+      sendingPathId: sendingPathId || null,
+    }
     if (attachment) payload.attachments = [await fileToAttachment(attachment)]
     return payload
   }
@@ -178,6 +193,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
       setStatus(body.status)
       const listIds = body.listIds || []
       setSelected(listIds)
+      setSendingPathId(body.sendingPathId || '')
       if (body.subject != null) setSubject(body.subject)
       if (body.htmlBody != null) setHtmlBody(body.htmlBody)
       if (body.textBody != null) setTextBody(body.textBody)
@@ -188,6 +204,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         htmlBody: body.htmlBody ?? htmlBody,
         textBody: body.textBody ?? textBody,
         listIds,
+        sendingPathId: body.sendingPathId || '',
         hasFile: false,
       }
       setMsg(`Saved Draft ${body.id}`)
@@ -264,6 +281,21 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
             onChange={(e) => setSubject(e.target.value)}
             {...dirtyControlProps(!valuesEqual(subject, saved.current.subject))}
           />
+        </label>
+        <label className="field">
+          Sending Path
+          <select
+            value={sendingPathId}
+            onChange={(e) => setSendingPathId(e.target.value)}
+            {...dirtyControlProps(!valuesEqual(sendingPathId, saved.current.sendingPathId))}
+          >
+            <option value="">Default (first list)</option>
+            {paths.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="field">
           HTML Body

@@ -28,6 +28,7 @@ const PHRASES = {
   useSsl: 'Use SSL',
   fromEmail: 'From Email',
   fromName: 'From Name',
+  returnPathEmail: 'Return-Path Email',
   pollIntervalMinutes: 'Poll Interval Minutes',
   autoQueue: 'Auto Queue',
   deleteAfterAccept: 'Delete After Accept',

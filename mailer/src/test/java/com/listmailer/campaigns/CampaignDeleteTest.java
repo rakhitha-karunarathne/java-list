@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.listmailer.bounce.BounceEventRepository;
+import com.listmailer.catalogs.CatalogReferenceService;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
@@ -36,6 +38,8 @@ class CampaignDeleteTest {
   @Mock BounceEventRepository bounces;
   @Mock OpsHooksPort ops;
   @Mock SendPauseCache pauseCache;
+  @Mock SendingPathRepository sendingPaths;
+  @Mock CatalogReferenceService references;
   @InjectMocks CampaignsController controller;
 
   @Test

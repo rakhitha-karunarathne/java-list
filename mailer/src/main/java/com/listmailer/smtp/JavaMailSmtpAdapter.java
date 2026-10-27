@@ -36,6 +36,11 @@ public class JavaMailSmtpAdapter implements SmtpPort {
             .orElseThrow(() -> new IllegalArgumentException("unknown sending path"));
     Properties props =
         MailSecurity.smtp(path.getHost(), path.getPort(), path.isUseSsl(), path.isUseTls());
+    String envelopeFrom =
+        StringUtils.hasText(path.getReturnPathEmail())
+            ? path.getReturnPathEmail().trim()
+            : path.getFromEmail();
+    props.put("mail.smtp.from", envelopeFrom);
     Session session =
         Session.getInstance(
             props,

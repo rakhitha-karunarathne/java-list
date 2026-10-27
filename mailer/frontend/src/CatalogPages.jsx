@@ -34,6 +34,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     password: '',
     fromEmail: '',
     fromName: '',
+    returnPathEmail: '',
     useTls: false,
     useSsl: false,
   })
@@ -104,6 +105,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
           password: '',
           fromEmail: d.fromEmail,
           fromName: d.fromName,
+          returnPathEmail: d.returnPathEmail || '',
           useTls: d.useTls,
           useSsl: !!d.useSsl,
         }
@@ -149,6 +151,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         password: '',
         fromEmail: d.fromEmail,
         fromName: d.fromName,
+        returnPathEmail: d.returnPathEmail || '',
         useTls: d.useTls,
         useSsl: !!d.useSsl,
       }
@@ -256,6 +259,15 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
               value={form.fromName}
               onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
               {...dirtyControlProps(!valuesEqual(form.fromName, base.fromName))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('returnPathEmail')}
+            <input
+              value={form.returnPathEmail}
+              onChange={(ev) => setForm({ ...form, returnPathEmail: ev.target.value })}
+              placeholder="Optional; domain must match From"
+              {...dirtyControlProps(!valuesEqual(form.returnPathEmail, base.returnPathEmail))}
             />
           </label>
           <label className="field">
@@ -369,6 +381,15 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
                 value={form.fromName}
                 onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
                 {...dirtyControlProps(!valuesEqual(form.fromName, saved.fromName))}
+              />
+            </label>
+            <label className="field">
+              {fieldLabel('returnPathEmail')}
+              <input
+                value={form.returnPathEmail}
+                onChange={(ev) => setForm({ ...form, returnPathEmail: ev.target.value })}
+                placeholder="Optional; domain must match From"
+                {...dirtyControlProps(!valuesEqual(form.returnPathEmail, saved.returnPathEmail))}
               />
             </label>
             <label className="field">

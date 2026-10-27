@@ -1,6 +1,9 @@
 package com.listmailer.campaigns;
 
 import com.listmailer.bounce.BounceEventRepository;
+import com.listmailer.catalogs.CatalogReferenceService;
+import com.listmailer.catalogs.CatalogTargetType;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListRepository;
@@ -45,6 +48,8 @@ public class CampaignsController {
   private final BounceEventRepository bounces;
   private final OpsHooksPort ops;
   private final SendPauseCache pauseCache;
+  private final SendingPathRepository sendingPaths;
+  private final CatalogReferenceService references;
 
   public CampaignsController(
       CampaignRepository campaigns,
@@ -57,7 +62,9 @@ public class CampaignsController {
       CampaignOpenRepository opens,
       BounceEventRepository bounces,
       OpsHooksPort ops,
-      SendPauseCache pauseCache) {
+      SendPauseCache pauseCache,
+      SendingPathRepository sendingPaths,
+      CatalogReferenceService references) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -69,6 +76,8 @@ public class CampaignsController {
     this.opens = opens;
     this.bounces = bounces;
     this.pauseCache = pauseCache;
+    this.sendingPaths = sendingPaths;
+    this.references = references;
   }
 
   @GetMapping
@@ -93,6 +102,8 @@ public class CampaignsController {
                 nullToEmpty(body.textBody()),
                 CampaignStatus.DRAFT,
                 Instant.now()));
+    applySendingPath(saved, null, body.sendingPathId());
+    campaigns.save(saved);
     replaceLists(id, body.listIds());
     if (body.attachments() != null) {
       replaceAttachments(id, body.attachments());
@@ -114,6 +125,7 @@ public class CampaignsController {
     c.setSubject(body.subject().trim());
     c.setHtmlBody(nullToEmpty(body.htmlBody()));
     c.setTextBody(nullToEmpty(body.textBody()));
+    applySendingPath(c, c.getSendingPathId(), body.sendingPathId());
     campaigns.save(c);
     // null listIds/attachments = leave unchanged; empty list = clear
     if (body.listIds() != null) {
@@ -206,6 +218,10 @@ public class CampaignsController {
         queue.findByCampaignId(id).stream().map(SendQueueEntity::getId).toList();
     if (!queueIds.isEmpty()) {
       bounces.deleteBySendQueueIdIn(queueIds);
+    }
+    if (StringUtils.hasText(c.getSendingPathId())) {
+      references.remove(
+          CatalogTargetType.SENDING_PATH, c.getSendingPathId(), "CAMPAIGN", id);
     }
     opens.deleteByCampaignId(id);
     attachments.deleteByCampaignId(id);
@@ -482,6 +498,7 @@ public class CampaignsController {
         c.getTextBody(),
         c.getStatus().name(),
         listIds,
+        c.getSendingPathId(),
         sent,
         uniqueOpens,
         totalOpens,
@@ -495,6 +512,21 @@ public class CampaignsController {
         totalOpens,
         listRefs,
         recipients);
+  }
+
+  private void applySendingPath(CampaignEntity c, String oldPathId, String raw) {
+    String next = StringUtils.hasText(raw) ? raw.trim() : null;
+    if (next != null && !sendingPaths.existsById(next)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown sending path");
+    }
+    if (oldPathId != null && !oldPathId.equals(next)) {
+      references.remove(CatalogTargetType.SENDING_PATH, oldPathId, "CAMPAIGN", c.getId());
+    }
+    c.setSendingPathId(next);
+    if (next != null) {
+      references.add(
+          CatalogTargetType.SENDING_PATH, next, "CAMPAIGN", c.getId(), c.getSubject());
+    }
   }
 
   public record AddListBody(String listId) {}
@@ -512,6 +544,7 @@ public class CampaignsController {
       String htmlBody,
       String textBody,
       List<String> listIds,
+      String sendingPathId,
       List<AttachmentIn> attachments) {}
 
   public record CampaignSummary(String id, String subject, String status, Instant createdAt, Instant queuedAt) {
@@ -557,6 +590,7 @@ public class CampaignsController {
       String textBody,
       String status,
       List<String> listIds,
+      String sendingPathId,
       long sentCount,
       long uniqueOpens,
       long totalOpens,

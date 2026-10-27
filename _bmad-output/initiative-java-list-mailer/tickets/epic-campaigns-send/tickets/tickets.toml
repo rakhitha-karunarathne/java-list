@@ -153,3 +153,15 @@ after = [12]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 14
+type = "story"
+title = "Campaign sending path override"
+description = "Optional Campaign sending path; when set, queue and test-send use it instead of the first List path."
+verify = "Compose can pick a path; queue rows use campaign path; null falls back to first List path; Used By lists the campaign."
+covers = ["R18"]
+after = [1]
+hitl = false
+risk = "medium"
+refine = true

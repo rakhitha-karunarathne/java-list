@@ -67,21 +67,22 @@ public class SendingPathsController {
   public PathDetail create(@RequestBody PathRequest body) {
     validate(body, true);
     try {
-      SendingPathEntity saved =
-          paths.save(
-              path(
-                  new SendingPathEntity(
-                      Guids.newGuid(),
-                      body.name().trim(),
-                      body.host().trim(),
-                      body.port(),
-                      body.username(),
-                      body.password(),
-                      body.fromEmail().trim(),
-                      body.fromName().trim(),
-                      body.useTls(),
-                      Instant.now()),
-                  body.useSsl()));
+      SendingPathEntity entity =
+          path(
+              new SendingPathEntity(
+                  Guids.newGuid(),
+                  body.name().trim(),
+                  body.host().trim(),
+                  body.port(),
+                  body.username(),
+                  body.password(),
+                  body.fromEmail().trim(),
+                  body.fromName().trim(),
+                  body.useTls(),
+                  Instant.now()),
+              body.useSsl());
+      entity.setReturnPathEmail(normalizeReturnPath(body.returnPathEmail()));
+      SendingPathEntity saved = paths.save(entity);
       return PathDetail.from(saved, List.of());
     } catch (DataIntegrityViolationException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "name already exists");
@@ -106,6 +107,7 @@ public class SendingPathsController {
     }
     path.setFromEmail(body.fromEmail().trim());
     path.setFromName(body.fromName().trim());
+    path.setReturnPathEmail(normalizeReturnPath(body.returnPathEmail()));
     path.setUseTls(body.useTls());
     path.setUseSsl(body.useSsl());
     try {
@@ -158,6 +160,37 @@ public class SendingPathsController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid sending path");
     }
     security(body.useSsl(), body.useTls());
+    String returnPath = normalizeReturnPath(body.returnPathEmail());
+    if (returnPath != null) {
+      String fromDomain = emailDomain(body.fromEmail().trim());
+      String returnDomain = emailDomain(returnPath);
+      if (fromDomain == null || returnDomain == null) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid From or Return-Path email");
+      }
+      if (!fromDomain.equalsIgnoreCase(returnDomain)) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "From domain must match Return-Path domain (" + returnDomain + ")");
+      }
+    }
+  }
+
+  private static String normalizeReturnPath(String raw) {
+    if (!StringUtils.hasText(raw)) {
+      return null;
+    }
+    return raw.trim();
+  }
+
+  private static String emailDomain(String email) {
+    if (!StringUtils.hasText(email)) {
+      return null;
+    }
+    int at = email.lastIndexOf('@');
+    if (at < 1 || at >= email.length() - 1) {
+      return null;
+    }
+    return email.substring(at + 1).trim();
   }
 
   private static SendingPathEntity path(SendingPathEntity entity, boolean useSsl) {
@@ -181,6 +214,7 @@ public class SendingPathsController {
       String password,
       String fromEmail,
       String fromName,
+      String returnPathEmail,
       boolean useTls,
       boolean useSsl) {}
 
@@ -211,6 +245,7 @@ public class SendingPathsController {
       String username,
       String fromEmail,
       String fromName,
+      String returnPathEmail,
       boolean useTls,
       boolean useSsl,
       List<UsedBy> usedBy) {
@@ -223,6 +258,7 @@ public class SendingPathsController {
           p.getUsername(),
           p.getFromEmail(),
           p.getFromName(),
+          p.getReturnPathEmail(),
           p.isUseTls(),
           p.isUseSsl(),
           usedBy);

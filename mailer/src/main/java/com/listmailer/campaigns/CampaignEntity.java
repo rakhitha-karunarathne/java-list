@@ -38,6 +38,10 @@ public class CampaignEntity {
   @Column(name = "queued_at")
   private Instant queuedAt;
 
+  /** When set, queue/test-send use this path instead of the first List path. */
+  @Column(name = "sending_path_id", length = 36)
+  private String sendingPathId;
+
   protected CampaignEntity() {}
 
   public CampaignEntity(
@@ -101,5 +105,13 @@ public class CampaignEntity {
 
   public void setQueuedAt(Instant queuedAt) {
     this.queuedAt = queuedAt;
+  }
+
+  public String getSendingPathId() {
+    return sendingPathId;
+  }
+
+  public void setSendingPathId(String sendingPathId) {
+    this.sendingPathId = sendingPathId;
   }
 }

@@ -35,6 +35,9 @@ public class SendingPathEntity {
   @Column(name = "from_name", nullable = false, length = 120)
   private String fromName;
 
+  @Column(name = "return_path_email", length = 320)
+  private String returnPathEmail;
+
   @Column(name = "use_tls", nullable = false)
   private boolean useTls;
 
@@ -127,6 +130,14 @@ public class SendingPathEntity {
 
   public void setFromName(String fromName) {
     this.fromName = fromName;
+  }
+
+  public String getReturnPathEmail() {
+    return returnPathEmail;
+  }
+
+  public void setReturnPathEmail(String returnPathEmail) {
+    this.returnPathEmail = returnPathEmail;
   }
 
   public boolean isUseTls() {

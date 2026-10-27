@@ -117,7 +117,7 @@ public class CampaignSendService {
         lists
             .findById(linked.get(0).getListId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
-    String pathId = firstList.getSendingPathId();
+    String pathId = resolveSendingPathId(campaign, firstList);
     List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaignId);
     List<SmtpPort.Attachment> files =
         blobs.stream()
@@ -250,12 +250,12 @@ public class CampaignSendService {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Finished requeue requires an added list");
     }
-    // first ordered list determines sending path (AD)
+    // campaign path overrides first ordered list path when set
     ListEntity firstList =
         lists
             .findById(linked.get(0).getListId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
-    String pathId = firstList.getSendingPathId();
+    String pathId = resolveSendingPathId(campaign, firstList);
     List<ListEntity> selectedLists = new ArrayList<>();
     for (CampaignListEntity cl : linked) {
       lists.findById(cl.getListId()).ifPresent(selectedLists::add);
@@ -584,10 +584,13 @@ public class CampaignSendService {
           .findById(row.getSendingPathId())
           .ifPresent(
               path -> {
-                String domain = path.getFromEmail();
-                int at = domain.lastIndexOf('@');
+                String seed =
+                    StringUtils.hasText(path.getReturnPathEmail())
+                        ? path.getReturnPathEmail()
+                        : path.getFromEmail();
+                int at = seed == null ? -1 : seed.lastIndexOf('@');
                 if (at > 0) {
-                  row.setVerpRcpt("bounce+" + corrToken + domain.substring(at));
+                  row.setVerpRcpt("bounce+" + corrToken + seed.substring(at));
                 }
               });
     }
@@ -651,5 +654,16 @@ public class CampaignSendService {
       return path.getName() + " host=" + path.getHost();
     }
     return pathId == null ? "" : pathId;
+  }
+
+  private String resolveSendingPathId(CampaignEntity campaign, ListEntity firstList) {
+    if (StringUtils.hasText(campaign.getSendingPathId())) {
+      String id = campaign.getSendingPathId().trim();
+      if (!sendingPaths.existsById(id)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown campaign sending path");
+      }
+      return id;
+    }
+    return firstList.getSendingPathId();
   }
 }
