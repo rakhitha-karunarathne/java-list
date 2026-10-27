@@ -134,8 +134,9 @@ export function MailboxProcessingLog({
   )
 }
 
-export function pollIndexColumns() {
-  return [
+/** @param {{ onPoll?: (row: { id: string, enabled?: boolean }) => void }} [opts] */
+export function pollIndexColumns(opts = {}) {
+  const cols = [
     { key: 'name', label: 'Name' },
     {
       key: 'pollIntervalMinutes',
@@ -153,4 +154,20 @@ export function pollIndexColumns() {
       render: (r) => r.result || '—',
     },
   ]
+  if (opts.onPoll) {
+    cols.push({
+      key: 'actions',
+      label: 'Actions',
+      stopRowClick: true,
+      render: (r) =>
+        r.enabled === false ? (
+          '—'
+        ) : (
+          <button type="button" className="btn secondary" onClick={() => opts.onPoll(r)}>
+            Poll
+          </button>
+        ),
+    })
+  }
+  return cols
 }

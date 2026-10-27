@@ -670,6 +670,16 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     )
   }
 
+  async function pollFromIndex(row) {
+    try {
+      const r = await apiJson(token, `/api/mts/inboxes/${row.id}/poll`, { method: 'POST' })
+      setPollMsg(r.message || 'process started')
+      await load()
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
   return (
     <div className="card">
       <div className="index-actions">
@@ -678,12 +688,13 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           Add Mail Box
         </button>
       </div>
+      {pollMsg ? <p>{pollMsg}</p> : null}
       <RecordTable
         rows={inboxes}
         rowKey={(i) => i.id}
         onOpen={(i) => onOpen(i.id)}
         empty="No inboxes yet."
-        columns={pollIndexColumns()}
+        columns={pollIndexColumns({ onPoll: pollFromIndex })}
       />
     </div>
   )

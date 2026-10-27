@@ -1027,6 +1027,16 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
     )
   }
 
+  async function pollFromIndex(row) {
+    try {
+      const r = await apiJson(token, `/api/bounce-mailboxes/${row.id}/poll`, { method: 'POST' })
+      setMsg(r.message || 'process started')
+      await load()
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
   return (
     <div className="card">
       <div className="index-actions">
@@ -1035,12 +1045,13 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           Add Mail Box
         </button>
       </div>
+      {msg ? <p>{msg}</p> : null}
       <RecordTable
         rows={rows}
         rowKey={(r) => r.id}
         onOpen={(r) => onOpen(r.id)}
         empty="No bounce mailboxes yet."
-        columns={pollIndexColumns()}
+        columns={pollIndexColumns({ onPoll: pollFromIndex })}
       />
     </div>
   )
