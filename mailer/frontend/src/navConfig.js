@@ -39,6 +39,7 @@ export const NAV_SECTIONS = [
     items: [
       { id: 'bounces', label: 'Bounce Log', hideForSender: true },
       { id: 'bounce-mailboxes', label: 'Bounce Mailboxes', adminOnly: true },
+      { id: 'bounce-process-log', label: 'Bounce Processing Log', adminOnly: true },
     ],
   },
   {
@@ -57,7 +58,6 @@ export const NAV_SECTIONS = [
     items: [
       { id: 'users', label: 'Users & Grants', adminOnly: true },
       { id: 'ops', label: 'Ops Logs', adminOnly: true },
-      { id: 'bounce-process-log', label: 'Bounce Processing Log', adminOnly: true },
       { id: 'queue-send-log', label: 'Queue Sending Log', adminOnly: true },
       { id: 'audit', label: 'Audit Log', hideForSender: true },
     ],
