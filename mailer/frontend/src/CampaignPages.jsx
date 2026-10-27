@@ -48,6 +48,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
   const [lists, setLists] = useState([])
   const [addListId, setAddListId] = useState('')
   const [msg, setMsg] = useState('')
+  const [recipientQ, setRecipientQ] = useState('')
 
   async function load() {
     try {
@@ -66,6 +67,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
 
   useEffect(() => {
     setMsg('')
+    setRecipientQ('')
     if (!detailId) {
       setDetail(null)
       return
@@ -131,6 +133,21 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
     return s === 'STOPPED' || s === 'FINISHED'
   }
 
+  const recipients = detail?.recipients || []
+  const recipientNeedle = recipientQ.trim().toLowerCase()
+  const visibleRecipients = recipientNeedle
+    ? recipients.filter(
+        (r) =>
+          String(r.email || '')
+            .toLowerCase()
+            .includes(recipientNeedle) ||
+          String(r.status || '')
+            .toLowerCase()
+            .includes(recipientNeedle),
+      )
+    : recipients
+  const hasSendFailed = recipients.some((r) => r.status === 'Send Failed')
+
   if (detailId && detail) {
     return (
       <div className="page-sections">
@@ -161,6 +178,26 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
           {canRequeue(detail.status) ? (
             <button type="button" className="btn" onClick={requeue}>
               Requeue
+            </button>
+          ) : null}{' '}
+          {hasSendFailed ? (
+            <button
+              type="button"
+              className="btn"
+              onClick={async () => {
+                try {
+                  setDetail(
+                    await apiJson(token, `/api/campaigns/${detailId}/retry-failed`, {
+                      method: 'POST',
+                    }),
+                  )
+                  setMsg('Retry queued')
+                } catch (e) {
+                  onError(e.message)
+                }
+              }}
+            >
+              Retry failed
             </button>
           ) : null}
         </section>
@@ -231,12 +268,21 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
 
         <section className="card">
           <h3>Recipients</h3>
+          <label className="field">
+            Search
+            <input
+              value={recipientQ}
+              onChange={(ev) => setRecipientQ(ev.target.value)}
+              placeholder="Email or status…"
+            />
+          </label>
           <RecordTable
-            rows={detail.recipients || []}
+            rows={visibleRecipients}
             rowKey={(r) => r.email}
-            empty="No messages sent yet."
+            empty={recipients.length ? 'No recipients match this search.' : 'No recipients yet.'}
             columns={[
               { key: 'email', label: 'Email' },
+              { key: 'status', label: 'Status' },
               {
                 key: 'firstOpenAt',
                 label: 'First Open',

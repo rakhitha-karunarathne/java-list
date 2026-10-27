@@ -1,7 +1,6 @@
 package com.listmailer.campaigns;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +49,8 @@ class CampaignDetailStatsTest {
         .thenReturn(
             Optional.of(new ListEntity("l1", "News", "path", null, null, null, null, Instant.now())));
     when(queue.findByCampaignId("c1")).thenReturn(List.of(sent, waiting));
-    when(bounces.countBySendQueueIdIn(any())).thenReturn(2L);
+    when(bounces.countBySendQueueIdIn(any())).thenReturn(0L);
+    when(bounces.findBySendQueueIdIn(any())).thenReturn(List.of());
     when(opens.findByCampaignId("c1"))
         .thenReturn(
             List.of(
@@ -65,13 +65,27 @@ class CampaignDetailStatsTest {
     assertEquals(started, detail.sendFinishedAt());
     assertEquals(1, detail.sentCount());
     assertEquals(1, detail.waitingCount());
-    assertEquals(2, detail.bounceCount());
+    assertEquals(0, detail.bounceCount());
     assertEquals(1, detail.uniqueViews());
     assertEquals(2, detail.totalViews());
-    assertEquals(1, detail.recipients().size());
-    assertEquals("b@x.com", detail.recipients().get(0).email());
-    assertEquals(opened, detail.recipients().get(0).firstOpenAt());
-    assertEquals(2, detail.recipients().get(0).openCount());
-    assertNull(detail.recipients().stream().filter(r -> "a@x.com".equals(r.email())).findFirst().orElse(null));
+    assertEquals(2, detail.recipients().size());
+    assertEquals("a@x.com", detail.recipients().get(0).email());
+    assertEquals("Pending", detail.recipients().get(0).status());
+    assertEquals("b@x.com", detail.recipients().get(1).email());
+    assertEquals("Opened", detail.recipients().get(1).status());
+    assertEquals(opened, detail.recipients().get(1).firstOpenAt());
+    assertEquals(2, detail.recipients().get(1).openCount());
+  }
+
+  @Test
+  void bouncedWinsOverOpened() {
+    assertEquals("Bounced", CampaignsController.recipientStatus("SENT", true, true));
+    assertEquals("Opened", CampaignsController.recipientStatus("SENT", false, true));
+    assertEquals("Sent", CampaignsController.recipientStatus("SENT", false, false));
+    assertEquals("Pending", CampaignsController.recipientStatus("PENDING", false, false));
+    assertEquals(
+        "Failed-Retry Pending",
+        CampaignsController.recipientStatus("FAILED_RETRY_PENDING", false, false));
+    assertEquals("Send Failed", CampaignsController.recipientStatus("SEND_FAILED", false, false));
   }
 }

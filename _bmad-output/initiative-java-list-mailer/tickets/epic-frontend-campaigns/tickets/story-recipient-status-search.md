@@ -8,7 +8,7 @@ after: [8]
 hitl: false
 risk: medium
 refined: true
-status: ready
+status: done
 ---
 
 # Search campaign recipients by email and status

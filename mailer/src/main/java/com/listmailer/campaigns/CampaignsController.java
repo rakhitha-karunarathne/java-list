@@ -315,6 +315,13 @@ public class CampaignsController {
             : null;
     List<String> queueIds = rows.stream().map(SendQueueEntity::getId).toList();
     long bounceCount = queueIds.isEmpty() ? 0 : bounces.countBySendQueueIdIn(queueIds);
+    java.util.Set<String> bouncedQueueIds =
+        queueIds.isEmpty()
+            ? java.util.Set.of()
+            : bounces.findBySendQueueIdIn(queueIds).stream()
+                .map(com.listmailer.bounce.BounceEventEntity::getSendQueueId)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
     List<CampaignOpenEntity> openRows = opens.findByCampaignId(c.getId());
     long totalOpens = openRows.size();
     long uniqueOpens = openRows.stream().map(CampaignOpenEntity::getMemberId).distinct().count();
@@ -327,7 +334,6 @@ public class CampaignsController {
                     java.util.stream.Collectors.toList()));
     List<RecipientStat> recipients =
         rows.stream()
-            .filter(r -> "SENT".equals(r.getStatus()))
             .map(
                 r -> {
                   List<CampaignOpenEntity> hits = opensByQueue.getOrDefault(r.getId(), List.of());
@@ -336,7 +342,11 @@ public class CampaignsController {
                           .map(CampaignOpenEntity::getOpenedAt)
                           .min(Instant::compareTo)
                           .orElse(null);
-                  return new RecipientStat(r.getEmail(), first, hits.size());
+                  return new RecipientStat(
+                      r.getEmail(),
+                      recipientStatus(r.getStatus(), bouncedQueueIds.contains(r.getId()), !hits.isEmpty()),
+                      first,
+                      hits.size());
                 })
             .sorted(Comparator.comparing(RecipientStat::email, String.CASE_INSENSITIVE_ORDER))
             .toList();
@@ -412,7 +422,30 @@ public class CampaignsController {
 
   public record CampaignListRef(String id, String name) {}
 
-  public record RecipientStat(String email, Instant firstOpenAt, long openCount) {}
+  public record RecipientStat(String email, String status, Instant firstOpenAt, long openCount) {}
+
+  /** Display status for the recipients table. Bounced wins over Opened. */
+  static String recipientStatus(String queueStatus, boolean bounced, boolean opened) {
+    if ("PENDING".equals(queueStatus)) {
+      return "Pending";
+    }
+    if ("FAILED_RETRY_PENDING".equals(queueStatus)) {
+      return "Failed-Retry Pending";
+    }
+    if ("SEND_FAILED".equals(queueStatus)) {
+      return "Send Failed";
+    }
+    if (bounced) {
+      return "Bounced";
+    }
+    if (opened) {
+      return "Opened";
+    }
+    if ("SENT".equals(queueStatus)) {
+      return "Sent";
+    }
+    return queueStatus == null ? "" : queueStatus;
+  }
 
   public record CampaignDetail(
       String id,
