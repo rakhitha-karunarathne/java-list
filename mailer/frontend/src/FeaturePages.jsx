@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiJson } from './api.js'
 import { authHeaders } from './auth.js'
+import { confirmDelete } from './confirmDelete.js'
 import { ActivityLogPage } from './ActivityLogPage.jsx'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { useRegisterUnsaved, useUnsavedGate } from './Unsaved.jsx'
@@ -41,6 +42,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
   const [testAddresses, setTestAddresses] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const fileInput = useRef(null)
   const saved = useRef({
     subject: '',
     htmlBody: '<p>Hello</p>',
@@ -131,6 +133,25 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
     }
   }
 
+  function clearPickedFile() {
+    setAttachment(null)
+    if (fileInput.current) fileInput.current.value = ''
+  }
+
+  async function removeKeptAttachment(att) {
+    if (!campaignId || !att?.id) return
+    if (!confirmDelete(`attachment “${att.filename || att.id}”`)) return
+    try {
+      await apiJson(token, `/api/campaigns/${campaignId}/attachments/${att.id}`, {
+        method: 'DELETE',
+      })
+      setKeptAttachments((prev) => prev.filter((a) => a.id !== att.id))
+      setMsg(`Removed ${att.filename || 'attachment'}`)
+    } catch (e) {
+      onError(e.message || String(e))
+    }
+  }
+
   async function bodyPayload() {
     const payload = { subject, htmlBody, textBody, listIds: selected }
     if (attachment) payload.attachments = [await fileToAttachment(attachment)]
@@ -160,7 +181,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
       if (body.subject != null) setSubject(body.subject)
       if (body.htmlBody != null) setHtmlBody(body.htmlBody)
       if (body.textBody != null) setTextBody(body.textBody)
-      setAttachment(null)
+      clearPickedFile()
       setKeptAttachments(body.attachments || keptAttachments)
       saved.current = {
         subject: body.subject ?? subject,
@@ -268,18 +289,42 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
 
       <section className="card">
         <h3>Attachments</h3>
+        {keptAttachments.length > 0 ? (
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 0.75rem' }}>
+            {keptAttachments.map((a) => (
+              <li key={a.id} style={{ marginBottom: '0.35rem' }}>
+                {a.filename || a.id}{' '}
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => removeKeptAttachment(a)}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="hint">No attachments saved yet.</p>
+        )}
         <label className="field">
-          Attachment
+          {keptAttachments.length > 0 ? 'Replace with file' : 'Add file'}
           <input
+            ref={fileInput}
             type="file"
             onChange={(e) => setAttachment(e.target.files?.[0] || null)}
             {...dirtyControlProps(!!attachment !== saved.current.hasFile)}
           />
         </label>
-        {!attachment && keptAttachments.length > 0 ? (
-          <p className="hint">
-            Kept: {keptAttachments.map((a) => a.filename).join(', ')}. Choose a file to replace them.
+        {attachment ? (
+          <p>
+            Selected: {attachment.name}{' '}
+            <button type="button" className="btn secondary" onClick={clearPickedFile}>
+              Clear
+            </button>
           </p>
+        ) : keptAttachments.length > 0 ? (
+          <p className="hint">Saving a new file replaces the list above.</p>
         ) : null}
       </section>
 

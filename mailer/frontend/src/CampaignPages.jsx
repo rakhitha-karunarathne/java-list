@@ -335,6 +335,37 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
                 label: 'Size',
                 render: (a) => formatBytes(a.sizeBytes),
               },
+              {
+                key: 'download',
+                label: '',
+                stopRowClick: true,
+                render: (a) => (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(
+                          `/api/campaigns/${detailId}/attachments/${a.id}`,
+                          { headers: { Authorization: `Bearer ${token}` } },
+                        )
+                        if (!res.ok) throw new Error(`Download failed (${res.status})`)
+                        const blob = await res.blob()
+                        const url = URL.createObjectURL(blob)
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.download = a.filename || 'attachment'
+                        link.click()
+                        URL.revokeObjectURL(url)
+                      } catch (e) {
+                        onError(e.message || String(e))
+                      }
+                    }}
+                  >
+                    Download
+                  </button>
+                ),
+              },
             ]}
           />
         </section>

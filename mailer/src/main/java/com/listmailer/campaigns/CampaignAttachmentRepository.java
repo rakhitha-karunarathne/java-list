@@ -11,5 +11,7 @@ public interface CampaignAttachmentRepository
 
   Optional<CampaignAttachmentEntity> findByCampaignIdAndFilename(String campaignId, String filename);
 
+  Optional<CampaignAttachmentEntity> findByIdAndCampaignId(String id, String campaignId);
+
   void deleteByCampaignId(String campaignId);
 }

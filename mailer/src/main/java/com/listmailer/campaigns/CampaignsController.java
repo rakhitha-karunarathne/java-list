@@ -5,13 +5,18 @@ import com.listmailer.kernel.ids.Guids;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -143,6 +148,47 @@ public class CampaignsController {
     }
     int sent = sendService.testSend(id, body.addresses());
     return new TestSendResult(sent);
+  }
+
+  @GetMapping("/{id}/attachments/{attachmentId}")
+  public ResponseEntity<byte[]> downloadAttachment(
+      @PathVariable String id, @PathVariable String attachmentId) {
+    require(id);
+    CampaignAttachmentEntity blob =
+        attachments
+            .findByIdAndCampaignId(attachmentId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
+    HttpHeaders headers = new HttpHeaders();
+    String ct =
+        StringUtils.hasText(blob.getContentType())
+            ? blob.getContentType()
+            : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+    try {
+      headers.setContentType(MediaType.parseMediaType(ct));
+    } catch (Exception ignored) {
+      headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+    }
+    headers.setContentLength(blob.getContent().length);
+    headers.setContentDisposition(
+        ContentDisposition.attachment()
+            .filename(blob.getFilename(), StandardCharsets.UTF_8)
+            .build());
+    return new ResponseEntity<>(blob.getContent(), headers, HttpStatus.OK);
+  }
+
+  @DeleteMapping("/{id}/attachments/{attachmentId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Transactional
+  public void deleteAttachment(@PathVariable String id, @PathVariable String attachmentId) {
+    CampaignEntity c = require(id);
+    if (c.getStatus() != CampaignStatus.DRAFT) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "only Draft attachments are removable");
+    }
+    CampaignAttachmentEntity blob =
+        attachments
+            .findByIdAndCampaignId(attachmentId, id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
+    attachments.delete(blob);
   }
 
   @DeleteMapping("/{id}")
