@@ -74,8 +74,8 @@ class BouncePollServiceTest {
     assertEquals(1, max.get());
     verify(ops).opsLog(eq("bounce.poll"), contains("ingested=1"));
     verify(activity).write(eq("BOUNCE"), eq("FETCH"), contains("subject=bounce"));
-    verify(activity).write(eq("BOUNCE"), eq("CONNECT"), contains("mailboxId=a"));
-    verify(activity).write(eq("BOUNCE"), eq("DISCONNECT"), contains("mailboxId=a"));
+    verify(activity).write(eq("BOUNCE"), eq("CONNECT"), contains("mailbox=A mailboxId=a"));
+    verify(activity).write(eq("BOUNCE"), eq("DISCONNECT"), contains("mailbox=A mailboxId=a"));
     verify(mailbox, org.mockito.Mockito.times(1)).poll(any(), any());
   }
 
