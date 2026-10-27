@@ -19,7 +19,11 @@ import { RecordTable } from './RecordTable.jsx'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
-import { MailboxPollPanel, pollIndexColumns } from './MailboxPollPanel.jsx'
+import {
+  MailboxPollPanel,
+  MailboxProcessingLog,
+  pollIndexColumns,
+} from './MailboxPollPanel.jsx'
 
 export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const blank = useRef({
@@ -905,15 +909,19 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           <MailboxPollPanel
             token={token}
             onError={onError}
-            mailboxId={detailId}
-            mailboxName={detail.name}
             enabled={detail.enabled !== false}
             detail={detail}
             pollPath={`/api/bounce-mailboxes/${detailId}/poll`}
             breakLockPath={`/api/bounce-mailboxes/${detailId}/break-lock`}
-            logKind="BOUNCE"
             onDetail={setDetail}
             onMsg={setMsg}
+          />
+          <MailboxProcessingLog
+            token={token}
+            onError={onError}
+            mailboxId={detailId}
+            mailboxName={detail.name}
+            logKind="BOUNCE"
           />
         </section>
         <section className="card">

@@ -7,49 +7,24 @@ function when(value) {
   return String(value).replace('T', ' ').replace('Z', ' UTC')
 }
 
-/** Poll controls, lock section, and per-mailbox activity log. Admin-only pages. */
+/** Poll controls and lock section. Admin-only pages. */
 export function MailboxPollPanel({
   token,
   onError,
-  mailboxId,
-  mailboxName,
   enabled,
   detail,
   pollPath,
   breakLockPath,
-  logKind,
   onDetail,
   onMsg,
+  onPolled,
 }) {
-  const [logs, setLogs] = useState([])
-  const [logOn, setLogOn] = useState(true)
-
-  function loadLogs() {
-    apiJson(token, `/api/activity-logs/enabled?kind=${logKind}`)
-      .then((r) => {
-        setLogOn(!!r.enabled)
-        if (!r.enabled) {
-          setLogs([])
-          return
-        }
-        return apiJson(token, `/api/activity-logs?kind=${logKind}&mailboxId=${encodeURIComponent(mailboxId)}`).then(
-          setLogs,
-        )
-      })
-      .catch((e) => onError(e.message))
-  }
-
-  useEffect(() => {
-    if (!mailboxId) return
-    loadLogs()
-  }, [token, mailboxId, logKind])
-
   async function pollNow() {
     try {
       const r = await apiJson(token, pollPath, { method: 'POST' })
       onMsg?.(r.message || 'process started')
       onDetail?.(await apiJson(token, pollPath.replace(/\/poll$/, '')))
-      loadLogs()
+      onPolled?.()
     } catch (e) {
       onError(e.message)
     }
@@ -67,14 +42,6 @@ export function MailboxPollPanel({
   const polling = !!detail?.polling
   const updateAt = detail?.lastPollingUpdate ? Date.parse(detail.lastPollingUpdate) : 0
   const canBreak = polling && updateAt > 0 && Date.now() - updateAt >= 60000
-
-  const namedLogs = logs.map((row) => ({
-    ...row,
-    message: String(row.message || '').replaceAll(
-      `mailboxId=${mailboxId}`,
-      mailboxName || mailboxId,
-    ),
-  }))
 
   return (
     <>
@@ -101,24 +68,69 @@ export function MailboxPollPanel({
           )}
         </section>
       ) : null}
-      <section className="card">
-        <h3>Processing Log</h3>
-        {logOn ? (
-          <RecordTable
-            rows={namedLogs}
-            rowKey={(r) => r.id}
-            empty="No log entries for this mailbox yet."
-            columns={[
-              { key: 'createdAt', label: 'Time', render: (r) => when(r.createdAt) },
-              { key: 'event', label: 'Event' },
-              { key: 'message', label: 'Message' },
-            ]}
-          />
-        ) : (
-          <p className="hint">Logging is off.</p>
-        )}
-      </section>
     </>
+  )
+}
+
+/** Per-mailbox activity log. Place as the last section on detail pages. */
+export function MailboxProcessingLog({
+  token,
+  onError,
+  mailboxId,
+  mailboxName,
+  logKind,
+  reloadKey = 0,
+}) {
+  const [logs, setLogs] = useState([])
+  const [logOn, setLogOn] = useState(true)
+
+  function loadLogs() {
+    apiJson(token, `/api/activity-logs/enabled?kind=${logKind}`)
+      .then((r) => {
+        setLogOn(!!r.enabled)
+        if (!r.enabled) {
+          setLogs([])
+          return
+        }
+        return apiJson(
+          token,
+          `/api/activity-logs?kind=${logKind}&mailboxId=${encodeURIComponent(mailboxId)}`,
+        ).then(setLogs)
+      })
+      .catch((e) => onError(e.message))
+  }
+
+  useEffect(() => {
+    if (!mailboxId) return
+    loadLogs()
+  }, [token, mailboxId, logKind, reloadKey])
+
+  const namedLogs = logs.map((row) => ({
+    ...row,
+    message: String(row.message || '').replaceAll(
+      `mailboxId=${mailboxId}`,
+      mailboxName || mailboxId,
+    ),
+  }))
+
+  return (
+    <section className="card">
+      <h3>Processing Log</h3>
+      {logOn ? (
+        <RecordTable
+          rows={namedLogs}
+          rowKey={(r) => r.id}
+          empty="No log entries for this mailbox yet."
+          columns={[
+            { key: 'createdAt', label: 'Time', render: (r) => when(r.createdAt) },
+            { key: 'event', label: 'Event' },
+            { key: 'message', label: 'Message' },
+          ]}
+        />
+      ) : (
+        <p className="hint">Logging is off.</p>
+      )}
+    </section>
   )
 }
 

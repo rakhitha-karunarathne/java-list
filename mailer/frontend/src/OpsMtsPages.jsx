@@ -10,7 +10,11 @@ import { RecordTable } from './RecordTable.jsx'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
-import { MailboxPollPanel, pollIndexColumns } from './MailboxPollPanel.jsx'
+import {
+  MailboxPollPanel,
+  MailboxProcessingLog,
+  pollIndexColumns,
+} from './MailboxPollPanel.jsx'
 
 const INBOX_BLANK = {
   name: '',
@@ -52,6 +56,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
 
   const [inboxes, setInboxes] = useState([])
   const [pollMsg, setPollMsg] = useState('')
+  const [logReload, setLogReload] = useState(0)
   const [detail, setDetail] = useState(null)
   const [senderEmail, setSenderEmail] = useState('')
   const [senderDetail, setSenderDetail] = useState(null)
@@ -556,15 +561,13 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           <MailboxPollPanel
             token={token}
             onError={onError}
-            mailboxId={nav.inboxId}
-            mailboxName={detail.name}
             enabled={!!detail.enabled}
             detail={detail}
             pollPath={`/api/mts/inboxes/${nav.inboxId}/poll`}
             breakLockPath={`/api/mts/inboxes/${nav.inboxId}/break-lock`}
-            logKind="MTS"
             onDetail={setDetail}
             onMsg={setPollMsg}
+            onPolled={() => setLogReload((n) => n + 1)}
           />
         </section>
 
@@ -654,6 +657,15 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             ]}
           />
         </section>
+
+        <MailboxProcessingLog
+          token={token}
+          onError={onError}
+          mailboxId={nav.inboxId}
+          mailboxName={detail.name}
+          logKind="MTS"
+          reloadKey={logReload}
+        />
       </div>
     )
   }
