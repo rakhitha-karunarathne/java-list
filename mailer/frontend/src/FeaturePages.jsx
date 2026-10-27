@@ -283,21 +283,6 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
           />
         </label>
         <label className="field">
-          Sending Path
-          <select
-            value={sendingPathId}
-            onChange={(e) => setSendingPathId(e.target.value)}
-            {...dirtyControlProps(!valuesEqual(sendingPathId, saved.current.sendingPathId))}
-          >
-            <option value="">Default (first list)</option>
-            {paths.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
           HTML Body
           <textarea
             value={htmlBody}
@@ -439,6 +424,26 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
             },
           ]}
         />
+      </section>
+
+      <section className="card">
+        <h3>Sending Path</h3>
+        <p className="hint">Optional. When none, send uses the first included list’s path.</p>
+        <label className="field">
+          Sending Path
+          <select
+            value={sendingPathId}
+            onChange={(e) => setSendingPathId(e.target.value)}
+            {...dirtyControlProps(!valuesEqual(sendingPathId, saved.current.sendingPathId))}
+          >
+            <option value="">— None —</option>
+            {paths.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </section>
 
       <section className="card">

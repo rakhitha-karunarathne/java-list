@@ -210,12 +210,6 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
           <p>
             <StatusBadge status={detail.status} />
           </p>
-          <p className="hint">
-            Sending path:{' '}
-            {detail.sendingPathId
-              ? pathNames[detail.sendingPathId] || detail.sendingPathId
-              : 'Default (first list)'}
-          </p>
           {msg ? <p>{msg}</p> : null}
           {canPauseCampaign(detail.status) ? (
             <button type="button" className="btn secondary" onClick={() => pause(detailId)}>
@@ -306,6 +300,15 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
               </button>
             </form>
           ) : null}
+        </section>
+
+        <section className="card">
+          <h3>Sending Path</h3>
+          <p>
+            {detail.sendingPathId
+              ? pathNames[detail.sendingPathId] || detail.sendingPathId
+              : 'None — first included list path is used at send'}
+          </p>
         </section>
 
         <section className="card">
