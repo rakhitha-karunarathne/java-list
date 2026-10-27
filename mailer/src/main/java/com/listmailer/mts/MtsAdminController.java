@@ -204,6 +204,9 @@ public class MtsAdminController {
             poll,
             Instant.now());
     box.setUseTls(body.useTls());
+    if (body.autoQueue() != null) {
+      box.setAutoQueue(body.autoQueue());
+    }
     MtsInboxEntity saved = inboxes.save(box);
     return detail(saved);
   }
@@ -231,6 +234,9 @@ public class MtsAdminController {
     }
     if (body.enabled() != null) {
       box.setEnabled(body.enabled());
+    }
+    if (body.autoQueue() != null) {
+      box.setAutoQueue(body.autoQueue());
     }
     return detail(inboxes.save(box));
   }
@@ -384,6 +390,7 @@ public class MtsAdminController {
         box.isUseTls(),
         box.getPollIntervalMinutes(),
         box.isEnabled(),
+        box.isAutoQueue(),
         emails,
         maps,
         box.getLastPolledAt() == null ? null : box.getLastPolledAt().toString(),
@@ -469,7 +476,8 @@ public class MtsAdminController {
       boolean useSsl,
       boolean useTls,
       int pollIntervalMinutes,
-      Boolean enabled) {}
+      Boolean enabled,
+      Boolean autoQueue) {}
 
   public record ConnectionTestRequest(
       String host,
@@ -506,6 +514,7 @@ public class MtsAdminController {
       boolean useTls,
       int pollIntervalMinutes,
       boolean enabled,
+      boolean autoQueue,
       List<String> authorizedSenders,
       List<MappingSummary> mappings,
       String lastPolledAt,

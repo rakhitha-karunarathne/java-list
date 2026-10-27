@@ -26,6 +26,7 @@ const INBOX_BLANK = {
   useTls: false,
   pollIntervalMinutes: 5,
   enabled: true,
+  autoQueue: true,
 }
 
 function grantsSig(rows) {
@@ -133,6 +134,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         useTls: !!d.useTls,
             pollIntervalMinutes: d.pollIntervalMinutes || 5,
             enabled: !!d.enabled,
+            autoQueue: d.autoQueue !== false,
           })
         })
         .catch((e) => onError(e.message))
@@ -194,6 +196,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         useTls: !!d.useTls,
         pollIntervalMinutes: d.pollIntervalMinutes || 5,
         enabled: !!d.enabled,
+        autoQueue: d.autoQueue !== false,
       })
       setConnTest(null)
       await loadInboxes()
@@ -373,6 +376,15 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                 useSsl: on ? false : !!inboxForm.useSsl,
               })
             }
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('auto queue')}
+          <Toggle
+            checked={!!inboxForm.autoQueue}
+            dirty={!valuesEqual(inboxForm.autoQueue, inboxBase('autoQueue'))}
+            aria-label={fieldLabel('auto queue')}
+            onChange={(on) => setInboxForm({ ...inboxForm, autoQueue: on })}
           />
         </label>
         {!creating ? (

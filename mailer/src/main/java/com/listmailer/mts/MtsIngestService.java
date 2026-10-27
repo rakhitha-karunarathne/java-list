@@ -190,7 +190,8 @@ public class MtsIngestService {
               }
               String html = extractHtml(raw);
               String text = extractText(raw);
-              var campaign = campaigns.createQueued(raw.subject(), html, text, senderGrants);
+              var campaign =
+                  campaigns.create(raw.subject(), html, text, senderGrants, box.isAutoQueue());
               String listIds =
                   senderGrants.stream()
                       .map(MtsSenderListGrantEntity::getListId)

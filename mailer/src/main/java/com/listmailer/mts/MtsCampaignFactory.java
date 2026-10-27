@@ -48,6 +48,20 @@ public class MtsCampaignFactory {
       String htmlBody,
       String textBody,
       List<MtsSenderListGrantEntity> grants) {
+    return create(subject, htmlBody, textBody, grants, true);
+  }
+
+  /**
+   * Creates an MTS campaign. When {@code autoQueue} is false the campaign stays Draft (operator
+   * queues later).
+   */
+  @Transactional
+  public CampaignEntity create(
+      String subject,
+      String htmlBody,
+      String textBody,
+      List<MtsSenderListGrantEntity> grants,
+      boolean autoQueue) {
     if (grants == null || grants.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sender has no list grants");
     }
@@ -68,6 +82,9 @@ public class MtsCampaignFactory {
     int i = 0;
     for (MtsSenderListGrantEntity g : grants) {
       campaignLists.save(new CampaignListEntity(id, g.getListId(), i++));
+    }
+    if (!autoQueue) {
+      return c;
     }
     return sendService.queueAndSend(id);
   }

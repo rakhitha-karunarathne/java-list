@@ -53,6 +53,9 @@ public class MtsInboxEntity {
   @Column(nullable = false)
   private boolean enabled = true;
 
+  @Column(name = "auto_queue", nullable = false)
+  private boolean autoQueue = true;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -77,6 +80,7 @@ public class MtsInboxEntity {
     this.useSsl = useSsl;
     this.pollIntervalMinutes = pollIntervalMinutes;
     this.enabled = true;
+    this.autoQueue = true;
     this.createdAt = createdAt;
   }
 
@@ -186,5 +190,13 @@ public class MtsInboxEntity {
 
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public boolean isAutoQueue() {
+    return autoQueue;
+  }
+
+  public void setAutoQueue(boolean autoQueue) {
+    this.autoQueue = autoQueue;
   }
 }

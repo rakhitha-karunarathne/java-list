@@ -1,0 +1,2 @@
+ALTER TABLE mts_inboxes
+  ADD COLUMN auto_queue BOOLEAN NOT NULL DEFAULT TRUE;
