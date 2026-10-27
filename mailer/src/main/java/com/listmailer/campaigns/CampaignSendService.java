@@ -330,6 +330,7 @@ public class CampaignSendService {
       campaign.setStatus(CampaignStatus.FINISHED);
     } else {
       campaign.setStatus(CampaignStatus.QUEUED);
+      campaign.setQueuedAt(java.time.Instant.now());
     }
     return campaigns.save(campaign);
   }
@@ -477,6 +478,7 @@ public class CampaignSendService {
     }
     if (campaign.getStatus() == CampaignStatus.FINISHED) {
       campaign.setStatus(CampaignStatus.QUEUED);
+      campaign.setQueuedAt(java.time.Instant.now());
       campaigns.save(campaign);
     }
     return campaign;

@@ -35,6 +35,9 @@ public class CampaignEntity {
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
+  @Column(name = "queued_at")
+  private Instant queuedAt;
+
   protected CampaignEntity() {}
 
   public CampaignEntity(
@@ -86,5 +89,17 @@ public class CampaignEntity {
 
   public void setStatus(CampaignStatus status) {
     this.status = status;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public Instant getQueuedAt() {
+    return queuedAt;
+  }
+
+  public void setQueuedAt(Instant queuedAt) {
+    this.queuedAt = queuedAt;
   }
 }

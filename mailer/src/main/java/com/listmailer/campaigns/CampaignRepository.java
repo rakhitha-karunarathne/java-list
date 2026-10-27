@@ -7,4 +7,6 @@ import java.util.List;
 public interface CampaignRepository extends JpaRepository<CampaignEntity, String> {
 
   List<CampaignEntity> findByStatus(CampaignStatus status);
+
+  List<CampaignEntity> findAllByOrderByCreatedAtDesc();
 }

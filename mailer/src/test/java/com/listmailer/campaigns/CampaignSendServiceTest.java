@@ -137,6 +137,7 @@ class CampaignSendServiceTest {
     service.queueAndSend("c1");
     assertEquals(1, enqueued.size());
     assertEquals(CampaignStatus.QUEUED, campaign.getStatus());
+    org.junit.jupiter.api.Assertions.assertNotNull(campaign.getQueuedAt());
 
     service.processPendingBatch(10);
 

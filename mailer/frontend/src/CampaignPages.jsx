@@ -434,6 +434,16 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
             render: (r) => <StatusBadge status={r.status} />,
           },
           {
+            key: 'createdAt',
+            label: 'Created',
+            render: (r) => when(r.createdAt),
+          },
+          {
+            key: 'queuedAt',
+            label: 'Queued',
+            render: (r) => when(r.queuedAt),
+          },
+          {
             key: 'actions',
             label: 'Actions',
             stopRowClick: true,

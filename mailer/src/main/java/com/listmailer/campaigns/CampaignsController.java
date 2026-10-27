@@ -68,7 +68,7 @@ public class CampaignsController {
 
   @GetMapping
   public List<CampaignSummary> index() {
-    return campaigns.findAll().stream().map(CampaignSummary::from).toList();
+    return campaigns.findAllByOrderByCreatedAtDesc().stream().map(CampaignSummary::from).toList();
   }
 
   @PostMapping
@@ -468,9 +468,10 @@ public class CampaignsController {
       List<String> listIds,
       List<AttachmentIn> attachments) {}
 
-  public record CampaignSummary(String id, String subject, String status) {
+  public record CampaignSummary(String id, String subject, String status, Instant createdAt, Instant queuedAt) {
     static CampaignSummary from(CampaignEntity c) {
-      return new CampaignSummary(c.getId(), c.getSubject(), c.getStatus().name());
+      return new CampaignSummary(
+          c.getId(), c.getSubject(), c.getStatus().name(), c.getCreatedAt(), c.getQueuedAt());
     }
   }
 
