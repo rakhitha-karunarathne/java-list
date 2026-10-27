@@ -44,6 +44,13 @@ function when(value) {
   return String(value).replace('T', ' ').replace('Z', ' UTC')
 }
 
+function formatBytes(n) {
+  const bytes = Number(n) || 0
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail, onEdit }) {
   const [rows, setRows] = useState([])
   const [filter, setFilter] = useState('')
@@ -263,6 +270,51 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
               </button>
             </form>
           ) : null}
+        </section>
+
+        <section className="card">
+          <h3>Preview</h3>
+          <p className="hint">Subject: {detail.subject || '(no subject)'}</p>
+          {detail.htmlBody ? (
+            <iframe
+              title="Campaign HTML preview"
+              sandbox=""
+              srcDoc={detail.htmlBody}
+              style={{
+                width: '100%',
+                minHeight: 280,
+                border: '1px solid #cbd5e1',
+                background: '#fff',
+              }}
+            />
+          ) : (
+            <pre className="hint" style={{ whiteSpace: 'pre-wrap' }}>
+              {detail.textBody || 'No body.'}
+            </pre>
+          )}
+          {detail.htmlBody && detail.textBody ? (
+            <details style={{ marginTop: '0.75rem' }}>
+              <summary>Text body</summary>
+              <pre style={{ whiteSpace: 'pre-wrap' }}>{detail.textBody}</pre>
+            </details>
+          ) : null}
+        </section>
+
+        <section className="card">
+          <h3>Attachments</h3>
+          <RecordTable
+            rows={detail.attachments || []}
+            rowKey={(a) => a.id}
+            empty="No attachments."
+            columns={[
+              { key: 'filename', label: 'File' },
+              {
+                key: 'sizeBytes',
+                label: 'Size',
+                render: (a) => formatBytes(a.sizeBytes),
+              },
+            ]}
+          />
         </section>
 
         <section className="card">
