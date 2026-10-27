@@ -30,24 +30,36 @@ public final class ParameterDefinitions {
         "Days to retain ops logs (send/bounce/MTS errors). Integer >= 1. Default 90.");
     put(
         ParameterKeys.BOUNCE_PROCESS_LOG_RETENTION_DAYS,
-        "90",
-        "Days to retain the Bounce Processing Log. Integer >= 1. Default 90 (3 months).");
+        "30",
+        "Days to retain the Bounce Processing Log. Integer >= 1. Default 30.");
+    put(
+        ParameterKeys.BOUNCE_PROCESS_LOG_MAX_ROWS,
+        "5000",
+        "Maximum Bounce Processing Log rows to keep. Integer >= 1. Default 5000.");
     put(
         ParameterKeys.BOUNCE_PROCESS_LOG_ENABLED,
         "true",
         "Write the Bounce Processing Log. Values: true|false. Default true.");
     put(
         ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS,
-        "90",
-        "Days to retain the Queue Sending Log. Integer >= 1. Default 90 (3 months).");
+        "30",
+        "Days to retain the Queue Sending Log. Integer >= 1. Default 30.");
+    put(
+        ParameterKeys.SEND_QUEUE_LOG_MAX_ROWS,
+        "5000",
+        "Maximum Queue Sending Log rows to keep. Integer >= 1. Default 5000.");
     put(
         ParameterKeys.SEND_QUEUE_LOG_ENABLED,
         "true",
         "Write the Queue Sending Log. Values: true|false. Default true.");
     put(
         ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS,
-        "90",
-        "Days to retain the Mail-To-Send Processing Log. Integer >= 1. Default 90 (3 months).");
+        "30",
+        "Days to retain the Mail-To-Send Processing Log. Integer >= 1. Default 30.");
+    put(
+        ParameterKeys.MTS_PROCESS_LOG_MAX_ROWS,
+        "5000",
+        "Maximum Mail-To-Send Processing Log rows to keep. Integer >= 1. Default 5000.");
     put(
         ParameterKeys.MTS_PROCESS_LOG_ENABLED,
         "true",

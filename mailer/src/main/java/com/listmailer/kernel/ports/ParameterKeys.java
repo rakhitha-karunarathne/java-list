@@ -8,10 +8,13 @@ public final class ParameterKeys {
   public static final String VERP_ENABLED = "verp.enabled";
   public static final String OPS_LOG_RETENTION_DAYS = "ops.log.retention.days";
   public static final String BOUNCE_PROCESS_LOG_RETENTION_DAYS = "bounce.process.log.retention.days";
+  public static final String BOUNCE_PROCESS_LOG_MAX_ROWS = "bounce.process.log.max.rows";
   public static final String BOUNCE_PROCESS_LOG_ENABLED = "bounce.process.log.enabled";
   public static final String SEND_QUEUE_LOG_RETENTION_DAYS = "send.queue.log.retention.days";
+  public static final String SEND_QUEUE_LOG_MAX_ROWS = "send.queue.log.max.rows";
   public static final String SEND_QUEUE_LOG_ENABLED = "send.queue.log.enabled";
   public static final String MTS_PROCESS_LOG_RETENTION_DAYS = "mts.process.log.retention.days";
+  public static final String MTS_PROCESS_LOG_MAX_ROWS = "mts.process.log.max.rows";
   public static final String MTS_PROCESS_LOG_ENABLED = "mts.process.log.enabled";
   public static final String AUDIT_RETENTION_DAYS = "audit.retention.days";
   public static final String SEND_DELAY_PER_EMAIL_MS = "send.delay.per.email.ms";

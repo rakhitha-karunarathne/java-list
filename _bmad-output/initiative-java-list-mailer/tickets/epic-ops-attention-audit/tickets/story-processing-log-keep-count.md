@@ -8,7 +8,7 @@ after: [10]
 hitl: false
 risk: low
 refined: true
-status: ready
+status: done
 ---
 
 # Cap each processing log

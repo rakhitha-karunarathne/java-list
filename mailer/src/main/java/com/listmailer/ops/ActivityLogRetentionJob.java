@@ -23,15 +23,30 @@ public class ActivityLogRetentionJob {
   @Transactional
   public int purge() {
     int n = 0;
-    n += purgeKind(ActivityLogService.BOUNCE, ParameterKeys.BOUNCE_PROCESS_LOG_RETENTION_DAYS);
-    n += purgeKind(ActivityLogService.SEND, ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS);
-    n += purgeKind(ActivityLogService.MTS, ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS);
+    n +=
+        purgeKind(
+            ActivityLogService.BOUNCE,
+            ParameterKeys.BOUNCE_PROCESS_LOG_RETENTION_DAYS,
+            ParameterKeys.BOUNCE_PROCESS_LOG_MAX_ROWS);
+    n +=
+        purgeKind(
+            ActivityLogService.SEND,
+            ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS,
+            ParameterKeys.SEND_QUEUE_LOG_MAX_ROWS);
+    n +=
+        purgeKind(
+            ActivityLogService.MTS,
+            ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS,
+            ParameterKeys.MTS_PROCESS_LOG_MAX_ROWS);
     return n;
   }
 
-  private int purgeKind(String kind, String key) {
-    int days = RetentionDays.read(parameters, key, 90);
+  private int purgeKind(String kind, String daysKey, String maxKey) {
+    int days = RetentionDays.read(parameters, daysKey, 30);
     Instant cutoff = Instant.now().minus(days, ChronoUnit.DAYS);
-    return logs.deleteKindOlderThan(kind, cutoff);
+    int n = logs.deleteKindOlderThan(kind, cutoff);
+    int keep = RetentionDays.read(parameters, maxKey, 5000);
+    n += logs.deleteKindBeyondNewest(kind, keep);
+    return n;
   }
 }

@@ -88,6 +88,9 @@ public class ParametersProbeController {
         || ParameterKeys.BOUNCE_PROCESS_LOG_RETENTION_DAYS.equals(key)
         || ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS.equals(key)
         || ParameterKeys.MTS_PROCESS_LOG_RETENTION_DAYS.equals(key)
+        || ParameterKeys.BOUNCE_PROCESS_LOG_MAX_ROWS.equals(key)
+        || ParameterKeys.SEND_QUEUE_LOG_MAX_ROWS.equals(key)
+        || ParameterKeys.MTS_PROCESS_LOG_MAX_ROWS.equals(key)
         || ParameterKeys.SEND_BATCH_SIZE.equals(key)
         || ParameterKeys.SEND_BATCH_DURATION_MINUTES.equals(key)
         || ParameterKeys.SEND_MESSAGES_PER_HOUR.equals(key)) {

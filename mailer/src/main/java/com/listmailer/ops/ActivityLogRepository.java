@@ -19,4 +19,15 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLogEntity, 
   @Modifying(clearAutomatically = true)
   @Query("delete from ActivityLogEntity a where a.kind = :kind and a.createdAt < :cutoff")
   int deleteKindOlderThan(@Param("kind") String kind, @Param("cutoff") Instant cutoff);
+
+  @Modifying(clearAutomatically = true)
+  @Query(
+      value =
+          "DELETE FROM activity_logs WHERE kind = :kind AND id NOT IN ("
+              + "SELECT id FROM ("
+              + "SELECT id FROM activity_logs WHERE kind = :kind ORDER BY created_at DESC LIMIT :keep"
+              + ") keep_ids)",
+      nativeQuery = true)
+  int deleteKindBeyondNewest(
+      @Param("kind") String kind, @Param("keep") int keep);
 }
