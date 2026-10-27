@@ -41,6 +41,15 @@ public class BounceMailboxEntity {
   @Column(name = "last_polled_at")
   private Instant lastPolledAt;
 
+  @Column(name = "last_polling_update")
+  private Instant lastPollingUpdate;
+
+  @Column(name = "last_poll_ok")
+  private Boolean lastPollOk;
+
+  @Column(nullable = false)
+  private boolean polling;
+
   @Column(nullable = false)
   private boolean enabled = true;
 
@@ -145,6 +154,30 @@ public class BounceMailboxEntity {
 
   public void setLastPolledAt(Instant lastPolledAt) {
     this.lastPolledAt = lastPolledAt;
+  }
+
+  public Instant getLastPollingUpdate() {
+    return lastPollingUpdate;
+  }
+
+  public void setLastPollingUpdate(Instant lastPollingUpdate) {
+    this.lastPollingUpdate = lastPollingUpdate;
+  }
+
+  public Boolean getLastPollOk() {
+    return lastPollOk;
+  }
+
+  public void setLastPollOk(Boolean lastPollOk) {
+    this.lastPollOk = lastPollOk;
+  }
+
+  public boolean isPolling() {
+    return polling;
+  }
+
+  public void setPolling(boolean polling) {
+    this.polling = polling;
   }
 
   public boolean isEnabled() {

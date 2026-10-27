@@ -2,6 +2,7 @@ package com.listmailer.mts;
 
 import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.OpsHooksPort;
+import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailboxQueryException;
 import com.listmailer.ops.ActivityLogService;
 import java.nio.charset.StandardCharsets;
@@ -10,11 +11,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -31,7 +34,8 @@ public class MtsIngestService {
   private final MtsDropService drops;
   private final OpsHooksPort ops;
   private final ActivityLogService activity;
-  private final AtomicBoolean running = new AtomicBoolean(false);
+  private final MailboxPollLock locks;
+  private final ExecutorService async = Executors.newCachedThreadPool();
 
   public MtsIngestService(
       MtsInboxRepository inboxes,
@@ -42,7 +46,8 @@ public class MtsIngestService {
       MtsFromDomainService fromDomain,
       MtsDropService drops,
       OpsHooksPort ops,
-      ActivityLogService activity) {
+      ActivityLogService activity,
+      MailboxPollLock locks) {
     this.inboxes = inboxes;
     this.grants = grants;
     this.mailbox = mailbox;
@@ -52,37 +57,49 @@ public class MtsIngestService {
     this.drops = drops;
     this.ops = ops;
     this.activity = activity;
+    this.locks = locks;
   }
 
   public int pollDue() {
-    if (!running.compareAndSet(false, true)) {
+    Instant now = Instant.now();
+    List<MtsInboxEntity> dueBoxes = new ArrayList<>();
+    for (MtsInboxEntity box : inboxes.findAll()) {
+      if (box.isEnabled() && due(box, now)) {
+        dueBoxes.add(box);
+      }
+    }
+    if (dueBoxes.isEmpty()) {
       return 0;
     }
+    activity.write(ActivityLogService.MTS, "START", "mts poll mailboxes=" + dueBoxes.size());
+    int created = 0;
     try {
-      Instant now = Instant.now();
-      List<MtsInboxEntity> dueBoxes = new ArrayList<>();
-      for (MtsInboxEntity box : inboxes.findAll()) {
-        if (box.isEnabled() && due(box, now)) {
-          dueBoxes.add(box);
+      for (MtsInboxEntity box : dueBoxes) {
+        if (!tryStart(box.getId())) {
+          continue;
         }
+        created += pollOne(box.getId());
       }
-      // shortcut: idle ticks are not written
-      if (dueBoxes.isEmpty()) {
-        return 0;
-      }
-      activity.write(ActivityLogService.MTS, "START", "mts poll mailboxes=" + dueBoxes.size());
-      int created = 0;
-      try {
-        for (MtsInboxEntity box : dueBoxes) {
-          created += pollOne(box, now);
-        }
-        return created;
-      } finally {
-        activity.write(ActivityLogService.MTS, "END", "mts poll campaigns=" + created);
-      }
+      return created;
     } finally {
-      running.set(false);
+      activity.write(ActivityLogService.MTS, "END", "mts poll campaigns=" + created);
     }
+  }
+
+  public boolean startPollAsync(String id) {
+    if (!tryStart(id)) {
+      return false;
+    }
+    async.execute(() -> pollOne(id));
+    return true;
+  }
+
+  @Transactional
+  public void breakLock(String id) {
+    MtsInboxEntity box =
+        inboxes.findById(id).orElseThrow(() -> new IllegalArgumentException("not found"));
+    box.setPolling(false);
+    inboxes.save(box);
   }
 
   private boolean due(MtsInboxEntity box, Instant now) {
@@ -94,9 +111,43 @@ public class MtsIngestService {
         .isBefore(now);
   }
 
-  int pollOne(MtsInboxEntity box, Instant now) {
+  private boolean tryStart(String id) {
+    MtsInboxEntity box = inboxes.findById(id).orElse(null);
+    if (box == null) {
+      return false;
+    }
+    Instant now = Instant.now();
+    if (locks.stillHeld(box.isPolling(), box.getLastPollingUpdate(), now)) {
+      return false;
+    }
+    box.setPolling(true);
+    box.setLastPollingUpdate(now);
+    inboxes.save(box);
+    return true;
+  }
+
+  private void heartbeat(MtsInboxEntity box) {
+    box.setLastPollingUpdate(Instant.now());
+    inboxes.save(box);
+  }
+
+  private void finish(MtsInboxEntity box, boolean ok) {
+    Instant now = Instant.now();
+    box.setPolling(false);
+    box.setLastPollingUpdate(now);
+    box.setLastPolledAt(now);
+    box.setLastPollOk(ok);
+    inboxes.save(box);
+  }
+
+  int pollOne(String id) {
+    MtsInboxEntity box = inboxes.findById(id).orElse(null);
+    if (box == null) {
+      return 0;
+    }
     AtomicInteger created = new AtomicInteger();
-    activity.write(ActivityLogService.MTS, "CONNECT", "inbox=" + box.getName());
+    heartbeat(box);
+    activity.write(ActivityLogService.MTS, "CONNECT", "mailboxId=" + box.getId());
     try {
       mailbox.poll(
           new MailboxPort.MailboxConn(
@@ -110,11 +161,12 @@ public class MtsIngestService {
           raw -> {
             MtsGateService.Decision decision = gates.evaluate(box.getId(), box.getName(), raw);
             String sender = MtsEmails.extract(raw.from());
+            heartbeat(box);
             activity.write(
                 ActivityLogService.MTS,
                 "FETCH",
-                "inbox="
-                    + box.getName()
+                "mailboxId="
+                    + box.getId()
                     + " from="
                     + raw.from()
                     + " subject="
@@ -148,7 +200,9 @@ public class MtsIngestService {
               activity.write(
                   ActivityLogService.MTS,
                   "CAMPAIGN",
-                  "id="
+                  "mailboxId="
+                      + box.getId()
+                      + " id="
                       + campaign.getId()
                       + " lists="
                       + listIds
@@ -167,20 +221,23 @@ public class MtsIngestService {
             }
             return true;
           });
-      box.setLastPolledAt(now);
-      inboxes.save(box);
-      activity.write(ActivityLogService.MTS, "DISCONNECT", "inbox=" + box.getName());
+      finish(box, true);
+      activity.write(ActivityLogService.MTS, "DISCONNECT", "mailboxId=" + box.getId());
       if (created.get() > 0) {
         ops.opsLog("mts.poll", "inbox=" + box.getName() + " campaigns=" + created.get());
       }
     } catch (MailboxQueryException ex) {
+      finish(box, false);
       activity.write(
-          ActivityLogService.MTS, "DISCONNECT", "inbox=" + box.getName() + " error=" + ex.getMessage());
+          ActivityLogService.MTS,
+          "DISCONNECT",
+          "mailboxId=" + box.getId() + " error=" + ex.getMessage());
       ops.opsLog("mts.poll", "inbox=" + box.getName() + " error=" + ex.getMessage());
       ops.attentionAdmin("MTS inbox poll failed", box.getName() + ": " + ex.getMessage());
       log.warn("mts poll {}: {}", box.getName(), ex.getMessage());
-      box.setLastPolledAt(now);
-      inboxes.save(box);
+    } catch (RuntimeException ex) {
+      finish(box, false);
+      throw ex;
     }
     return created.get();
   }

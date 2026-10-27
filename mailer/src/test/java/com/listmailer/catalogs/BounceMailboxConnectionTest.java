@@ -23,6 +23,8 @@ class BounceMailboxConnectionTest {
 
   @Mock BounceMailboxRepository mailboxes;
   @Mock MailConnectionProbe probe;
+  @Mock com.listmailer.bounce.BouncePollService poll;
+  @Mock com.listmailer.mailbox.MailboxPollLock locks;
   @InjectMocks BounceMailboxesController controller;
 
   @Test

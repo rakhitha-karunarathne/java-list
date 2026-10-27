@@ -19,6 +19,7 @@ import { RecordTable } from './RecordTable.jsx'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
+import { MailboxPollPanel, pollIndexColumns } from './MailboxPollPanel.jsx'
 
 export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const blank = useRef({
@@ -672,6 +673,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   const [detail, setDetail] = useState(null)
   const [connTest, setConnTest] = useState(null)
   const [testing, setTesting] = useState(false)
+  const [msg, setMsg] = useState('')
 
   async function runBounceImapTest() {
     setTesting(true)
@@ -893,11 +895,28 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
 
   if (detailId && detail && saved) {
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Bounce Mailboxes
-        </button>
-        <h2>{detail.name}</h2>
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Bounce Mailboxes
+          </button>
+          <h2>{detail.name}</h2>
+          {msg ? <p>{msg}</p> : null}
+          <MailboxPollPanel
+            token={token}
+            onError={onError}
+            mailboxId={detailId}
+            mailboxName={detail.name}
+            enabled={detail.enabled !== false}
+            detail={detail}
+            pollPath={`/api/bounce-mailboxes/${detailId}/poll`}
+            breakLockPath={`/api/bounce-mailboxes/${detailId}/break-lock`}
+            logKind="BOUNCE"
+            onDetail={setDetail}
+            onMsg={setMsg}
+          />
+        </section>
+        <section className="card">
         <form onSubmit={save}>
           <label className="field">
             {fieldLabel('name')}
@@ -991,6 +1010,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             </button>
           </p>
         </form>
+        </section>
       </div>
     )
   }
@@ -1008,15 +1028,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         rowKey={(r) => r.id}
         onOpen={(r) => onOpen(r.id)}
         empty="No bounce mailboxes yet."
-        columns={[
-          { key: 'name', label: 'Name' },
-          { key: 'host', label: 'Host' },
-          {
-            key: 'pollIntervalMinutes',
-            label: 'Poll Minutes',
-            render: (r) => r.pollIntervalMinutes,
-          },
-        ]}
+        columns={pollIndexColumns()}
       />
     </div>
   )

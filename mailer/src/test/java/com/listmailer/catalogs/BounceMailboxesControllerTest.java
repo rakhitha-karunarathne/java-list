@@ -15,6 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BounceMailboxesControllerTest {
 
   @Mock BounceMailboxRepository mailboxes;
+  @Mock com.listmailer.mailbox.MailConnectionProbe probe;
+  @Mock com.listmailer.bounce.BouncePollService poll;
+  @Mock com.listmailer.mailbox.MailboxPollLock locks;
   @InjectMocks BounceMailboxesController controller;
 
   @Test

@@ -1,10 +1,13 @@
 package com.listmailer.catalogs;
 
+import com.listmailer.bounce.BouncePollService;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.mailbox.MailConnectionProbe;
+import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailSecurity;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
@@ -26,10 +29,18 @@ public class BounceMailboxesController {
 
   private final BounceMailboxRepository mailboxes;
   private final MailConnectionProbe probe;
+  private final BouncePollService poll;
+  private final MailboxPollLock locks;
 
-  public BounceMailboxesController(BounceMailboxRepository mailboxes, MailConnectionProbe probe) {
+  public BounceMailboxesController(
+      BounceMailboxRepository mailboxes,
+      MailConnectionProbe probe,
+      BouncePollService poll,
+      MailboxPollLock locks) {
     this.mailboxes = mailboxes;
     this.probe = probe;
+    this.poll = poll;
+    this.locks = locks;
   }
 
   @PostMapping("/test-connection")
@@ -52,7 +63,7 @@ public class BounceMailboxesController {
 
   @GetMapping
   public List<MailboxSummary> list() {
-    return mailboxes.findAll().stream().map(MailboxSummary::from).toList();
+    return mailboxes.findAll().stream().map(b -> MailboxSummary.from(b, locks)).toList();
   }
 
   @PostMapping
@@ -72,7 +83,7 @@ public class BounceMailboxesController {
               poll,
               Instant.now());
       box.setUseTls(body.useTls());
-      return MailboxDetail.from(mailboxes.save(box));
+      return MailboxDetail.from(mailboxes.save(box), locks);
     } catch (DataIntegrityViolationException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "name already exists");
     }
@@ -80,7 +91,7 @@ public class BounceMailboxesController {
 
   @GetMapping("/{id}")
   public MailboxDetail get(@PathVariable String id) {
-    return MailboxDetail.from(require(id));
+    return MailboxDetail.from(require(id), locks);
   }
 
   @PutMapping("/{id}")
@@ -99,7 +110,7 @@ public class BounceMailboxesController {
     box.setPollIntervalMinutes(
         body.pollIntervalMinutes() > 0 ? body.pollIntervalMinutes() : DEFAULT_POLL_MINUTES);
     try {
-      return MailboxDetail.from(mailboxes.save(box));
+      return MailboxDetail.from(mailboxes.save(box), locks);
     } catch (DataIntegrityViolationException ex) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "name already exists");
     }
@@ -109,6 +120,23 @@ public class BounceMailboxesController {
   public void delete(@PathVariable String id) {
     require(id);
     mailboxes.deleteById(id);
+  }
+
+  @PostMapping("/{id}/poll")
+  public Map<String, String> pollNow(@PathVariable String id) {
+    BounceMailboxEntity box = require(id);
+    if (!box.isEnabled()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "mailbox is disabled");
+    }
+    poll.startPollAsync(id);
+    return Map.of("message", "process started");
+  }
+
+  @PostMapping("/{id}/break-lock")
+  public MailboxDetail breakLock(@PathVariable String id) {
+    require(id);
+    poll.breakLock(id);
+    return MailboxDetail.from(require(id), locks);
   }
 
   private BounceMailboxEntity require(String id) {
@@ -158,9 +186,21 @@ public class BounceMailboxesController {
 
   public record ConnectionTestResponse(boolean ok, String message) {}
 
-  public record MailboxSummary(String id, String name, String host, int pollIntervalMinutes) {
-    static MailboxSummary from(BounceMailboxEntity b) {
-      return new MailboxSummary(b.getId(), b.getName(), b.getHost(), b.getPollIntervalMinutes());
+  public record MailboxSummary(
+      String id,
+      String name,
+      int pollIntervalMinutes,
+      String lastPolledAt,
+      String result,
+      boolean enabled) {
+    static MailboxSummary from(BounceMailboxEntity b, MailboxPollLock locks) {
+      return new MailboxSummary(
+          b.getId(),
+          b.getName(),
+          b.getPollIntervalMinutes(),
+          b.getLastPolledAt() == null ? null : b.getLastPolledAt().toString(),
+          pollResult(b),
+          b.isEnabled());
     }
   }
 
@@ -172,8 +212,15 @@ public class BounceMailboxesController {
       String username,
       boolean useSsl,
       boolean useTls,
-      int pollIntervalMinutes) {
-    static MailboxDetail from(BounceMailboxEntity b) {
+      int pollIntervalMinutes,
+      boolean enabled,
+      String lastPolledAt,
+      String lastPollingUpdate,
+      String result,
+      boolean polling) {
+    static MailboxDetail from(BounceMailboxEntity b, MailboxPollLock locks) {
+      Instant now = Instant.now();
+      boolean held = locks.stillHeld(b.isPolling(), b.getLastPollingUpdate(), now);
       return new MailboxDetail(
           b.getId(),
           b.getName(),
@@ -182,7 +229,19 @@ public class BounceMailboxesController {
           b.getUsername(),
           b.isUseSsl(),
           b.isUseTls(),
-          b.getPollIntervalMinutes());
+          b.getPollIntervalMinutes(),
+          b.isEnabled(),
+          b.getLastPolledAt() == null ? null : b.getLastPolledAt().toString(),
+          b.getLastPollingUpdate() == null ? null : b.getLastPollingUpdate().toString(),
+          pollResult(b),
+          held);
     }
+  }
+
+  static String pollResult(BounceMailboxEntity b) {
+    if (b.getLastPollOk() == null) {
+      return "";
+    }
+    return b.getLastPollOk() ? "OK" : "Errors";
   }
 }

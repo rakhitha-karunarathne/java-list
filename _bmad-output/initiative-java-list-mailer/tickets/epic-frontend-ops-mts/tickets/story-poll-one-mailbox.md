@@ -8,7 +8,7 @@ after: [9]
 hitl: true
 risk: medium
 refined: true
-status: ready
+status: done
 ---
 
 # Poll one mailbox now

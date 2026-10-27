@@ -1,7 +1,6 @@
 package com.listmailer.bounce;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,13 +13,16 @@ import com.listmailer.catalogs.BounceMailboxEntity;
 import com.listmailer.catalogs.BounceMailboxRepository;
 import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.OpsHooksPort;
+import com.listmailer.mailbox.MailboxPollLock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,7 +34,14 @@ class BouncePollServiceTest {
   @Mock MailboxPort mailbox;
   @Mock OpsHooksPort ops;
   @Mock com.listmailer.ops.ActivityLogService activity;
-  @InjectMocks BouncePollService service;
+  BouncePollService service;
+
+  @BeforeEach
+  void setUp() {
+    service =
+        new BouncePollService(
+            mailboxes, events, mailbox, ops, activity, new MailboxPollLock(Duration.ofHours(1)));
+  }
 
   @Test
   void pollsEnabledDueMailboxesSequentiallyAndIngests() throws Exception {
@@ -42,6 +51,7 @@ class BouncePollServiceTest {
         new BounceMailboxEntity("b", "B", "h", 143, "u", "p", false, 1, Instant.now());
     b.setEnabled(false);
     when(mailboxes.findAll()).thenReturn(List.of(a, b));
+    when(mailboxes.findById("a")).thenReturn(Optional.of(a));
     AtomicInteger concurrent = new AtomicInteger();
     AtomicInteger max = new AtomicInteger();
     doAnswer(
@@ -64,38 +74,26 @@ class BouncePollServiceTest {
     assertEquals(1, max.get());
     verify(ops).opsLog(eq("bounce.poll"), contains("ingested=1"));
     verify(activity).write(eq("BOUNCE"), eq("FETCH"), contains("subject=bounce"));
-    verify(activity).write(eq("BOUNCE"), eq("CONNECT"), contains("inbox=A"));
-    verify(activity).write(eq("BOUNCE"), eq("DISCONNECT"), contains("inbox=A"));
+    verify(activity).write(eq("BOUNCE"), eq("CONNECT"), contains("mailboxId=a"));
+    verify(activity).write(eq("BOUNCE"), eq("DISCONNECT"), contains("mailboxId=a"));
     verify(mailbox, org.mockito.Mockito.times(1)).poll(any(), any());
   }
 
   @Test
-  void skipsSecondTickWhileRunning() throws Exception {
+  void skipsMailboxAlreadyLocked() throws Exception {
     BounceMailboxEntity a =
         new BounceMailboxEntity("a", "A", "h", 143, "u", "p", false, 1, Instant.now());
+    a.setPolling(true);
+    a.setLastPollingUpdate(Instant.now());
     when(mailboxes.findAll()).thenReturn(List.of(a));
-    doAnswer(
-            inv -> {
-              assertTrue(service.isRunning());
-              assertEquals(0, service.pollDue()); // nested tick skipped
-              MailboxPort.MessageHandler h = inv.getArgument(1);
-              h.onMessage(
-                  new MailboxPort.RawMessage(
-                      null, "s", "f", List.of(), Map.of(), new byte[] {1}));
-              return null;
-            })
-        .when(mailbox)
-        .poll(any(), any());
-    when(events.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(mailboxes.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(mailboxes.findById("a")).thenReturn(Optional.of(a));
 
-    service.pollDue();
-    verify(ops).opsLog(eq("bounce.poll"), contains("ingested=1"));
+    assertEquals(0, service.pollDue());
+    verify(mailbox, never()).poll(any(), any());
   }
 
   @Test
   void doesNotDisableMembers() {
-    // ingest path never touches members — smoke via zero member interactions
     when(mailboxes.findAll()).thenReturn(List.of());
     assertEquals(0, service.pollDue());
     verify(events, never()).save(any());

@@ -10,6 +10,7 @@ import { RecordTable } from './RecordTable.jsx'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
+import { MailboxPollPanel, pollIndexColumns } from './MailboxPollPanel.jsx'
 
 const INBOX_BLANK = {
   name: '',
@@ -50,6 +51,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   } = useDirtyForm(INBOX_BLANK, creating ? 'inbox-create' : `inbox-edit-${nav.inboxId || 'x'}`, creating)
 
   const [inboxes, setInboxes] = useState([])
+  const [pollMsg, setPollMsg] = useState('')
   const [detail, setDetail] = useState(null)
   const [senderEmail, setSenderEmail] = useState('')
   const [senderDetail, setSenderDetail] = useState(null)
@@ -550,6 +552,20 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             ← Inboxes
           </button>
           <h2>{detail.name}</h2>
+          {pollMsg ? <p>{pollMsg}</p> : null}
+          <MailboxPollPanel
+            token={token}
+            onError={onError}
+            mailboxId={nav.inboxId}
+            mailboxName={detail.name}
+            enabled={!!detail.enabled}
+            detail={detail}
+            pollPath={`/api/mts/inboxes/${nav.inboxId}/poll`}
+            breakLockPath={`/api/mts/inboxes/${nav.inboxId}/break-lock`}
+            logKind="MTS"
+            onDetail={setDetail}
+            onMsg={setPollMsg}
+          />
         </section>
 
         <section className="card">
@@ -655,18 +671,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         rowKey={(i) => i.id}
         onOpen={(i) => onOpen(i.id)}
         empty="No inboxes yet."
-        columns={[
-          { key: 'name', label: 'Name' },
-          {
-            key: 'enabled',
-            label: 'Enabled',
-            render: (i) => (i.enabled ? 'Yes' : 'No'),
-          },
-          {
-            key: 'pollIntervalMinutes',
-            label: 'Poll Minutes',
-          },
-        ]}
+        columns={pollIndexColumns()}
       />
     </div>
   )

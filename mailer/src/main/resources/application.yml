@@ -45,4 +45,6 @@ mailer:
     correlate-tick-ms: 60000
   mts:
     poll-tick-ms: 60000
+  poll:
+    lock-timeout: 1h
 

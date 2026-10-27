@@ -5,6 +5,7 @@ import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.mailbox.MailConnectionProbe;
+import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailSecurity;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -39,6 +40,8 @@ public class MtsAdminController {
   private final MtsDropService drops;
   private final CatalogReferenceService references;
   private final MailConnectionProbe probe;
+  private final MtsIngestService ingest;
+  private final MailboxPollLock locks;
 
   public MtsAdminController(
       MtsInboxRepository inboxes,
@@ -48,7 +51,9 @@ public class MtsAdminController {
       MtsFromDomainService fromDomain,
       MtsDropService drops,
       CatalogReferenceService references,
-      MailConnectionProbe probe) {
+      MailConnectionProbe probe,
+      MtsIngestService ingest,
+      MailboxPollLock locks) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.grants = grants;
@@ -57,6 +62,8 @@ public class MtsAdminController {
     this.drops = drops;
     this.references = references;
     this.probe = probe;
+    this.ingest = ingest;
+    this.locks = locks;
   }
 
   @GetMapping("/drop-log")
@@ -134,8 +141,33 @@ public class MtsAdminController {
   @GetMapping("/inboxes")
   public List<InboxSummary> index() {
     return inboxes.findAll().stream()
-        .map(i -> new InboxSummary(i.getId(), i.getName(), i.isEnabled(), i.getPollIntervalMinutes()))
+        .map(
+            i ->
+                new InboxSummary(
+                    i.getId(),
+                    i.getName(),
+                    i.isEnabled(),
+                    i.getPollIntervalMinutes(),
+                    i.getLastPolledAt() == null ? null : i.getLastPolledAt().toString(),
+                    pollResult(i)))
         .toList();
+  }
+
+  @PostMapping("/inboxes/{id}/poll")
+  public Map<String, String> pollNow(@PathVariable String id) {
+    MtsInboxEntity box = requireInbox(id);
+    if (!box.isEnabled()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "mailbox is disabled");
+    }
+    ingest.startPollAsync(id);
+    return Map.of("message", "process started");
+  }
+
+  @PostMapping("/inboxes/{id}/break-lock")
+  public InboxDetail breakLock(@PathVariable String id) {
+    requireInbox(id);
+    ingest.breakLock(id);
+    return detail(requireInbox(id));
   }
 
   @PostMapping("/inboxes/test-connection")
@@ -340,6 +372,8 @@ public class MtsAdminController {
         grants.findByInboxIdOrderBySenderEmailAscPositionAsc(box.getId()).stream()
             .map(this::mappingSummary)
             .toList();
+    Instant now = Instant.now();
+    boolean held = locks.stillHeld(box.isPolling(), box.getLastPollingUpdate(), now);
     return new InboxDetail(
         box.getId(),
         box.getName(),
@@ -351,7 +385,18 @@ public class MtsAdminController {
         box.getPollIntervalMinutes(),
         box.isEnabled(),
         emails,
-        maps);
+        maps,
+        box.getLastPolledAt() == null ? null : box.getLastPolledAt().toString(),
+        box.getLastPollingUpdate() == null ? null : box.getLastPollingUpdate().toString(),
+        pollResult(box),
+        held);
+  }
+
+  private static String pollResult(MtsInboxEntity b) {
+    if (b.getLastPollOk() == null) {
+      return "";
+    }
+    return b.getLastPollOk() ? "OK" : "Errors";
   }
 
   private SenderDetail senderDetail(String inboxId, String email) {
@@ -443,7 +488,13 @@ public class MtsAdminController {
 
   public record GrantRow(String listId, boolean granted, String substituteFrom, String footerId) {}
 
-  public record InboxSummary(String id, String name, boolean enabled, int pollIntervalMinutes) {}
+  public record InboxSummary(
+      String id,
+      String name,
+      boolean enabled,
+      int pollIntervalMinutes,
+      String lastPolledAt,
+      String result) {}
 
   public record InboxDetail(
       String id,
@@ -456,7 +507,11 @@ public class MtsAdminController {
       int pollIntervalMinutes,
       boolean enabled,
       List<String> authorizedSenders,
-      List<MappingSummary> mappings) {}
+      List<MappingSummary> mappings,
+      String lastPolledAt,
+      String lastPollingUpdate,
+      String result,
+      boolean polling) {}
 
   public record SenderDetail(String email, List<GrantView> grants) {}
 
