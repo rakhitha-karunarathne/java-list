@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.listmailer.catalogs.CatalogReferenceService;
 import com.listmailer.catalogs.CatalogTargetType;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.mailbox.MailConnectionProbe;
@@ -26,6 +27,7 @@ class MtsDeleteInboxTest {
   @Mock MtsAuthorizedSenderRepository senders;
   @Mock MtsSenderListGrantRepository grants;
   @Mock ListRepository lists;
+  @Mock SendingPathRepository sendingPaths;
   @Mock MtsFromDomainService fromDomain;
   @Mock MtsDropService drops;
   @Mock CatalogReferenceService references;
@@ -43,7 +45,9 @@ class MtsDeleteInboxTest {
         .thenReturn(
             List.of(
                 new MtsSenderListGrantEntity(
-                    "g1", "i1", "a@x.com", "L1", null, "footer-1", 0)));
+                    "g1", "i1", "a@x.com", "L1", "footer-1", 0)));
+    when(senders.findByInboxIdAndEmail("i1", "a@x.com"))
+        .thenReturn(Optional.of(new MtsAuthorizedSenderEntity("i1", "a@x.com")));
     when(lists.findById("L1"))
         .thenReturn(
             Optional.of(new ListEntity("L1", "A", "path-1", null, null, null, null, Instant.now())));

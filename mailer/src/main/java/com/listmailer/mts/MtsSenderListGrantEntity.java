@@ -29,9 +29,6 @@ public class MtsSenderListGrantEntity {
   @Column(name = "list_id", length = 36, nullable = false)
   private String listId;
 
-  @Column(name = "substitute_from", length = 320)
-  private String substituteFrom;
-
   @Column(name = "footer_id", length = 36)
   private String footerId;
 
@@ -45,14 +42,12 @@ public class MtsSenderListGrantEntity {
       String inboxId,
       String senderEmail,
       String listId,
-      String substituteFrom,
       String footerId,
       int position) {
     this.id = id;
     this.inboxId = inboxId;
     this.senderEmail = senderEmail.trim().toLowerCase(Locale.ROOT);
     this.listId = listId;
-    this.substituteFrom = substituteFrom;
     this.footerId = footerId;
     this.position = position;
   }
@@ -71,10 +66,6 @@ public class MtsSenderListGrantEntity {
 
   public String getListId() {
     return listId;
-  }
-
-  public String getSubstituteFrom() {
-    return substituteFrom;
   }
 
   public String getFooterId() {

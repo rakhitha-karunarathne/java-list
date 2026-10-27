@@ -30,17 +30,18 @@ const INBOX_BLANK = {
   deleteAfterAccept: true,
 }
 
-function grantsSig(rows) {
-  return JSON.stringify(
-    (rows || [])
+function grantsSig(rows, substituteFrom, sendingPathId) {
+  return JSON.stringify({
+    substituteFrom: substituteFrom || '',
+    sendingPathId: sendingPathId || '',
+    grants: (rows || [])
       .filter((r) => r.granted)
       .map((r) => ({
         listId: r.listId,
-        substituteFrom: r.substituteFrom || '',
         footerId: r.footerId || '',
       }))
       .sort((a, b) => String(a.listId).localeCompare(String(b.listId))),
-  )
+  })
 }
 
 export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
@@ -64,11 +65,18 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [senderDetail, setSenderDetail] = useState(null)
   const [grants, setGrants] = useState([])
   const [savedGrants, setSavedGrants] = useState([])
+  const [substituteFrom, setSubstituteFrom] = useState('')
+  const [savedSubstituteFrom, setSavedSubstituteFrom] = useState('')
+  const [sendingPathId, setSendingPathId] = useState('')
+  const [savedSendingPathId, setSavedSendingPathId] = useState('')
+  const [paths, setPaths] = useState([])
   const [footers, setFooters] = useState([])
   const [connTest, setConnTest] = useState(null)
   const [testing, setTesting] = useState(false)
   const senderDirty = !!senderEmail.trim()
-  const grantsDirty = grantsSig(grants) !== grantsSig(savedGrants)
+  const grantsDirty =
+    grantsSig(grants, substituteFrom, sendingPathId) !==
+    grantsSig(savedGrants, savedSubstituteFrom, savedSendingPathId)
   useRegisterUnsaved(senderDirty, `mts-sender-add-${nav.inboxId || 'x'}`)
   useRegisterUnsaved(nav.kind === 'sender' && grantsDirty, `mts-sender-grants-${detailId || 'x'}`)
 
@@ -108,6 +116,9 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     apiJson(token, '/api/footers')
       .then(setFooters)
       .catch(() => setFooters([]))
+    apiJson(token, '/api/sending-paths')
+      .then(setPaths)
+      .catch(() => setPaths([]))
   }, [token])
 
   useEffect(() => {
@@ -116,6 +127,10 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     setSenderDetail(null)
     setGrants([])
     setSavedGrants([])
+    setSubstituteFrom('')
+    setSavedSubstituteFrom('')
+    setSendingPathId('')
+    setSavedSendingPathId('')
     if (creating) {
       setDetail(null)
       resetInbox()
@@ -149,11 +164,16 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       apiJson(token, `/api/mts/inboxes/${nav.inboxId}/senders/${encodeURIComponent(nav.email)}`)
         .then((s) => {
           setSenderDetail(s)
+          const sub = s.substituteFrom || ''
+          const path = s.sendingPathId || ''
+          setSubstituteFrom(sub)
+          setSavedSubstituteFrom(sub)
+          setSendingPathId(path)
+          setSavedSendingPathId(path)
           const rows = (s.grants || []).map((g) => ({
             listId: g.listId,
             listName: g.listName,
             granted: !!g.granted,
-            substituteFrom: g.substituteFrom || '',
             footerId: g.footerId || '',
           }))
           setGrants(rows)
@@ -277,21 +297,27 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         {
           method: 'PUT',
           body: JSON.stringify({
+            substituteFrom: substituteFrom || null,
+            sendingPathId: sendingPathId || null,
             grants: grants.map((g) => ({
               listId: g.listId,
               granted: !!g.granted,
-              substituteFrom: g.substituteFrom || null,
               footerId: g.footerId || null,
             })),
           }),
         },
       )
       setSenderDetail(s)
+      const sub = s.substituteFrom || ''
+      const path = s.sendingPathId || ''
+      setSubstituteFrom(sub)
+      setSavedSubstituteFrom(sub)
+      setSendingPathId(path)
+      setSavedSendingPathId(path)
       const rows = (s.grants || []).map((g) => ({
         listId: g.listId,
         listName: g.listName,
         granted: !!g.granted,
-        substituteFrom: g.substituteFrom || '',
         footerId: g.footerId || '',
       }))
       setGrants(rows)
@@ -480,8 +506,34 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           ← {detail?.name || 'Inbox'}
         </button>
         <h2>{senderDetail.email}</h2>
-        <p className="hint">Grant Lists for this authorized sender. Substitute From and Footer are per List.</p>
+        <p className="hint">
+          Substitute From and Sending Path apply to this sender. Footer stays per List grant.
+        </p>
         <form onSubmit={saveGrants}>
+          <label className="field">
+            {fieldLabel('substituteFrom')}
+            <input
+              value={substituteFrom}
+              onChange={(ev) => setSubstituteFrom(ev.target.value)}
+              placeholder="Optional"
+              {...dirtyControlProps(!valuesEqual(substituteFrom, savedSubstituteFrom))}
+            />
+          </label>
+          <label className="field">
+            {fieldLabel('sendingPathId')}
+            <select
+              value={sendingPathId}
+              onChange={(ev) => setSendingPathId(ev.target.value)}
+              {...dirtyControlProps(!valuesEqual(sendingPathId, savedSendingPathId))}
+            >
+              <option value="">— Default (first list) —</option>
+              {paths.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <RecordTable
             rows={grants}
             rowKey={(r) => r.listId}
@@ -506,33 +558,6 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                 ),
               },
               { key: 'listName', label: 'List' },
-              {
-                key: 'substituteFrom',
-                label: 'Substitute From',
-                stopRowClick: true,
-                render: (r) => (
-                  <input
-                    value={r.substituteFrom}
-                    disabled={!r.granted}
-                    onChange={(ev) =>
-                      setGrants((rows) =>
-                        rows.map((x) =>
-                          x.listId === r.listId
-                            ? { ...x, substituteFrom: ev.target.value }
-                            : x,
-                        ),
-                      )
-                    }
-                    {...dirtyControlProps(
-                      r.granted &&
-                        !valuesEqual(
-                          r.substituteFrom,
-                          savedGrants.find((s) => s.listId === r.listId)?.substituteFrom || '',
-                        ),
-                    )}
-                  />
-                ),
-              },
               {
                 key: 'footerId',
                 label: 'Footer',
@@ -573,7 +598,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               className={btnDirtyClass(grantsDirty)}
               title={grantsDirty ? 'Unsaved changes' : undefined}
             >
-              Save Grants
+              Save Sender
             </button>
           </p>
         </form>
@@ -697,6 +722,12 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                 key: 'substituteFrom',
                 label: 'Substitute From',
                 render: (m) => m.substituteFrom || '—',
+              },
+              {
+                key: 'sendingPathId',
+                label: 'Sending Path',
+                render: (m) =>
+                  paths.find((p) => p.id === m.sendingPathId)?.name || m.sendingPathId || '—',
               },
               {
                 key: 'footerId',

@@ -37,19 +37,41 @@ public class MtsFromDomainService {
     this.ops = ops;
   }
 
-  /** Returns null if OK; otherwise opens Issue (no Campaign). All-or-nothing across grants. */
+  /** Returns null if OK; otherwise opens Issue (no Campaign). All-or-nothing. */
   @Transactional
   public MtsFromDomainIssueEntity validateOrOpenIssue(
       MtsInboxEntity inbox,
+      MtsAuthorizedSenderEntity sender,
       List<MtsSenderListGrantEntity> grants,
-      String senderEmail,
       String subject) {
-    for (MtsSenderListGrantEntity grant : grants) {
-      String sub = grant.getSubstituteFrom();
-      if (!StringUtils.hasText(sub)) {
-        continue;
+    String sub = sender == null ? null : sender.getSubstituteFrom();
+    if (!StringUtils.hasText(sub)) {
+      return null;
+    }
+    String subDomain = domainOf(sub);
+    String senderEmail = sender.getEmail();
+    if (StringUtils.hasText(sender.getSendingPathId())) {
+      SendingPathEntity path =
+          paths
+              .findById(sender.getSendingPathId())
+              .orElseThrow(
+                  () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "path missing"));
+      String pathDomain = domainOf(path.getFromEmail());
+      if (!subDomain.equalsIgnoreCase(pathDomain)) {
+        String grantId = grants.isEmpty() ? null : grants.get(0).getId();
+        return openIssue(
+            inbox,
+            grantId,
+            senderEmail,
+            subject,
+            "substitute From domain "
+                + subDomain
+                + " != sender path "
+                + pathDomain);
       }
-      String subDomain = domainOf(sub);
+      return null;
+    }
+    for (MtsSenderListGrantEntity grant : grants) {
       ListEntity list =
           lists
               .findById(grant.getListId())
@@ -149,7 +171,7 @@ public class MtsFromDomainService {
     return n;
   }
 
-  static String domainOf(String email) {
+  public static String domainOf(String email) {
     return MtsEmails.domain(email);
   }
 }

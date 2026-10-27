@@ -8,8 +8,11 @@ import com.listmailer.campaigns.CampaignListRepository;
 import com.listmailer.campaigns.CampaignRepository;
 import com.listmailer.campaigns.CampaignSendService;
 import com.listmailer.campaigns.CampaignStatus;
+import com.listmailer.catalogs.CatalogReferenceService;
+import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.catalogs.FooterEntity;
 import com.listmailer.catalogs.FooterRepository;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
@@ -32,6 +35,8 @@ public class MtsCampaignFactory {
   private final CampaignSendService sendService;
   private final FooterRepository footers;
   private final ListRepository lists;
+  private final SendingPathRepository sendingPaths;
+  private final CatalogReferenceService references;
 
   public MtsCampaignFactory(
       CampaignRepository campaigns,
@@ -39,13 +44,17 @@ public class MtsCampaignFactory {
       CampaignAttachmentRepository attachments,
       CampaignSendService sendService,
       FooterRepository footers,
-      ListRepository lists) {
+      ListRepository lists,
+      SendingPathRepository sendingPaths,
+      CatalogReferenceService references) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
     this.sendService = sendService;
     this.footers = footers;
     this.lists = lists;
+    this.sendingPaths = sendingPaths;
+    this.references = references;
   }
 
   @Transactional
@@ -54,7 +63,7 @@ public class MtsCampaignFactory {
       String htmlBody,
       String textBody,
       List<MtsSenderListGrantEntity> grants) {
-    return create(subject, htmlBody, textBody, grants, true, List.of());
+    return create(subject, htmlBody, textBody, grants, true, List.of(), null);
   }
 
   /**
@@ -68,7 +77,7 @@ public class MtsCampaignFactory {
       String textBody,
       List<MtsSenderListGrantEntity> grants,
       boolean autoQueue) {
-    return create(subject, htmlBody, textBody, grants, autoQueue, List.of());
+    return create(subject, htmlBody, textBody, grants, autoQueue, List.of(), null);
   }
 
   @Transactional
@@ -79,6 +88,18 @@ public class MtsCampaignFactory {
       List<MtsSenderListGrantEntity> grants,
       boolean autoQueue,
       List<MimeBodyParser.Attachment> files) {
+    return create(subject, htmlBody, textBody, grants, autoQueue, files, null);
+  }
+
+  @Transactional
+  public CampaignEntity create(
+      String subject,
+      String htmlBody,
+      String textBody,
+      List<MtsSenderListGrantEntity> grants,
+      boolean autoQueue,
+      List<MimeBodyParser.Attachment> files,
+      String sendingPathId) {
     if (grants == null || grants.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sender has no list grants");
     }
@@ -96,6 +117,16 @@ public class MtsCampaignFactory {
                 text,
                 CampaignStatus.DRAFT,
                 Instant.now()));
+    if (StringUtils.hasText(sendingPathId)) {
+      String pathId = sendingPathId.trim();
+      if (!sendingPaths.existsById(pathId)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown sending path");
+      }
+      c.setSendingPathId(pathId);
+      campaigns.save(c);
+      references.add(
+          CatalogTargetType.SENDING_PATH, pathId, "CAMPAIGN", c.getId(), c.getSubject());
+    }
     int i = 0;
     for (MtsSenderListGrantEntity g : grants) {
       campaignLists.save(new CampaignListEntity(id, g.getListId(), i++));

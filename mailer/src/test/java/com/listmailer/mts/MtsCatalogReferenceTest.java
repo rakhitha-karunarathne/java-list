@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.listmailer.catalogs.CatalogReferenceService;
 import com.listmailer.catalogs.CatalogTargetType;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.mailbox.MailConnectionProbe;
@@ -25,6 +26,7 @@ class MtsCatalogReferenceTest {
   @Mock MtsAuthorizedSenderRepository senders;
   @Mock MtsSenderListGrantRepository grants;
   @Mock ListRepository lists;
+  @Mock SendingPathRepository sendingPaths;
   @Mock MtsFromDomainService fromDomain;
   @Mock MtsDropService drops;
   @Mock CatalogReferenceService references;
@@ -36,7 +38,9 @@ class MtsCatalogReferenceTest {
     when(inboxes.findById("i1"))
         .thenReturn(
             Optional.of(new MtsInboxEntity("i1", "n", "h", 1, "u", "p", false, 1, Instant.now())));
-    when(senders.existsByInboxIdAndEmail("i1", "a@x.com")).thenReturn(true);
+    MtsAuthorizedSenderEntity sender = new MtsAuthorizedSenderEntity("i1", "a@x.com");
+    when(senders.findByInboxIdAndEmail("i1", "a@x.com")).thenReturn(Optional.of(sender));
+    when(senders.save(org.mockito.ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
     when(lists.existsById("L1")).thenReturn(true);
     when(lists.findById("L1"))
         .thenReturn(
@@ -46,9 +50,7 @@ class MtsCatalogReferenceTest {
     when(grants.findByInboxIdAndSenderEmailOrderByPositionAsc("i1", "a@x.com"))
         .thenReturn(List.of())
         .thenReturn(
-            List.of(
-                new MtsSenderListGrantEntity(
-                    "g1", "i1", "a@x.com", "L1", null, "footer-1", 0)));
+            List.of(new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "L1", "footer-1", 0)));
     when(grants.save(org.mockito.ArgumentMatchers.any()))
         .thenAnswer(
             inv -> {
@@ -60,7 +62,7 @@ class MtsCatalogReferenceTest {
         "i1",
         "a@x.com",
         new MtsAdminController.GrantsBody(
-            List.of(new MtsAdminController.GrantRow("L1", true, null, "footer-1"))));
+            null, null, List.of(new MtsAdminController.GrantRow("L1", true, "footer-1"))));
 
     verify(references)
         .add(

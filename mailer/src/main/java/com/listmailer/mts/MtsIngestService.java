@@ -26,6 +26,7 @@ public class MtsIngestService {
   private static final Logger log = LoggerFactory.getLogger(MtsIngestService.class);
 
   private final MtsInboxRepository inboxes;
+  private final MtsAuthorizedSenderRepository senders;
   private final MtsSenderListGrantRepository grants;
   private final MailboxPort mailbox;
   private final MtsGateService gates;
@@ -39,6 +40,7 @@ public class MtsIngestService {
 
   public MtsIngestService(
       MtsInboxRepository inboxes,
+      MtsAuthorizedSenderRepository senders,
       MtsSenderListGrantRepository grants,
       MailboxPort mailbox,
       MtsGateService gates,
@@ -49,6 +51,7 @@ public class MtsIngestService {
       ActivityLogService activity,
       MailboxPollLock locks) {
     this.inboxes = inboxes;
+    this.senders = senders;
     this.grants = grants;
     this.mailbox = mailbox;
     this.gates = gates;
@@ -206,8 +209,18 @@ public class MtsIngestService {
                     "authorized but no list grants inbox=" + box.getId() + " sender=" + email);
                 return MailboxPort.HandleResult.SEEN;
               }
+              MtsAuthorizedSenderEntity auth =
+                  senders
+                      .findByInboxIdAndEmail(box.getId(), email)
+                      .orElse(null);
+              if (auth == null) {
+                ops.opsLog(
+                    "mts.ingest",
+                    "authorized sender row missing inbox=" + box.getId() + " sender=" + email);
+                return MailboxPort.HandleResult.SEEN;
+              }
               var issue =
-                  fromDomain.validateOrOpenIssue(box, senderGrants, email, raw.subject());
+                  fromDomain.validateOrOpenIssue(box, auth, senderGrants, raw.subject());
               if (issue != null) {
                 // hold-back: leave SEEN so it is not re-polled, but do not delete
                 return MailboxPort.HandleResult.SEEN;
@@ -226,7 +239,8 @@ public class MtsIngestService {
                       text,
                       senderGrants,
                       box.isAutoQueue(),
-                      parts.attachments());
+                      parts.attachments(),
+                      auth.getSendingPathId());
               String listIds =
                   senderGrants.stream()
                       .map(MtsSenderListGrantEntity::getListId)

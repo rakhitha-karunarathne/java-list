@@ -71,3 +71,15 @@ after = [1, 2, 3, 4, 5]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 7
+type = "story"
+title = "MTS sender-level Substitute From and Sending Path"
+description = "Substitute From and optional Sending Path live on the authorized sender; path is set on MTS campaigns; From domains must match."
+verify = "Sender page edits From/path; grant table has no Substitute From; domain mismatch blocked; campaign gets sender path when set."
+covers = ["R1", "R29"]
+after = [1, 2]
+hitl = false
+risk = "high"
+refine = true

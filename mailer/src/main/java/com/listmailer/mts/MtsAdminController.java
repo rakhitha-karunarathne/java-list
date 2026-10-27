@@ -2,6 +2,8 @@ package com.listmailer.mts;
 
 import com.listmailer.catalogs.CatalogReferenceService;
 import com.listmailer.catalogs.CatalogTargetType;
+import com.listmailer.catalogs.SendingPathEntity;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.mailbox.MailConnectionProbe;
@@ -31,11 +33,13 @@ public class MtsAdminController {
 
   public static final int DEFAULT_POLL = 15;
   private static final String REF_SOURCE = "MTS_SENDER_GRANT";
+  private static final String REF_SENDER = "MTS_SENDER";
 
   private final MtsInboxRepository inboxes;
   private final MtsAuthorizedSenderRepository senders;
   private final MtsSenderListGrantRepository grants;
   private final ListRepository lists;
+  private final SendingPathRepository sendingPaths;
   private final MtsFromDomainService fromDomain;
   private final MtsDropService drops;
   private final CatalogReferenceService references;
@@ -48,6 +52,7 @@ public class MtsAdminController {
       MtsAuthorizedSenderRepository senders,
       MtsSenderListGrantRepository grants,
       ListRepository lists,
+      SendingPathRepository sendingPaths,
       MtsFromDomainService fromDomain,
       MtsDropService drops,
       CatalogReferenceService references,
@@ -58,6 +63,7 @@ public class MtsAdminController {
     this.senders = senders;
     this.grants = grants;
     this.lists = lists;
+    this.sendingPaths = sendingPaths;
     this.fromDomain = fromDomain;
     this.drops = drops;
     this.references = references;
@@ -263,6 +269,7 @@ public class MtsAdminController {
   public Map<String, String> deleteInbox(@PathVariable String id) {
     MtsInboxEntity box = requireInbox(id);
     for (MtsAuthorizedSenderEntity sender : senders.findByInboxId(id)) {
+      clearSenderPathReference(id, sender.getEmail());
       clearGrantReferences(id, sender.getEmail());
     }
     drops.deleteDropsForInbox(id);
@@ -290,6 +297,7 @@ public class MtsAdminController {
   public InboxDetail removeSender(@PathVariable String id, @PathVariable String email) {
     requireInbox(id);
     String norm = email.trim().toLowerCase(Locale.ROOT);
+    clearSenderPathReference(id, norm);
     clearGrantReferences(id, norm);
     grants.deleteByInboxIdAndSenderEmail(id, norm);
     senders.deleteByInboxIdAndEmail(id, norm);
@@ -312,14 +320,47 @@ public class MtsAdminController {
       @PathVariable String id, @PathVariable String email, @RequestBody GrantsBody body) {
     requireInbox(id);
     String norm = email.trim().toLowerCase(Locale.ROOT);
-    if (!senders.existsByInboxIdAndEmail(id, norm)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "sender not found");
-    }
+    MtsAuthorizedSenderEntity sender =
+        senders
+            .findByInboxIdAndEmail(id, norm)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "sender not found"));
     if (body == null || body.grants() == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "grants required");
     }
+    String substitute = blankToNull(body.substituteFrom());
+    String pathId = blankToNull(body.sendingPathId());
+    if (pathId != null && !sendingPaths.existsById(pathId)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown sending path");
+    }
+    if (substitute != null && pathId != null) {
+      SendingPathEntity path =
+          sendingPaths
+              .findById(pathId)
+              .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown sending path"));
+      String subDomain = MtsFromDomainService.domainOf(substitute);
+      String pathDomain = MtsFromDomainService.domainOf(path.getFromEmail());
+      if (subDomain == null
+          || pathDomain == null
+          || !subDomain.equalsIgnoreCase(pathDomain)) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Substitute From domain must match Sending Path From domain");
+      }
+    }
+    clearSenderPathReference(id, norm);
     clearGrantReferences(id, norm);
     grants.deleteByInboxIdAndSenderEmail(id, norm);
+    sender.setSubstituteFrom(substitute);
+    sender.setSendingPathId(pathId);
+    senders.save(sender);
+    if (pathId != null) {
+      references.add(
+          CatalogTargetType.SENDING_PATH,
+          pathId,
+          REF_SENDER,
+          senderRefId(id, norm),
+          "MTS sender " + norm);
+    }
     int pos = 0;
     for (GrantRow row : body.grants()) {
       if (row == null || !row.granted() || !StringUtils.hasText(row.listId())) {
@@ -332,13 +373,7 @@ public class MtsAdminController {
       MtsSenderListGrantEntity g =
           grants.save(
               new MtsSenderListGrantEntity(
-                  Guids.newGuid(),
-                  id,
-                  norm,
-                  row.listId(),
-                  blankToNull(row.substituteFrom()),
-                  footerId,
-                  pos++));
+                  Guids.newGuid(), id, norm, row.listId(), footerId, pos++));
       lists
           .findById(row.listId())
           .ifPresent(
@@ -388,6 +423,25 @@ public class MtsAdminController {
     }
   }
 
+  private void clearSenderPathReference(String inboxId, String senderEmail) {
+    senders
+        .findByInboxIdAndEmail(inboxId, senderEmail)
+        .ifPresent(
+            s -> {
+              if (StringUtils.hasText(s.getSendingPathId())) {
+                references.remove(
+                    CatalogTargetType.SENDING_PATH,
+                    s.getSendingPathId(),
+                    REF_SENDER,
+                    senderRefId(inboxId, senderEmail));
+              }
+            });
+  }
+
+  private static String senderRefId(String inboxId, String senderEmail) {
+    return inboxId + ":" + senderEmail;
+  }
+
   private InboxDetail detail(MtsInboxEntity box) {
     List<String> emails =
         senders.findByInboxId(box.getId()).stream().map(MtsAuthorizedSenderEntity::getEmail).toList();
@@ -425,6 +479,8 @@ public class MtsAdminController {
   }
 
   private SenderDetail senderDetail(String inboxId, String email) {
+    MtsAuthorizedSenderEntity sender =
+        senders.findByInboxIdAndEmail(inboxId, email).orElse(null);
     Map<String, MtsSenderListGrantEntity> byList =
         grants.findByInboxIdAndSenderEmailOrderByPositionAsc(inboxId, email).stream()
             .collect(java.util.stream.Collectors.toMap(MtsSenderListGrantEntity::getListId, g -> g, (a, b) -> a));
@@ -439,21 +495,35 @@ public class MtsAdminController {
                       list.getId(),
                       list.getName(),
                       g != null,
-                      g == null ? null : g.getSubstituteFrom(),
                       g == null ? null : g.getFooterId()));
             });
-    return new SenderDetail(email, rows);
+    return new SenderDetail(
+        email,
+        sender == null ? null : sender.getSubstituteFrom(),
+        sender == null ? null : sender.getSendingPathId(),
+        rows);
   }
 
   private MappingSummary mappingSummary(MtsSenderListGrantEntity g) {
     String listName = lists.findById(g.getListId()).map(l -> l.getName()).orElse(g.getListId());
+    String substitute =
+        senders
+            .findByInboxIdAndEmail(g.getInboxId(), g.getSenderEmail())
+            .map(MtsAuthorizedSenderEntity::getSubstituteFrom)
+            .orElse(null);
+    String pathId =
+        senders
+            .findByInboxIdAndEmail(g.getInboxId(), g.getSenderEmail())
+            .map(MtsAuthorizedSenderEntity::getSendingPathId)
+            .orElse(null);
     return new MappingSummary(
         g.getId(),
         g.getInboxId(),
         g.getSenderEmail(),
         g.getListId(),
         listName,
-        g.getSubstituteFrom(),
+        substitute,
+        pathId,
         g.getFooterId());
   }
 
@@ -511,9 +581,9 @@ public class MtsAdminController {
 
   public record SenderBody(String email) {}
 
-  public record GrantsBody(List<GrantRow> grants) {}
+  public record GrantsBody(String substituteFrom, String sendingPathId, List<GrantRow> grants) {}
 
-  public record GrantRow(String listId, boolean granted, String substituteFrom, String footerId) {}
+  public record GrantRow(String listId, boolean granted, String footerId) {}
 
   public record InboxSummary(
       String id,
@@ -542,10 +612,10 @@ public class MtsAdminController {
       String result,
       boolean polling) {}
 
-  public record SenderDetail(String email, List<GrantView> grants) {}
+  public record SenderDetail(
+      String email, String substituteFrom, String sendingPathId, List<GrantView> grants) {}
 
-  public record GrantView(
-      String listId, String listName, boolean granted, String substituteFrom, String footerId) {}
+  public record GrantView(String listId, String listName, boolean granted, String footerId) {}
 
   public record MappingSummary(
       String id,
@@ -554,6 +624,7 @@ public class MtsAdminController {
       String listId,
       String listName,
       String substituteFrom,
+      String sendingPathId,
       String footerId) {}
 
   public record IssueView(

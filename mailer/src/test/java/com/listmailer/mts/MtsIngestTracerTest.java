@@ -129,7 +129,6 @@ class MtsIngestTracerTest {
             "author@example.com",
             listId,
             null,
-            null,
             0));
 
     GreenMailUtil.sendTextEmail(

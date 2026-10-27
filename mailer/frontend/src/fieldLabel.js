@@ -29,6 +29,7 @@ const PHRASES = {
   fromEmail: 'From Email',
   fromName: 'From Name',
   returnPathEmail: 'Return-Path Email',
+  substituteFrom: 'Substitute From',
   pollIntervalMinutes: 'Poll Interval Minutes',
   autoQueue: 'Auto Queue',
   deleteAfterAccept: 'Delete After Accept',

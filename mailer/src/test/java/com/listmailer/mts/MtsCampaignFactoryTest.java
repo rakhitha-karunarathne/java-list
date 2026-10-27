@@ -15,7 +15,9 @@ import com.listmailer.campaigns.CampaignListRepository;
 import com.listmailer.campaigns.CampaignRepository;
 import com.listmailer.campaigns.CampaignSendService;
 import com.listmailer.campaigns.CampaignStatus;
+import com.listmailer.catalogs.CatalogReferenceService;
 import com.listmailer.catalogs.FooterRepository;
+import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.lists.ListRepository;
 import java.time.Instant;
 import java.util.List;
@@ -34,6 +36,8 @@ class MtsCampaignFactoryTest {
   @Mock CampaignSendService sendService;
   @Mock FooterRepository footers;
   @Mock ListRepository lists;
+  @Mock SendingPathRepository sendingPaths;
+  @Mock CatalogReferenceService references;
   @InjectMocks MtsCampaignFactory factory;
 
   @Test
@@ -49,7 +53,7 @@ class MtsCampaignFactoryTest {
     CampaignEntity queued =
         new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.QUEUED, Instant.now());
     when(sendService.queueAndSend(anyString())).thenReturn(queued);
-    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, null, 0);
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, 0);
 
     CampaignEntity out = factory.createQueued("Hi", "<p>x</p>", "x", List.of(grant));
 
@@ -61,7 +65,7 @@ class MtsCampaignFactoryTest {
   void createWithoutAutoQueueStaysDraft() {
     when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(campaignLists.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, null, 0);
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, 0);
 
     CampaignEntity out = factory.create("Hi", "<p>x</p>", "x", List.of(grant), false);
 
@@ -74,7 +78,7 @@ class MtsCampaignFactoryTest {
     when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(campaignLists.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(attachments.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, null, 0);
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, 0);
     var file =
         new com.listmailer.mailbox.MimeBodyParser.Attachment(
             "Receipt_562459.pdf", "application/pdf", new byte[] {1, 2, 3});
@@ -98,7 +102,7 @@ class MtsCampaignFactoryTest {
             });
     when(campaignLists.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(attachments.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, null, 0);
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, 0);
     String html =
         "<p><img src=\"logo.png\"/><img src=\"https://cdn.example.com/banner.png\"/></p>";
     var inline =

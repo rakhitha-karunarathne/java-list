@@ -22,6 +22,12 @@ public class MtsAuthorizedSenderEntity {
   @Column(nullable = false, length = 320)
   private String email;
 
+  @Column(name = "substitute_from", length = 320)
+  private String substituteFrom;
+
+  @Column(name = "sending_path_id", length = 36)
+  private String sendingPathId;
+
   protected MtsAuthorizedSenderEntity() {}
 
   public MtsAuthorizedSenderEntity(String inboxId, String email) {
@@ -35,6 +41,22 @@ public class MtsAuthorizedSenderEntity {
 
   public String getEmail() {
     return email;
+  }
+
+  public String getSubstituteFrom() {
+    return substituteFrom;
+  }
+
+  public void setSubstituteFrom(String substituteFrom) {
+    this.substituteFrom = substituteFrom;
+  }
+
+  public String getSendingPathId() {
+    return sendingPathId;
+  }
+
+  public void setSendingPathId(String sendingPathId) {
+    this.sendingPathId = sendingPathId;
   }
 
   public static final class Pk implements Serializable {
