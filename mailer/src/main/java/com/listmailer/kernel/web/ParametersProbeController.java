@@ -101,7 +101,9 @@ public class ParametersProbeController {
         || ParameterKeys.SEND_MESSAGES_PER_HOUR.equals(key)) {
       requireInt(body.value(), 1);
     }
-    if (ParameterKeys.SEND_DELAY_PER_EMAIL_MS.equals(key)) {
+    if (ParameterKeys.SEND_DELAY_PER_EMAIL_MS.equals(key)
+        || ParameterKeys.SEND_RETRY_COUNT.equals(key)
+        || ParameterKeys.SEND_RETRY_DELAY_MINUTES.equals(key)) {
       requireInt(body.value(), 0);
     }
     if (body.value().length() > 2000) {

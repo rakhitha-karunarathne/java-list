@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +29,7 @@ import static org.mockito.Mockito.lenient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,6 +89,9 @@ class CampaignSendServiceTest {
     lenient().when(pauseCache.globalPaused()).thenReturn(false);
     lenient().when(pauseCache.campaignPaused(anyString())).thenReturn(false);
     lenient().when(pauseCache.listPaused(any())).thenReturn(false);
+    lenient().when(queue.findByStatus("FAILED_RETRY_PENDING")).thenReturn(List.of());
+    lenient().when(queue.findById(anyString())).thenReturn(Optional.empty());
+    lenient().when(queue.save(any())).thenAnswer(inv -> inv.getArgument(0));
   }
 
   @Test
@@ -392,6 +398,100 @@ class CampaignSendServiceTest {
     assertEquals(0, service.processPendingBatch(10));
 
     verify(smtp, times(0)).send(any());
+  }
+
+  @Test
+  void smtpFailureMarksRetryAndContinues() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.SENDING, Instant.now());
+    SendQueueEntity fail =
+        new SendQueueEntity("q1", "c1", "m1", "bad@example.com", "path-1", "PENDING");
+    SendQueueEntity ok =
+        new SendQueueEntity("q2", "c1", "m2", "ok@example.com", "path-1", "PENDING");
+    when(queue.findByStatus("PENDING")).thenReturn(new ArrayList<>(List.of(fail, ok)));
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(attachments.findByCampaignId("c1")).thenReturn(List.of());
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1")).thenReturn(List.of());
+    when(queue.findById(anyString()))
+        .thenAnswer(
+            inv -> {
+              String id = inv.getArgument(0);
+              if ("q1".equals(id)) {
+                return Optional.of(fail);
+              }
+              if ("q2".equals(id)) {
+                return Optional.of(ok);
+              }
+              return Optional.empty();
+            });
+    when(queue.findByCampaignId("c1")).thenAnswer(inv -> List.of(fail, ok));
+    when(parameters.get(ParameterKeys.SEND_RETRY_COUNT)).thenReturn(Optional.of("3"));
+    when(parameters.get(ParameterKeys.SEND_RETRY_DELAY_MINUTES)).thenReturn(Optional.of("5"));
+    doAnswer(
+            inv -> {
+              SmtpPort.SmtpMessage msg = inv.getArgument(0);
+              if (msg.toEmail().startsWith("bad")) {
+                throw new RuntimeException("smtp down");
+              }
+              return null;
+            })
+        .when(smtp)
+        .send(any());
+
+    int sent = service.processPendingBatch(10, 0L, null);
+
+    assertEquals("FAILED_RETRY_PENDING", fail.getStatus());
+    assertEquals("SENT", ok.getStatus());
+    assertEquals(1, sent);
+  }
+
+  @Test
+  void exhaustedRetriesBecomeSendFailed() {
+    SendQueueEntity row =
+        new SendQueueEntity("q1", "c1", "m1", "bad@example.com", "path-1", "FAILED_RETRY_PENDING");
+    row.setRetryAttempts(2);
+    row.setNextAttemptAt(Instant.now().minusSeconds(1));
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.SENDING, Instant.now());
+    when(queue.findByStatus("PENDING")).thenReturn(List.of());
+    when(queue.findByStatus("FAILED_RETRY_PENDING")).thenReturn(List.of(row));
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(attachments.findByCampaignId("c1")).thenReturn(List.of());
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1")).thenReturn(List.of());
+    when(queue.findById("q1")).thenReturn(Optional.of(row));
+    when(parameters.get(ParameterKeys.SEND_RETRY_COUNT)).thenReturn(Optional.of("3"));
+    when(parameters.get(ParameterKeys.SEND_RETRY_DELAY_MINUTES)).thenReturn(Optional.of("5"));
+    doThrow(new RuntimeException("smtp down")).when(smtp).send(any());
+
+    assertEquals(0, service.processPendingBatch(10));
+
+    assertEquals("SEND_FAILED", row.getStatus());
+    assertEquals(3, row.getRetryAttempts());
+  }
+
+  @Test
+  void retryFailedRequeuesSendFailedOnly() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.FINISHED, Instant.now());
+    SendQueueEntity failed =
+        new SendQueueEntity("q1", "c1", "m1", "a@example.com", "path-1", "SEND_FAILED");
+    failed.setRetryAttempts(3);
+    SendQueueEntity retrying =
+        new SendQueueEntity("q2", "c1", "m2", "b@example.com", "path-1", "FAILED_RETRY_PENDING");
+    retrying.setRetryAttempts(1);
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(queue.findByCampaignId("c1")).thenReturn(List.of(failed, retrying));
+    when(queue.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    CampaignEntity out = service.retryFailed("c1");
+
+    assertEquals(CampaignStatus.QUEUED, out.getStatus());
+    assertEquals("PENDING", failed.getStatus());
+    assertEquals(0, failed.getRetryAttempts());
+    assertEquals("FAILED_RETRY_PENDING", retrying.getStatus());
+    assertEquals(1, retrying.getRetryAttempts());
   }
 
   @Test

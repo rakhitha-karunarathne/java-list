@@ -53,6 +53,12 @@ public class SendQueueEntity {
   @Column(name = "sent_at")
   private Instant sentAt;
 
+  @Column(name = "retry_attempts", nullable = false)
+  private int retryAttempts;
+
+  @Column(name = "next_attempt_at")
+  private Instant nextAttemptAt;
+
   protected SendQueueEntity() {}
 
   public SendQueueEntity(
@@ -160,5 +166,21 @@ public class SendQueueEntity {
 
   public void setSentAt(Instant sentAt) {
     this.sentAt = sentAt;
+  }
+
+  public int getRetryAttempts() {
+    return retryAttempts;
+  }
+
+  public void setRetryAttempts(int retryAttempts) {
+    this.retryAttempts = retryAttempts;
+  }
+
+  public Instant getNextAttemptAt() {
+    return nextAttemptAt;
+  }
+
+  public void setNextAttemptAt(Instant nextAttemptAt) {
+    this.nextAttemptAt = nextAttemptAt;
   }
 }

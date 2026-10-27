@@ -73,6 +73,14 @@ public final class ParameterDefinitions {
         "false",
         "When true, the send-queue processor starts no further campaign messages. Test sends and Notice-path mail still go out. Values: true|false. Default false.");
     put(
+        ParameterKeys.SEND_RETRY_COUNT,
+        "3",
+        "Further SMTP tries after the first failure for a recipient. Integer >= 0. Default 3.");
+    put(
+        ParameterKeys.SEND_RETRY_DELAY_MINUTES,
+        "5",
+        "Minutes to wait before the next try of a Failed-Retry Pending row. Integer >= 0. Default 5.");
+    put(
         ParameterKeys.SEND_DELAY_PER_EMAIL_MS,
         "1000",
         "Pause after each SMTP send, in milliseconds. Integer >= 0. Default 1000.");

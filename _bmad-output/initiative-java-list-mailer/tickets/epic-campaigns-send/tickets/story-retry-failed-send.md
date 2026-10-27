@@ -8,7 +8,7 @@ after: [12]
 hitl: false
 risk: medium
 refined: true
-status: ready
+status: done
 ---
 
 # Retry a failed send

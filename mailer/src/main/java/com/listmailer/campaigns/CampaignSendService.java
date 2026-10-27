@@ -350,17 +350,31 @@ public class CampaignSendService {
     if (pauseCache.globalPaused()) {
       return 0;
     }
-    List<SendQueueEntity> pending = queue.findByStatus("PENDING");
+    java.time.Instant now = java.time.Instant.now();
+    List<SendQueueEntity> pending = new ArrayList<>();
+    List<SendQueueEntity> duePending = queue.findByStatus("PENDING");
+    if (duePending != null) {
+      pending.addAll(duePending);
+    }
+    List<SendQueueEntity> retries = queue.findByStatus("FAILED_RETRY_PENDING");
+    if (retries != null) {
+      for (SendQueueEntity row : retries) {
+        if (row.getNextAttemptAt() == null || !row.getNextAttemptAt().isAfter(now)) {
+          pending.add(row);
+        }
+      }
+    }
     // shortcut: empty ticks are not written
-    if (pending == null || pending.isEmpty()) {
+    if (pending.isEmpty()) {
       return 0;
     }
     activity.write(ActivityLogService.SEND, "START", "queue send pending=" + pending.size());
     int sent = 0;
+    int tries = 0;
     String openPath = null;
     try {
       for (SendQueueEntity row : pending) {
-        if (sent >= maxSends) {
+        if (tries >= maxSends) {
           break;
         }
         if (deadline != null && !java.time.Instant.now().isBefore(deadline)) {
@@ -378,7 +392,7 @@ public class CampaignSendService {
             || peek.getStatus() == CampaignStatus.PAUSED) {
           continue;
         }
-        if (sent > 0 && delayMs > 0) {
+        if (tries > 0 && delayMs > 0) {
           long wait = delayMs;
           if (deadline != null) {
             long remain = java.time.Duration.between(java.time.Instant.now(), deadline).toMillis();
@@ -404,10 +418,33 @@ public class CampaignSendService {
           openPath = row.getSendingPathId();
           activity.write(ActivityLogService.SEND, "CONNECT", "path=" + pathLabel(openPath));
         }
-        if (!Boolean.TRUE.equals(inTx(status -> deliver(row)))) {
-          continue;
+        try {
+          if (!Boolean.TRUE.equals(inTx(status -> deliver(row)))) {
+            continue;
+          }
+          tries++;
+          sent++;
+        } catch (RuntimeException ex) {
+          tries++;
+          try {
+            inTx(
+                status -> {
+                  recordFailure(row.getId());
+                  return null;
+                });
+          } catch (RuntimeException ignored) {
+            // keep draining other recipients
+          }
+          activity.write(
+              ActivityLogService.SEND,
+              "FAIL",
+              "to="
+                  + row.getEmail()
+                  + " campaign="
+                  + row.getCampaignId()
+                  + " "
+                  + (ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage()));
         }
-        sent++;
       }
       return sent;
     } finally {
@@ -416,6 +453,85 @@ public class CampaignSendService {
       }
       activity.write(ActivityLogService.SEND, "END", "queue send sent=" + sent);
     }
+  }
+
+  @Transactional
+  public CampaignEntity retryFailed(String campaignId) {
+    CampaignEntity campaign =
+        campaigns
+            .findById(campaignId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "not found"));
+    boolean any = false;
+    for (SendQueueEntity row : queue.findByCampaignId(campaignId)) {
+      if (!"SEND_FAILED".equals(row.getStatus())) {
+        continue;
+      }
+      row.setStatus("PENDING");
+      row.setRetryAttempts(0);
+      row.setNextAttemptAt(null);
+      queue.save(row);
+      any = true;
+    }
+    if (!any) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "no Send Failed rows");
+    }
+    if (campaign.getStatus() == CampaignStatus.FINISHED) {
+      campaign.setStatus(CampaignStatus.QUEUED);
+      campaigns.save(campaign);
+    }
+    return campaign;
+  }
+
+  private void recordFailure(String queueId) {
+    SendQueueEntity row = queue.findById(queueId).orElse(null);
+    if (row == null) {
+      return;
+    }
+    String status = row.getStatus();
+    if (!"PENDING".equals(status) && !"FAILED_RETRY_PENDING".equals(status)) {
+      return;
+    }
+    int maxFurther = intParam(ParameterKeys.SEND_RETRY_COUNT, 3);
+    int delayMin = intParam(ParameterKeys.SEND_RETRY_DELAY_MINUTES, 5);
+    if ("PENDING".equals(status)) {
+      if (maxFurther <= 0) {
+        row.setStatus("SEND_FAILED");
+        row.setRetryAttempts(0);
+        row.setNextAttemptAt(null);
+      } else {
+        row.setStatus("FAILED_RETRY_PENDING");
+        row.setRetryAttempts(0);
+        row.setNextAttemptAt(
+            java.time.Instant.now().plus(delayMin, java.time.temporal.ChronoUnit.MINUTES));
+      }
+      queue.save(row);
+      return;
+    }
+    int next = row.getRetryAttempts() + 1;
+    row.setRetryAttempts(next);
+    if (next >= maxFurther) {
+      row.setStatus("SEND_FAILED");
+      row.setNextAttemptAt(null);
+    } else {
+      row.setStatus("FAILED_RETRY_PENDING");
+      row.setNextAttemptAt(java.time.Instant.now().plus(delayMin, java.time.temporal.ChronoUnit.MINUTES));
+    }
+    queue.save(row);
+  }
+
+  private int intParam(String key, int fallback) {
+    return parameters
+        .get(key)
+        .map(
+            v -> {
+              try {
+                int n = Integer.parseInt(v.trim());
+                return n >= 0 ? n : fallback;
+              } catch (NumberFormatException e) {
+                return fallback;
+              }
+            })
+        .orElse(fallback);
   }
 
   /** One message. Returns false when the campaign must be skipped. */
@@ -491,15 +607,20 @@ public class CampaignSendService {
             headers));
     row.setStatus("SENT");
     row.setSentAt(java.time.Instant.now());
+    row.setRetryAttempts(0);
+    row.setNextAttemptAt(null);
     queue.save(row);
     activity.write(
         ActivityLogService.SEND,
         "SEND",
         "to=" + row.getEmail() + " campaign=" + campaign.getId() + " subject=" + campaign.getSubject());
-    boolean morePending =
+    boolean moreOpen =
         queue.findByCampaignId(campaign.getId()).stream()
-            .anyMatch(r -> "PENDING".equals(r.getStatus()));
-    if (!morePending && campaign.getStatus() == CampaignStatus.SENDING) {
+            .anyMatch(
+                r ->
+                    "PENDING".equals(r.getStatus())
+                        || "FAILED_RETRY_PENDING".equals(r.getStatus()));
+    if (!moreOpen && campaign.getStatus() == CampaignStatus.SENDING) {
       campaign.setStatus(CampaignStatus.FINISHED);
       campaigns.save(campaign);
       ops.audit("campaign.finished", "campaign=" + campaign.getId(), "system", null, null);

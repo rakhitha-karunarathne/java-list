@@ -245,6 +245,14 @@ public class CampaignsController {
     return out;
   }
 
+  @PostMapping("/{id}/retry-failed")
+  public CampaignDetail retryFailed(@PathVariable String id) {
+    require(id);
+    CampaignDetail out = detail(sendService.retryFailed(id));
+    ops.audit("campaign.retry_failed", "campaign=" + id, actor(), null, null);
+    return out;
+  }
+
   private String actor() {
     return access.currentUser().map(u -> u.getEmail()).orElse("system");
   }
@@ -334,7 +342,13 @@ public class CampaignsController {
             .toList();
     List<SendQueueEntity> rows = queue.findByCampaignId(c.getId());
     long sent = rows.stream().filter(r -> "SENT".equals(r.getStatus())).count();
-    long waiting = rows.stream().filter(r -> "PENDING".equals(r.getStatus())).count();
+    long waiting =
+        rows.stream()
+            .filter(
+                r ->
+                    "PENDING".equals(r.getStatus())
+                        || "FAILED_RETRY_PENDING".equals(r.getStatus()))
+            .count();
     Instant sendStartedAt =
         rows.stream().map(SendQueueEntity::getSentAt).filter(Objects::nonNull).min(Instant::compareTo).orElse(null);
     Instant sendFinishedAt =
