@@ -147,7 +147,7 @@ public class MtsIngestService {
     }
     AtomicInteger created = new AtomicInteger();
     heartbeat(box);
-    activity.write(ActivityLogService.MTS, "CONNECT", "mailboxId=" + box.getId());
+    activity.write(ActivityLogService.MTS, "CONNECT", mailboxRef(box));
     try {
       mailbox.poll(
           new MailboxPort.MailboxConn(
@@ -165,8 +165,7 @@ public class MtsIngestService {
             activity.write(
                 ActivityLogService.MTS,
                 "FETCH",
-                "mailboxId="
-                    + box.getId()
+                mailboxRef(box)
                     + " from="
                     + raw.from()
                     + " subject="
@@ -200,8 +199,7 @@ public class MtsIngestService {
               activity.write(
                   ActivityLogService.MTS,
                   "CAMPAIGN",
-                  "mailboxId="
-                      + box.getId()
+                  mailboxRef(box)
                       + " id="
                       + campaign.getId()
                       + " lists="
@@ -222,7 +220,7 @@ public class MtsIngestService {
             return true;
           });
       finish(box, true);
-      activity.write(ActivityLogService.MTS, "DISCONNECT", "mailboxId=" + box.getId());
+      activity.write(ActivityLogService.MTS, "DISCONNECT", mailboxRef(box));
       if (created.get() > 0) {
         ops.opsLog("mts.poll", "inbox=" + box.getName() + " campaigns=" + created.get());
       }
@@ -231,7 +229,7 @@ public class MtsIngestService {
       activity.write(
           ActivityLogService.MTS,
           "DISCONNECT",
-          "mailboxId=" + box.getId() + " error=" + ex.getMessage());
+          mailboxRef(box) + " error=" + ex.getMessage());
       ops.opsLog("mts.poll", "inbox=" + box.getName() + " error=" + ex.getMessage());
       ops.attentionAdmin("MTS inbox poll failed", box.getName() + ": " + ex.getMessage());
       log.warn("mts poll {}: {}", box.getName(), ex.getMessage());
@@ -240,6 +238,11 @@ public class MtsIngestService {
       throw ex;
     }
     return created.get();
+  }
+
+  /** Keep mailboxId= for per-box log filters; name is for operators. */
+  static String mailboxRef(MtsInboxEntity box) {
+    return "mailbox=" + box.getName() + " mailboxId=" + box.getId();
   }
 
   static String extractHtml(MailboxPort.RawMessage raw) {

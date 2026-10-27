@@ -140,7 +140,7 @@ public class BouncePollService {
     Instant now = Instant.now();
     AtomicInteger count = new AtomicInteger();
     heartbeat(box);
-    activity.write(ActivityLogService.BOUNCE, "CONNECT", "mailboxId=" + box.getId());
+    activity.write(ActivityLogService.BOUNCE, "CONNECT", mailboxRef(box));
     try {
       mailbox.poll(
           new MailboxPort.MailboxConn(
@@ -169,8 +169,7 @@ public class BouncePollService {
             activity.write(
                 ActivityLogService.BOUNCE,
                 "FETCH",
-                "mailboxId="
-                    + box.getId()
+                mailboxRef(box)
                     + " from="
                     + raw.from()
                     + " subject="
@@ -180,7 +179,7 @@ public class BouncePollService {
             return true;
           });
       finish(box, true);
-      activity.write(ActivityLogService.BOUNCE, "DISCONNECT", "mailboxId=" + box.getId());
+      activity.write(ActivityLogService.BOUNCE, "DISCONNECT", mailboxRef(box));
       if (count.get() > 0) {
         ops.opsLog(
             "bounce.poll",
@@ -191,7 +190,7 @@ public class BouncePollService {
       activity.write(
           ActivityLogService.BOUNCE,
           "DISCONNECT",
-          "mailboxId=" + box.getId() + " error=" + ex.getMessage());
+          mailboxRef(box) + " error=" + ex.getMessage());
       ops.opsLog("bounce.poll", "mailbox=" + box.getName() + " error=" + ex.getMessage());
       ops.attentionAdmin("Bounce mailbox poll failed", box.getName() + ": " + ex.getMessage());
       log.warn("bounce poll {}: {}", box.getName(), ex.getMessage());
@@ -200,6 +199,11 @@ public class BouncePollService {
       throw ex;
     }
     return count.get();
+  }
+
+  /** Keep mailboxId= for per-box log filters; name is for operators. */
+  static String mailboxRef(BounceMailboxEntity box) {
+    return "mailbox=" + box.getName() + " mailboxId=" + box.getId();
   }
 
   static String headersToText(Map<String, String> headers) {
