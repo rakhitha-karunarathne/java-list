@@ -203,7 +203,46 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
             ← Lists
           </button>
           <h2>{detail.name}</h2>
+          {detail.paused ? <p className="hint">Sending for this list is paused.</p> : null}
           {detail.canManage ? (
+            <>
+              <p>
+                {detail.paused ? (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={async () => {
+                      try {
+                        const d = await apiJson(token, `/api/lists/${detailId}/resume`, {
+                          method: 'POST',
+                        })
+                        setDetail(d)
+                      } catch (err) {
+                        onError(err.message)
+                      }
+                    }}
+                  >
+                    Resume sending
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={async () => {
+                      try {
+                        const d = await apiJson(token, `/api/lists/${detailId}/pause`, {
+                          method: 'POST',
+                        })
+                        setDetail(d)
+                      } catch (err) {
+                        onError(err.message)
+                      }
+                    }}
+                  >
+                    Pause sending
+                  </button>
+                )}
+              </p>
             <form onSubmit={save}>
               <label className="field">
                 {fieldLabel('name')}
@@ -254,6 +293,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
                 Save
               </button>
             </form>
+            </>
           ) : (
             <p className="hint">View only (no manage grant).</p>
           )}

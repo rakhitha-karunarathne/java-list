@@ -69,6 +69,10 @@ public final class ParameterDefinitions {
         "365",
         "Days to retain audit records. Integer >= 1. Default 365.");
     put(
+        ParameterKeys.SEND_PAUSED,
+        "false",
+        "When true, the send-queue processor starts no further campaign messages. Test sends and Notice-path mail still go out. Values: true|false. Default false.");
+    put(
         ParameterKeys.SEND_DELAY_PER_EMAIL_MS,
         "1000",
         "Pause after each SMTP send, in milliseconds. Integer >= 0. Default 1000.");

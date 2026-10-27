@@ -57,6 +57,7 @@ class CampaignSendServiceTest {
   @Mock SendingPathRepository sendingPaths;
   @Mock com.listmailer.ops.ActivityLogService activity;
   @Mock TransactionTemplate transactions;
+  @Mock SendPauseCache pauseCache;
   @InjectMocks CampaignSendService service;
 
   @BeforeEach
@@ -82,6 +83,9 @@ class CampaignSendServiceTest {
         .when(imageFetch.ingest(anyString(), any(), any(), any()))
         .thenAnswer(inv -> inv.getArgument(1));
     lenient().when(opaqueTokens.seal(any())).thenReturn("opaque-unsub-token");
+    lenient().when(pauseCache.globalPaused()).thenReturn(false);
+    lenient().when(pauseCache.campaignPaused(anyString())).thenReturn(false);
+    lenient().when(pauseCache.listPaused(any())).thenReturn(false);
   }
 
   @Test
@@ -379,5 +383,45 @@ class CampaignSendServiceTest {
     assertEquals(0, service.processPendingBatch(10, 0, Instant.now().minusSeconds(1)));
 
     verify(smtp, times(0)).send(any());
+  }
+
+  @Test
+  void globalPauseSkipsBatch() {
+    when(pauseCache.globalPaused()).thenReturn(true);
+
+    assertEquals(0, service.processPendingBatch(10));
+
+    verify(smtp, times(0)).send(any());
+  }
+
+  @Test
+  void enqueueTracksFirstListId() {
+    CampaignEntity campaign =
+        new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.DRAFT, Instant.now());
+    when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
+    when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1"))
+        .thenReturn(List.of(new CampaignListEntity("c1", "list-a", 0)));
+    when(lists.findById("list-a"))
+        .thenReturn(
+            Optional.of(
+                new ListEntity("list-a", "A", "path-1", null, null, null, null, Instant.now())));
+    when(listMembers.findByListId("list-a"))
+        .thenReturn(List.of(new ListMemberEntity("list-a", "m1", false, Instant.now())));
+    when(members.findById("m1"))
+        .thenReturn(Optional.of(new MemberEntity("m1", "a@example.com", true, Instant.now())));
+    List<SendQueueEntity> enqueued = new ArrayList<>();
+    when(queue.save(any()))
+        .thenAnswer(
+            inv -> {
+              enqueued.add(inv.getArgument(0));
+              return inv.getArgument(0);
+            });
+    when(queue.findByCampaignId("c1")).thenAnswer(inv -> List.copyOf(enqueued));
+
+    service.queueAndSend("c1");
+
+    assertEquals(1, enqueued.size());
+    assertEquals("list-a", enqueued.get(0).getListId());
   }
 }

@@ -1,9 +1,17 @@
-export const CAMPAIGN_STATUSES = ['DRAFT', 'QUEUED', 'SENDING', 'FINISHED', 'STOPPED']
+export const CAMPAIGN_STATUSES = [
+  'DRAFT',
+  'QUEUED',
+  'SENDING',
+  'PAUSED',
+  'FINISHED',
+  'STOPPED',
+]
 
 export const CAMPAIGN_STATUS_LABEL = {
   DRAFT: 'Draft',
   QUEUED: 'Queued',
   SENDING: 'Sending',
+  PAUSED: 'Paused',
   FINISHED: 'Finished',
   STOPPED: 'Stopped',
 }
@@ -21,5 +29,14 @@ export function filterCampaigns(rows, statusFilter) {
 
 export function canStopCampaign(status) {
   const s = (status || '').toUpperCase()
-  return s === 'DRAFT' || s === 'QUEUED' || s === 'SENDING'
+  return s === 'DRAFT' || s === 'QUEUED' || s === 'SENDING' || s === 'PAUSED'
+}
+
+export function canPauseCampaign(status) {
+  const s = (status || '').toUpperCase()
+  return s === 'QUEUED' || s === 'SENDING'
+}
+
+export function canResumeCampaign(status) {
+  return (status || '').toUpperCase() === 'PAUSED'
 }

@@ -23,6 +23,7 @@ class SendQueueProcessorTest {
   @Mock CampaignSendService sendService;
   @Mock SendQueueRepository queue;
   @Mock ParametersPort parameters;
+  @Mock SendPauseCache pauseCache;
   @InjectMocks SendQueueProcessor processor;
 
   @Test

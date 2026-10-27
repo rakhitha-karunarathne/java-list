@@ -8,7 +8,7 @@ after: [11]
 hitl: true
 risk: high
 refined: true
-status: ready
+status: done
 ---
 
 # Pause sending

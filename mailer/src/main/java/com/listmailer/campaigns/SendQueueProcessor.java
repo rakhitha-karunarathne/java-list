@@ -22,13 +22,18 @@ public class SendQueueProcessor {
   private final CampaignSendService sendService;
   private final SendQueueRepository queue;
   private final ParametersPort parameters;
+  private final SendPauseCache pauseCache;
   private final AtomicBoolean running = new AtomicBoolean(false);
 
   public SendQueueProcessor(
-      CampaignSendService sendService, SendQueueRepository queue, ParametersPort parameters) {
+      CampaignSendService sendService,
+      SendQueueRepository queue,
+      ParametersPort parameters,
+      SendPauseCache pauseCache) {
     this.sendService = sendService;
     this.queue = queue;
     this.parameters = parameters;
+    this.pauseCache = pauseCache;
   }
 
   @Scheduled(fixedDelayString = "${mailer.send-queue.tick-ms:60000}")
@@ -37,6 +42,7 @@ public class SendQueueProcessor {
       return; // same schedule class non-overlap
     }
     try {
+      pauseCache.clear();
       int batch = positive(ParameterKeys.SEND_BATCH_SIZE, 600);
       int minutes = positive(ParameterKeys.SEND_BATCH_DURATION_MINUTES, 10);
       int perHour = positive(ParameterKeys.SEND_MESSAGES_PER_HOUR, 3600);

@@ -17,6 +17,7 @@ public final class ParameterKeys {
   public static final String MTS_PROCESS_LOG_MAX_ROWS = "mts.process.log.max.rows";
   public static final String MTS_PROCESS_LOG_ENABLED = "mts.process.log.enabled";
   public static final String AUDIT_RETENTION_DAYS = "audit.retention.days";
+  public static final String SEND_PAUSED = "send.paused";
   public static final String SEND_DELAY_PER_EMAIL_MS = "send.delay.per.email.ms";
   public static final String SEND_BATCH_SIZE = "send.batch.size";
   public static final String SEND_BATCH_DURATION_MINUTES = "send.batch.duration.minutes";

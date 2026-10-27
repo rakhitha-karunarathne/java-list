@@ -26,6 +26,9 @@ public class SendQueueEntity {
   @Column(name = "sending_path_id", nullable = false, length = 36)
   private String sendingPathId;
 
+  @Column(name = "list_id", length = 36)
+  private String listId;
+
   @Column(nullable = false, length = 32)
   private String status;
 
@@ -85,6 +88,14 @@ public class SendQueueEntity {
 
   public String getSendingPathId() {
     return sendingPathId;
+  }
+
+  public String getListId() {
+    return listId;
+  }
+
+  public void setListId(String listId) {
+    this.listId = listId;
   }
 
   public String getStatus() {

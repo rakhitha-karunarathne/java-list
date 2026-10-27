@@ -3,6 +3,8 @@ import { apiJson } from './api.js'
 import {
   CAMPAIGN_STATUSES,
   campaignStatusLabel,
+  canPauseCampaign,
+  canResumeCampaign,
   canStopCampaign,
   filterCampaigns,
 } from './campaignStatus.js'
@@ -12,6 +14,7 @@ const BADGE = {
   DRAFT: { bg: '#e2e8f0', fg: '#0f172a' },
   QUEUED: { bg: '#dbeafe', fg: '#1e3a8a' },
   SENDING: { bg: '#fef3c7', fg: '#92400e' },
+  PAUSED: { bg: '#fce7f3', fg: '#9d174d' },
   FINISHED: { bg: '#dcfce7', fg: '#14532d' },
   STOPPED: { bg: '#fee2e2', fg: '#7f1d1d' },
 }
@@ -89,6 +92,26 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
     }
   }
 
+  async function pause(id) {
+    try {
+      const updated = await apiJson(token, `/api/campaigns/${id}/pause`, { method: 'POST' })
+      await load()
+      if (detailId === id) setDetail(updated)
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
+  async function resume(id) {
+    try {
+      const updated = await apiJson(token, `/api/campaigns/${id}/resume`, { method: 'POST' })
+      await load()
+      if (detailId === id) setDetail(updated)
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
   async function queue(id) {
     try {
       const updated = await apiJson(token, `/api/campaigns/${id}/queue`, { method: 'POST' })
@@ -160,6 +183,16 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
             <StatusBadge status={detail.status} />
           </p>
           {msg ? <p>{msg}</p> : null}
+          {canPauseCampaign(detail.status) ? (
+            <button type="button" className="btn secondary" onClick={() => pause(detailId)}>
+              Pause
+            </button>
+          ) : null}{' '}
+          {canResumeCampaign(detail.status) ? (
+            <button type="button" className="btn" onClick={() => resume(detailId)}>
+              Resume
+            </button>
+          ) : null}{' '}
           {canStopCampaign(detail.status) ? (
             <button type="button" className="btn secondary" onClick={() => stop(detailId)}>
               Stop
@@ -332,8 +365,10 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
             stopRowClick: true,
             render: (r) => {
               const draft = (r.status || '').toUpperCase() === 'DRAFT'
+              const showPause = canPauseCampaign(r.status)
+              const showResume = canResumeCampaign(r.status)
               const showStop = canStopCampaign(r.status)
-              if (!draft && !showStop) return '—'
+              if (!draft && !showPause && !showResume && !showStop) return '—'
               return (
                 <>
                   {draft ? (
@@ -345,6 +380,16 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
                         Queue
                       </button>
                     </>
+                  ) : null}{' '}
+                  {showPause ? (
+                    <button type="button" className="btn secondary" onClick={() => pause(r.id)}>
+                      Pause
+                    </button>
+                  ) : null}{' '}
+                  {showResume ? (
+                    <button type="button" className="btn" onClick={() => resume(r.id)}>
+                      Resume
+                    </button>
                   ) : null}{' '}
                   {showStop ? (
                     <button type="button" className="btn secondary" onClick={() => stop(r.id)}>

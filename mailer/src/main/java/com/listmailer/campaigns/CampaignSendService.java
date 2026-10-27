@@ -52,6 +52,7 @@ public class CampaignSendService {
   private final SendingPathRepository sendingPaths;
   private final ActivityLogService activity;
   private final TransactionTemplate transactions;
+  private final SendPauseCache pauseCache;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -69,7 +70,8 @@ public class CampaignSendService {
       OpaqueTokenHelper opaqueTokens,
       SendingPathRepository sendingPaths,
       ActivityLogService activity,
-      TransactionTemplate transactions) {
+      TransactionTemplate transactions,
+      SendPauseCache pauseCache) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -86,6 +88,7 @@ public class CampaignSendService {
     this.sendingPaths = sendingPaths;
     this.activity = activity;
     this.transactions = transactions;
+    this.pauseCache = pauseCache;
   }
 
   /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
@@ -264,8 +267,9 @@ public class CampaignSendService {
     campaign.setHtmlBody(rewrittenHtml);
     campaigns.save(campaign);
 
-    // address-level dedupe (R1): same email → one queue row
+    // address-level dedupe (R1): same email → one queue row; first list wins for list_id
     Map<String, MemberEntity> unique = new LinkedHashMap<>();
+    Map<String, String> emailToList = new LinkedHashMap<>();
     for (CampaignListEntity cl : linked) {
       for (ListMemberEntity lm : listMembers.findByListId(cl.getListId())) {
         if (lm.isUnsubscribed()) {
@@ -275,7 +279,12 @@ public class CampaignSendService {
             .findById(lm.getMemberId())
             .filter(MemberEntity::isEnabled)
             .ifPresent(
-                m -> unique.putIfAbsent(m.getEmail().trim().toLowerCase(Locale.ROOT), m));
+                m -> {
+                  String key = m.getEmail().trim().toLowerCase(Locale.ROOT);
+                  if (unique.putIfAbsent(key, m) == null) {
+                    emailToList.put(key, cl.getListId());
+                  }
+                });
       }
     }
     int enqueued = 0;
@@ -297,14 +306,16 @@ public class CampaignSendService {
       if (already) {
         continue;
       }
-      queue.save(
+      SendQueueEntity row =
           new SendQueueEntity(
               Guids.newGuid(),
               campaignId,
               member.getId(),
               member.getEmail(),
               pathId,
-              "PENDING"));
+              "PENDING");
+      row.setListId(emailToList.get(emailKey));
+      queue.save(row);
       enqueued++;
     }
     for (CampaignListEntity cl : linked) {
@@ -336,6 +347,9 @@ public class CampaignSendService {
     if (maxSends <= 0) {
       return 0;
     }
+    if (pauseCache.globalPaused()) {
+      return 0;
+    }
     List<SendQueueEntity> pending = queue.findByStatus("PENDING");
     // shortcut: empty ticks are not written
     if (pending == null || pending.isEmpty()) {
@@ -352,10 +366,16 @@ public class CampaignSendService {
         if (deadline != null && !java.time.Instant.now().isBefore(deadline)) {
           break;
         }
+        if (pauseCache.globalPaused()
+            || pauseCache.campaignPaused(row.getCampaignId())
+            || pauseCache.listPaused(row.getListId())) {
+          continue;
+        }
         CampaignEntity peek = campaigns.findById(row.getCampaignId()).orElse(null);
         if (peek == null
             || peek.getStatus() == CampaignStatus.STOPPED
-            || peek.getStatus() == CampaignStatus.DRAFT) {
+            || peek.getStatus() == CampaignStatus.DRAFT
+            || peek.getStatus() == CampaignStatus.PAUSED) {
           continue;
         }
         if (sent > 0 && delayMs > 0) {
@@ -400,10 +420,16 @@ public class CampaignSendService {
 
   /** One message. Returns false when the campaign must be skipped. */
   private boolean deliver(SendQueueEntity row) {
+    if (pauseCache.globalPaused()
+        || pauseCache.campaignPaused(row.getCampaignId())
+        || pauseCache.listPaused(row.getListId())) {
+      return false;
+    }
     CampaignEntity campaign = campaigns.findById(row.getCampaignId()).orElse(null);
     if (campaign == null
         || campaign.getStatus() == CampaignStatus.STOPPED
-        || campaign.getStatus() == CampaignStatus.DRAFT) {
+        || campaign.getStatus() == CampaignStatus.DRAFT
+        || campaign.getStatus() == CampaignStatus.PAUSED) {
       return false;
     }
     if (campaign.getStatus() == CampaignStatus.QUEUED) {

@@ -33,6 +33,9 @@ public class ListEntity {
   @Column(name = "image_ttl_override_hours")
   private Integer imageTtlOverrideHours;
 
+  @Column(nullable = false)
+  private boolean paused;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -107,6 +110,14 @@ public class ListEntity {
 
   public void setImageTtlOverrideHours(Integer imageTtlOverrideHours) {
     this.imageTtlOverrideHours = imageTtlOverrideHours;
+  }
+
+  public boolean isPaused() {
+    return paused;
+  }
+
+  public void setPaused(boolean paused) {
+    this.paused = paused;
   }
 
   public Instant getCreatedAt() {

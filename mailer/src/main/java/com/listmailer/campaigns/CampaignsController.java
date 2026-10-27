@@ -39,6 +39,7 @@ public class CampaignsController {
   private final CampaignOpenRepository opens;
   private final BounceEventRepository bounces;
   private final OpsHooksPort ops;
+  private final SendPauseCache pauseCache;
 
   public CampaignsController(
       CampaignRepository campaigns,
@@ -50,7 +51,8 @@ public class CampaignsController {
       SendQueueRepository queue,
       CampaignOpenRepository opens,
       BounceEventRepository bounces,
-      OpsHooksPort ops) {
+      OpsHooksPort ops,
+      SendPauseCache pauseCache) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -61,6 +63,7 @@ public class CampaignsController {
     this.queue = queue;
     this.opens = opens;
     this.bounces = bounces;
+    this.pauseCache = pauseCache;
   }
 
   @GetMapping
@@ -162,12 +165,41 @@ public class CampaignsController {
     CampaignEntity c = require(id);
     if (c.getStatus() != CampaignStatus.DRAFT
         && c.getStatus() != CampaignStatus.QUEUED
-        && c.getStatus() != CampaignStatus.SENDING) {
+        && c.getStatus() != CampaignStatus.SENDING
+        && c.getStatus() != CampaignStatus.PAUSED) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot stop from " + c.getStatus());
     }
     c.setStatus(CampaignStatus.STOPPED);
     CampaignDetail out = detail(campaigns.save(c));
     ops.audit("campaign.stop", "campaign=" + id, actor(), null, null);
+    return out;
+  }
+
+  @PostMapping("/{id}/pause")
+  @Transactional
+  public CampaignDetail pause(@PathVariable String id) {
+    CampaignEntity c = require(id);
+    if (c.getStatus() != CampaignStatus.QUEUED && c.getStatus() != CampaignStatus.SENDING) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "pause only from Queued or Sending");
+    }
+    c.setStatus(CampaignStatus.PAUSED);
+    CampaignDetail out = detail(campaigns.save(c));
+    pauseCache.clearCampaign(id);
+    ops.audit("campaign.pause", "campaign=" + id, actor(), null, null);
+    return out;
+  }
+
+  @PostMapping("/{id}/resume")
+  @Transactional
+  public CampaignDetail resume(@PathVariable String id) {
+    CampaignEntity c = require(id);
+    if (c.getStatus() != CampaignStatus.PAUSED) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "resume only from Paused");
+    }
+    c.setStatus(CampaignStatus.QUEUED);
+    CampaignDetail out = detail(campaigns.save(c));
+    pauseCache.clearCampaign(id);
+    ops.audit("campaign.resume", "campaign=" + id, actor(), null, null);
     return out;
   }
 

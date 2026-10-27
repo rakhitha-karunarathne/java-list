@@ -31,6 +31,7 @@ class CampaignDetailStatsTest {
   @Mock CampaignOpenRepository opens;
   @Mock BounceEventRepository bounces;
   @Mock OpsHooksPort ops;
+  @Mock SendPauseCache pauseCache;
   @InjectMocks CampaignsController controller;
 
   @Test

@@ -1,5 +1,6 @@
 package com.listmailer.kernel.web;
 
+import com.listmailer.campaigns.SendPauseCache;
 import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.parameters.ParameterDefinitions;
@@ -23,10 +24,13 @@ public class ParametersProbeController {
 
   private final ParametersPort parameters;
   private final ParameterRepository repository;
+  private final SendPauseCache pauseCache;
 
-  public ParametersProbeController(ParametersPort parameters, ParameterRepository repository) {
+  public ParametersProbeController(
+      ParametersPort parameters, ParameterRepository repository, SendPauseCache pauseCache) {
     this.parameters = parameters;
     this.repository = repository;
+    this.pauseCache = pauseCache;
   }
 
   @GetMapping
@@ -78,7 +82,8 @@ public class ParametersProbeController {
             || ParameterKeys.VERP_ENABLED.equals(key)
             || ParameterKeys.BOUNCE_PROCESS_LOG_ENABLED.equals(key)
             || ParameterKeys.SEND_QUEUE_LOG_ENABLED.equals(key)
-            || ParameterKeys.MTS_PROCESS_LOG_ENABLED.equals(key))
+            || ParameterKeys.MTS_PROCESS_LOG_ENABLED.equals(key)
+            || ParameterKeys.SEND_PAUSED.equals(key))
         && !"true".equalsIgnoreCase(body.value())
         && !"false".equalsIgnoreCase(body.value())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value must be true or false");
@@ -103,6 +108,9 @@ public class ParametersProbeController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value too long");
     }
     parameters.set(key, body.value());
+    if (ParameterKeys.SEND_PAUSED.equals(key)) {
+      pauseCache.clearGlobal();
+    }
     return new ParameterView(key, body.value(), def.description());
   }
 

@@ -1,5 +1,6 @@
 package com.listmailer.lists;
 
+import com.listmailer.campaigns.SendPauseCache;
 import com.listmailer.catalogs.CatalogReferenceService;
 import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.catalogs.FooterRepository;
@@ -38,6 +39,7 @@ public class ListsController {
   private final CatalogReferenceService references;
   private final ListAccessService access;
   private final UserListGrantRepository grants;
+  private final SendPauseCache pauseCache;
 
   public ListsController(
       ListRepository lists,
@@ -45,13 +47,15 @@ public class ListsController {
       FooterRepository footers,
       CatalogReferenceService references,
       ListAccessService access,
-      UserListGrantRepository grants) {
+      UserListGrantRepository grants,
+      SendPauseCache pauseCache) {
     this.lists = lists;
     this.paths = paths;
     this.footers = footers;
     this.references = references;
     this.access = access;
     this.grants = grants;
+    this.pauseCache = pauseCache;
   }
 
   @GetMapping
@@ -135,6 +139,32 @@ public class ListsController {
     }
     grants.deleteByListId(listId);
     lists.delete(list);
+  }
+
+  @PostMapping("/{listId}/pause")
+  @Transactional
+  public ListDetail pause(@PathVariable String listId) {
+    if (!access.canManage(listId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "manage grant required");
+    }
+    ListEntity list = require(listId);
+    list.setPaused(true);
+    ListDetail out = ListDetail.from(lists.save(list), true, access.canSend(listId));
+    pauseCache.clearList(listId);
+    return out;
+  }
+
+  @PostMapping("/{listId}/resume")
+  @Transactional
+  public ListDetail resume(@PathVariable String listId) {
+    if (!access.canManage(listId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "manage grant required");
+    }
+    ListEntity list = require(listId);
+    list.setPaused(false);
+    ListDetail out = ListDetail.from(lists.save(list), true, access.canSend(listId));
+    pauseCache.clearList(listId);
+    return out;
   }
 
   private void wireReferences(String oldPath, String oldFooter, ListEntity list) {
@@ -222,7 +252,8 @@ public class ListsController {
       String payloadOverride,
       Integer imageTtlOverrideHours,
       boolean canManage,
-      boolean canSend) {
+      boolean canSend,
+      boolean paused) {
     static ListDetail from(ListEntity list, boolean canManage, boolean canSend) {
       return new ListDetail(
           list.getId(),
@@ -233,7 +264,8 @@ public class ListsController {
           list.getPayloadOverride() == null ? "" : list.getPayloadOverride(),
           list.getImageTtlOverrideHours(),
           canManage,
-          canSend);
+          canSend,
+          list.isPaused());
     }
   }
 }
