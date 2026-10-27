@@ -79,6 +79,7 @@ public class BounceCorrelationService {
     String blob = textOf(ev);
     Optional<Match> match = ladder(ev, blob);
     String clazz = classify(blob);
+    String error = BounceErrorExtractor.extract(blob, ev.getSubject());
     if (match.isPresent()) {
       Match m = match.get();
       ev.setStatus("CORRELATED");
@@ -86,11 +87,13 @@ public class BounceCorrelationService {
       ev.setSendQueueId(m.row().getId());
       ev.setCorrelationSignal(m.signal());
       ev.setClassification(clazz);
+      ev.setErrorText(error);
       events.save(ev);
       return;
     }
     ev.setStatus("UNCORRELATED");
     ev.setClassification(clazz);
+    ev.setErrorText(error);
     events.save(ev);
     ops.opsLog(
         "bounce.uncorrelated",

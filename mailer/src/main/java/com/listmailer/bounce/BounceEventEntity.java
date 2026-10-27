@@ -54,6 +54,9 @@ public class BounceEventEntity {
   @Column(name = "correlation_signal", length = 32)
   private String correlationSignal;
 
+  @Column(name = "error_text", length = 512)
+  private String errorText;
+
   protected BounceEventEntity() {}
 
   public BounceEventEntity(
@@ -147,5 +150,13 @@ public class BounceEventEntity {
 
   public void setCorrelationSignal(String correlationSignal) {
     this.correlationSignal = correlationSignal;
+  }
+
+  public String getErrorText() {
+    return errorText;
+  }
+
+  public void setErrorText(String errorText) {
+    this.errorText = errorText;
   }
 }

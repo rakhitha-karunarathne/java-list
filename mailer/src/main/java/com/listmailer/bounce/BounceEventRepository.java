@@ -9,6 +9,8 @@ public interface BounceEventRepository extends JpaRepository<BounceEventEntity, 
 
   List<BounceEventEntity> findByStatusAndMemberId(String status, String memberId);
 
+  List<BounceEventEntity> findAllByOrderByReceivedAtDesc();
+
   long countByMailboxIdAndStatus(String mailboxId, String status);
 
   long countBySendQueueIdIn(java.util.Collection<String> sendQueueIds);
