@@ -678,6 +678,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
   const [connTest, setConnTest] = useState(null)
   const [testing, setTesting] = useState(false)
   const [msg, setMsg] = useState('')
+  const [logReload, setLogReload] = useState(0)
 
   async function runBounceImapTest() {
     setTesting(true)
@@ -915,13 +916,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
             breakLockPath={`/api/bounce-mailboxes/${detailId}/break-lock`}
             onDetail={setDetail}
             onMsg={setMsg}
-          />
-          <MailboxProcessingLog
-            token={token}
-            onError={onError}
-            mailboxId={detailId}
-            mailboxName={detail.name}
-            logKind="BOUNCE"
+            onPolled={() => setLogReload((n) => n + 1)}
           />
         </section>
         <section className="card">
@@ -1019,6 +1014,15 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           </p>
         </form>
         </section>
+
+        <MailboxProcessingLog
+          token={token}
+          onError={onError}
+          mailboxId={detailId}
+          mailboxName={detail.name}
+          logKind="BOUNCE"
+          reloadKey={logReload}
+        />
       </div>
     )
   }
