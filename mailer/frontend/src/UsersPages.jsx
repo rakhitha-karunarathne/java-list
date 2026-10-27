@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiJson } from './api.js'
 import { confirmDelete } from './confirmDelete.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
+import { listTimeZones } from './formatWhen.js'
 import { passwordChangeProblem } from './passwordChange.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useTimeZone } from './TimeZone.jsx'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
@@ -339,6 +341,17 @@ export function MyAccountPage({ token, onError }) {
     true,
   )
   const [msg, setMsg] = useState('')
+  const { timeZone, setTimeZone } = useTimeZone()
+  const [zoneDraft, setZoneDraft] = useState(timeZone)
+  const [zoneMsg, setZoneMsg] = useState('')
+  const zoneTouched = useRef(false)
+  const zones = useMemo(() => listTimeZones(), [])
+  const zoneDirty = !valuesEqual(zoneDraft, timeZone)
+  useRegisterUnsaved(zoneDirty, 'account-timezone')
+
+  useEffect(() => {
+    if (!zoneTouched.current) setZoneDraft(timeZone)
+  }, [timeZone])
 
   async function changePassword(e) {
     e.preventDefault()
@@ -365,6 +378,23 @@ export function MyAccountPage({ token, onError }) {
       setMsg('Password changed.')
     } catch (err) {
       setMsg('')
+      onError(err.message)
+    }
+  }
+
+  async function saveTimeZone(e) {
+    e.preventDefault()
+    try {
+      const out = await apiJson(token, '/api/me/time-zone', {
+        method: 'PUT',
+        body: JSON.stringify({ timeZone: zoneDraft }),
+      })
+      zoneTouched.current = false
+      setTimeZone(out.timeZone || zoneDraft)
+      onError('')
+      setZoneMsg('Time zone saved.')
+    } catch (err) {
+      setZoneMsg('')
       onError(err.message)
     }
   }
@@ -414,6 +444,41 @@ export function MyAccountPage({ token, onError }) {
             title={dirty ? 'Unsaved changes' : undefined}
           >
             Change Password
+          </button>
+        </form>
+      </section>
+      <section className="card">
+        <h3>Time Zone</h3>
+        <p className="hint">Timestamps in the app use this zone. Values are still stored in UTC.</p>
+        {zoneMsg ? <p className="hint">{zoneMsg}</p> : null}
+        <form onSubmit={saveTimeZone}>
+          <label className="field">
+            {fieldLabel('timeZone')}
+            <select
+              value={zoneDraft}
+              onChange={(ev) => {
+                zoneTouched.current = true
+                setZoneDraft(ev.target.value)
+              }}
+              {...dirtyControlProps(zoneDirty)}
+            >
+              {zones.includes(zoneDraft) ? null : (
+                <option value={zoneDraft}>{zoneDraft}</option>
+              )}
+              {zones.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            className={btnDirtyClass(zoneDirty)}
+            title={zoneDirty ? 'Unsaved changes' : undefined}
+            disabled={!zoneDirty}
+          >
+            Save Time Zone
           </button>
         </form>
       </section>

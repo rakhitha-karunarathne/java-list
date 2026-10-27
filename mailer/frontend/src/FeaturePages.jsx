@@ -23,6 +23,7 @@ import {
   MtsPage,
 } from './OpsMtsPages.jsx'
 import Placeholder from './Placeholder.jsx'
+import { useFormatWhen } from './TimeZone.jsx'
 import { MyAccountPage, UsersPage } from './UsersPages.jsx'
 
 export function Compose({ token, onError, editId, onBack, onQueued }) {
@@ -646,6 +647,7 @@ export function AttentionInbox({ token, onError, onOpenBounce }) {
 }
 
 export function OpsLogs({ token, onError }) {
+  const when = useFormatWhen()
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
   useEffect(() => {
@@ -682,10 +684,7 @@ export function OpsLogs({ token, onError }) {
             {
               key: 'createdAt',
               label: 'Time',
-              render: (r) =>
-                r.createdAt
-                  ? String(r.createdAt).replace('T', ' ').replace('Z', ' UTC')
-                  : '—',
+              render: (r) => when(r.createdAt),
             },
             { key: 'severity', label: 'Severity' },
             { key: 'category', label: 'Category' },
@@ -701,7 +700,7 @@ export function OpsLogs({ token, onError }) {
         <div className="card">
           <h2>{detail.category}</h2>
           <p>{detail.message}</p>
-          <p className="hint">{detail.createdAt}</p>
+          <p className="hint">{when(detail.createdAt)}</p>
           <button type="button" className="btn secondary" onClick={() => setDetail(null)}>
             Close
           </button>

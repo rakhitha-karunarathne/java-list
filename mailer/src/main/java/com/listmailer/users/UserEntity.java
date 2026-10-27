@@ -38,6 +38,9 @@ public class UserEntity {
   @Column(name = "totp_enabled", nullable = false)
   private boolean totpEnabled;
 
+  @Column(name = "time_zone", nullable = false, length = 64)
+  private String timeZone = "UTC";
+
   protected UserEntity() {}
 
   public UserEntity(
@@ -49,6 +52,7 @@ public class UserEntity {
     this.enabled = enabled;
     this.createdAt = createdAt;
     this.totpEnabled = false;
+    this.timeZone = "UTC";
   }
 
   public String getId() {
@@ -101,5 +105,13 @@ public class UserEntity {
 
   public void setTotpEnabled(boolean totpEnabled) {
     this.totpEnabled = totpEnabled;
+  }
+
+  public String getTimeZone() {
+    return timeZone;
+  }
+
+  public void setTimeZone(String timeZone) {
+    this.timeZone = timeZone;
   }
 }

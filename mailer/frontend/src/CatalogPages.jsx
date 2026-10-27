@@ -24,6 +24,7 @@ import {
   MailboxProcessingLog,
   pollIndexColumns,
 } from './MailboxPollPanel.jsx'
+import { useFormatWhen } from './TimeZone.jsx'
 
 export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const blank = useRef({
@@ -679,6 +680,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
 }
 
 export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const when = useFormatWhen()
   const creating = isCreatePage(detailId)
   const { form, setForm, saved, dirty, blank, adopt, resetToBlank } = useDirtyForm(
     {
@@ -1072,7 +1074,7 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         rowKey={(r) => r.id}
         onOpen={(r) => onOpen(r.id)}
         empty="No bounce mailboxes yet."
-        columns={pollIndexColumns({ onPoll: pollFromIndex })}
+        columns={pollIndexColumns({ onPoll: pollFromIndex, when })}
       />
     </div>
   )

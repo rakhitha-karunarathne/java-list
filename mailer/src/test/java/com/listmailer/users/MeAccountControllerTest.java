@@ -91,4 +91,63 @@ class MeAccountControllerTest {
     assertEquals(400, blank.getStatusCode().value());
     verify(users, never()).save(user);
   }
+
+  @Test
+  void returnsProfileWithDefaultTimeZone() {
+    var out = controller.me(auth);
+    assertEquals("a@example.com", out.get("email"));
+    assertEquals("LIST_SENDER", out.get("role"));
+    assertEquals("UTC", out.get("timeZone"));
+  }
+
+  @Test
+  void meReturnsStoredTimeZone() {
+    user.setTimeZone("Asia/Colombo");
+    assertEquals("Asia/Colombo", controller.me(auth).get("timeZone"));
+  }
+
+  @Test
+  void meFallsBackWhenStoredZoneCorrupt() {
+    user.setTimeZone("+05:30");
+    assertEquals("UTC", controller.me(auth).get("timeZone"));
+  }
+
+  @Test
+  void savesValidTimeZone() {
+    var out =
+        controller.setTimeZone(auth, new MeAccountController.TimeZoneRequest("Asia/Colombo"));
+    assertEquals("Asia/Colombo", out.get("timeZone"));
+    assertEquals("Asia/Colombo", user.getTimeZone());
+    verify(users).save(user);
+  }
+
+  @Test
+  void rejectsInvalidTimeZone() {
+    ResponseStatusException bad =
+        assertThrows(
+            ResponseStatusException.class,
+            () -> controller.setTimeZone(auth, new MeAccountController.TimeZoneRequest("Not/AZone")));
+    assertEquals(400, bad.getStatusCode().value());
+
+    ResponseStatusException offset =
+        assertThrows(
+            ResponseStatusException.class,
+            () -> controller.setTimeZone(auth, new MeAccountController.TimeZoneRequest("+05:30")));
+    assertEquals(400, offset.getStatusCode().value());
+    verify(users, never()).save(user);
+  }
+
+  @Test
+  void rejectsNullOrBlankTimeZone() {
+    ResponseStatusException nil =
+        assertThrows(ResponseStatusException.class, () -> controller.setTimeZone(auth, null));
+    assertEquals(400, nil.getStatusCode().value());
+
+    ResponseStatusException blank =
+        assertThrows(
+            ResponseStatusException.class,
+            () -> controller.setTimeZone(auth, new MeAccountController.TimeZoneRequest("  ")));
+    assertEquals(400, blank.getStatusCode().value());
+    verify(users, never()).save(user);
+  }
 }

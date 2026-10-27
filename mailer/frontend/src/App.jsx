@@ -3,6 +3,7 @@ import { TOKEN_KEY, decodeJwtPayload, roleFromToken } from './auth.js'
 import LoginCard from './LoginCard.jsx'
 import Shell from './Shell.jsx'
 import { MainView } from './FeaturePages.jsx'
+import { TimeZoneProvider } from './TimeZone.jsx'
 import { UnsavedProvider, useUnsavedGate } from './Unsaved.jsx'
 
 function AppInner() {
@@ -65,23 +66,25 @@ function AppInner() {
           {error}
         </div>
       ) : null}
-      <Shell
-        role={role}
-        view={view}
-        email={email}
-        onNavigate={onNavigate}
-        onLogout={onLogout}
-      >
-        <MainView
+      <TimeZoneProvider token={token}>
+        <Shell
+          role={role}
           view={view}
-          token={token}
-          onError={setError}
-          detailId={detailId}
-          onOpenDetail={setDetailId}
-          onCloseDetail={onCloseDetail}
-          openInView={openInView}
-        />
-      </Shell>
+          email={email}
+          onNavigate={onNavigate}
+          onLogout={onLogout}
+        >
+          <MainView
+            view={view}
+            token={token}
+            onError={setError}
+            detailId={detailId}
+            onOpenDetail={setDetailId}
+            onCloseDetail={onCloseDetail}
+            openInView={openInView}
+          />
+        </Shell>
+      </TimeZoneProvider>
     </>
   )
 }

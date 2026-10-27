@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useFormatWhen } from './TimeZone.jsx'
 
 export function ActivityLogPage({ token, onError, kind, title, hint }) {
+  const when = useFormatWhen()
   const [rows, setRows] = useState([])
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export function ActivityLogPage({ token, onError, kind, title, hint }) {
         rowKey={(r) => r.id}
         empty="No log entries yet."
         columns={[
-          { key: 'createdAt', label: 'Time' },
+          { key: 'createdAt', label: 'Time', render: (r) => when(r.createdAt) },
           { key: 'event', label: 'Event' },
           { key: 'message', label: 'Message' },
         ]}

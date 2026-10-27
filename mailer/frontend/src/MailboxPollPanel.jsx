@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
+import { formatWhen } from './formatWhen.js'
 import { RecordTable } from './RecordTable.jsx'
-
-function when(value) {
-  if (!value) return '—'
-  return String(value).replace('T', ' ').replace('Z', ' UTC')
-}
+import { useFormatWhen } from './TimeZone.jsx'
 
 /** Poll controls and lock section. Admin-only pages. */
 export function MailboxPollPanel({
@@ -19,6 +16,7 @@ export function MailboxPollPanel({
   onMsg,
   onPolled,
 }) {
+  const when = useFormatWhen()
   async function pollNow() {
     try {
       const r = await apiJson(token, pollPath, { method: 'POST' })
@@ -81,6 +79,7 @@ export function MailboxProcessingLog({
   logKind,
   reloadKey = 0,
 }) {
+  const when = useFormatWhen()
   const [logs, setLogs] = useState([])
   const [logOn, setLogOn] = useState(true)
 
@@ -134,8 +133,9 @@ export function MailboxProcessingLog({
   )
 }
 
-/** @param {{ onPoll?: (row: { id: string, enabled?: boolean }) => void }} [opts] */
+/** @param {{ onPoll?: (row: { id: string, enabled?: boolean }) => void, when?: (v: unknown) => string }} [opts] */
 export function pollIndexColumns(opts = {}) {
+  const when = opts.when || ((v) => formatWhen(v, 'UTC'))
   const cols = [
     { key: 'name', label: 'Name' },
     {

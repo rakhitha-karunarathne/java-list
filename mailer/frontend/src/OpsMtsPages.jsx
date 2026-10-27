@@ -15,6 +15,7 @@ import {
   MailboxProcessingLog,
   pollIndexColumns,
 } from './MailboxPollPanel.jsx'
+import { useFormatWhen } from './TimeZone.jsx'
 
 const INBOX_BLANK = {
   name: '',
@@ -45,6 +46,7 @@ function grantsSig(rows, substituteFrom, sendingPathId) {
 }
 
 export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const when = useFormatWhen()
   const creating = isCreatePage(detailId)
   const nav = creating ? { kind: 'create' } : parseMtsDetailId(detailId)
   const {
@@ -775,7 +777,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         rowKey={(i) => i.id}
         onOpen={(i) => onOpen(i.id)}
         empty="No inboxes yet."
-        columns={pollIndexColumns({ onPoll: pollFromIndex })}
+        columns={pollIndexColumns({ onPoll: pollFromIndex, when })}
       />
     </div>
   )
@@ -1068,11 +1070,6 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
   )
 }
 
-function whenBounce(value) {
-  if (!value) return '—'
-  return String(value).replace('T', ' ').replace('Z', ' UTC')
-}
-
 /** Ingested bounce_events index + detail with stored payload (not Bounce Processing Log). */
 export function BounceMessagesPage({
   token,
@@ -1083,6 +1080,7 @@ export function BounceMessagesPage({
   onOpenMember,
   onOpenCampaign,
 }) {
+  const when = useFormatWhen()
   const [rows, setRows] = useState([])
   const [filter, setFilter] = useState('all')
   const [msg, setMsg] = useState('')
@@ -1171,7 +1169,7 @@ export function BounceMessagesPage({
             </a>
           </p>
           <h2>Bounce message</h2>
-          <p className="hint">{whenBounce(s.receivedAt)}</p>
+          <p className="hint">{when(s.receivedAt)}</p>
           <dl className="stats">
             <div>
               <dt>Email</dt>
@@ -1288,7 +1286,7 @@ export function BounceMessagesPage({
             {
               key: 'receivedAt',
               label: 'When',
-              render: (r) => whenBounce(r.receivedAt),
+              render: (r) => when(r.receivedAt),
             },
             {
               key: 'email',

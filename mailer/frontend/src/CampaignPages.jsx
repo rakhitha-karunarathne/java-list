@@ -11,6 +11,7 @@ import {
 } from './campaignStatus.js'
 import { confirmDelete } from './confirmDelete.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useFormatWhen } from './TimeZone.jsx'
 
 const BADGE = {
   DRAFT: { bg: '#e2e8f0', fg: '#0f172a' },
@@ -41,11 +42,6 @@ export function StatusBadge({ status }) {
   )
 }
 
-function when(value) {
-  if (!value) return '—'
-  return String(value).replace('T', ' ').replace('Z', ' UTC')
-}
-
 function formatBytes(n) {
   const bytes = Number(n) || 0
   if (bytes < 1024) return `${bytes} B`
@@ -54,6 +50,7 @@ function formatBytes(n) {
 }
 
 export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail, onEdit }) {
+  const when = useFormatWhen()
   const [rows, setRows] = useState([])
   const [filter, setFilter] = useState('')
   const [detail, setDetail] = useState(null)

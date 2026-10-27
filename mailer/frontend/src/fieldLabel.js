@@ -35,6 +35,7 @@ const PHRASES = {
   deleteAfterAccept: 'Delete After Accept',
   spamThreshold: 'Spam Threshold',
   sendingPathId: 'Sending Path',
+  timeZone: 'Time Zone',
   footerId: 'Footer',
   payloadOverride: 'Payload Override',
   imageTtlOverrideHours: 'Image TTL Override Hours',
