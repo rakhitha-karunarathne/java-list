@@ -663,7 +663,7 @@ export function MainView({
         />
       )
     case 'bounces':
-      return <BounceLogPage />
+      return <BounceLogPage token={token} onError={onError} />
     case 'ops':
       return <OpsLogs token={token} onError={onError} />
     case 'bounce-process-log':

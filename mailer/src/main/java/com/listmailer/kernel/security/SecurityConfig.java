@@ -46,6 +46,7 @@ public class SecurityConfig {
                         "/api/parameters/**",
                         "/api/sending-paths/**",
                         "/api/bounce-mailboxes/**",
+                        "/api/bounce-process/**",
                         "/api/footers/**",
                         "/api/notice-sending-path/**",
                         "/api/mts/**",

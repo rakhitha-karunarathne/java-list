@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ public class BounceProcessService {
   private final OpsHooksPort ops;
   private final ActivityLogService activity;
   private final AtomicBoolean running = new AtomicBoolean(false);
+  private final ExecutorService async = Executors.newCachedThreadPool();
 
   public BounceProcessService(
       BounceEventRepository events,
@@ -44,31 +47,51 @@ public class BounceProcessService {
     this.activity = activity;
   }
 
+  /** Start daily bounce processing on a background thread. Returns false if already running. */
+  public boolean startProcessAsync() {
+    if (!running.compareAndSet(false, true)) {
+      return false;
+    }
+    async.execute(
+        () -> {
+          try {
+            runProcess();
+          } finally {
+            running.set(false);
+          }
+        });
+    return true;
+  }
+
   public int processDaily() {
     if (!running.compareAndSet(false, true)) {
       return 0;
     }
     try {
-      activity.write(ActivityLogService.BOUNCE, "START", "bounce process");
-      int disabled = 0;
-      try {
-        Set<String> memberIds = new HashSet<>();
-        for (BounceEventEntity ev : events.findByStatus("CORRELATED")) {
-          if (ev.getMemberId() != null) {
-            memberIds.add(ev.getMemberId());
-          }
-        }
-        for (String memberId : memberIds) {
-          if (processMember(memberId)) {
-            disabled++;
-          }
-        }
-        return disabled;
-      } finally {
-        activity.write(ActivityLogService.BOUNCE, "END", "bounce process disabled=" + disabled);
-      }
+      return runProcess();
     } finally {
       running.set(false);
+    }
+  }
+
+  private int runProcess() {
+    activity.write(ActivityLogService.BOUNCE, "START", "bounce process");
+    int disabled = 0;
+    try {
+      Set<String> memberIds = new HashSet<>();
+      for (BounceEventEntity ev : events.findByStatus("CORRELATED")) {
+        if (ev.getMemberId() != null) {
+          memberIds.add(ev.getMemberId());
+        }
+      }
+      for (String memberId : memberIds) {
+        if (processMember(memberId)) {
+          disabled++;
+        }
+      }
+      return disabled;
+    } finally {
+      activity.write(ActivityLogService.BOUNCE, "END", "bounce process disabled=" + disabled);
     }
   }
 

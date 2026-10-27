@@ -976,11 +976,30 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
   )
 }
 
-export function BounceLogPage() {
+export function BounceLogPage({ token, onError }) {
+  const [msg, setMsg] = useState('')
+
+  async function runProcess() {
+    try {
+      const r = await apiJson(token, '/api/bounce-process/run', { method: 'POST' })
+      setMsg(r.message || 'process started')
+    } catch (e) {
+      onError(e.message)
+    }
+  }
+
   return (
     <div className="card">
       <h2>Bounce Log</h2>
-      <p className="hint">Correlation index ships with bounce processing ops; mailbox config is under Bounce Mailboxes.</p>
+      <p className="hint">
+        Correlation index ships with bounce processing ops; mailbox config is under Bounce Mailboxes.
+      </p>
+      {msg ? <p>{msg}</p> : null}
+      <p>
+        <button type="button" className="btn" onClick={runProcess}>
+          Run bounce processing
+        </button>
+      </p>
     </div>
   )
 }
