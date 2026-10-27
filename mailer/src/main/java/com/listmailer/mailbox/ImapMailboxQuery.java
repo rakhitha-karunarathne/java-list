@@ -4,7 +4,6 @@ import com.listmailer.kernel.ports.MailboxPort;
 import jakarta.mail.Flags;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
-import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
 import jakarta.mail.internet.InternetAddress;
@@ -34,27 +33,70 @@ public class ImapMailboxQuery implements MailboxPort {
       store.connect(conn.host(), conn.port(), conn.username(), conn.password());
       Folder folder = store.getFolder(conn.folder());
       folder.open(Folder.READ_WRITE);
+      boolean expunge = false;
       try {
-        // Stream one message at a time — do not collect bodies into a list
         Message[] messages = folder.getMessages();
         for (Message message : messages) {
           if (message.isSet(Flags.Flag.SEEN) || message.isSet(Flags.Flag.DELETED)) {
             continue;
           }
           RawMessage raw = toRaw(message);
-          boolean handled = handler.onMessage(raw);
-          if (handled) {
+          HandleResult result = handler.onMessage(raw);
+          if (result == HandleResult.DELETE) {
+            message.setFlag(Flags.Flag.DELETED, true);
+            expunge = true;
+          } else if (result == HandleResult.SEEN) {
             message.setFlag(Flags.Flag.SEEN, true);
           }
         }
       } finally {
         if (folder.isOpen()) {
-          folder.close(false);
+          folder.close(expunge);
         }
       }
     } catch (Exception ex) {
       throw new MailboxQueryException(
           "IMAP poll failed for " + conn.host() + ":" + conn.port() + " — " + ex.getMessage(), ex);
+    }
+  }
+
+  @Override
+  public int deleteSeen(MailboxConn conn) {
+    Properties props =
+        MailSecurity.imap(conn.host(), conn.port(), conn.useSsl(), conn.useTls());
+    String protocol = MailSecurity.imapProtocol(conn.useSsl());
+    Session session = Session.getInstance(props);
+    try (Store store = session.getStore(protocol)) {
+      store.connect(conn.host(), conn.port(), conn.username(), conn.password());
+      Folder folder = store.getFolder(conn.folder());
+      folder.open(Folder.READ_WRITE);
+      int deleted = 0;
+      try {
+        Message[] messages = folder.getMessages();
+        for (Message message : messages) {
+          if (message.isSet(Flags.Flag.DELETED)) {
+            continue;
+          }
+          if (message.isSet(Flags.Flag.SEEN)) {
+            message.setFlag(Flags.Flag.DELETED, true);
+            deleted++;
+          }
+        }
+      } finally {
+        if (folder.isOpen()) {
+          folder.close(deleted > 0);
+        }
+      }
+      return deleted;
+    } catch (Exception ex) {
+      throw new MailboxQueryException(
+          "IMAP delete-seen failed for "
+              + conn.host()
+              + ":"
+              + conn.port()
+              + " — "
+              + ex.getMessage(),
+          ex);
     }
   }
 

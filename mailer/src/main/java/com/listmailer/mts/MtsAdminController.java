@@ -207,6 +207,9 @@ public class MtsAdminController {
     if (body.autoQueue() != null) {
       box.setAutoQueue(body.autoQueue());
     }
+    if (body.deleteAfterAccept() != null) {
+      box.setDeleteAfterAccept(body.deleteAfterAccept());
+    }
     MtsInboxEntity saved = inboxes.save(box);
     return detail(saved);
   }
@@ -238,7 +241,21 @@ public class MtsAdminController {
     if (body.autoQueue() != null) {
       box.setAutoQueue(body.autoQueue());
     }
+    if (body.deleteAfterAccept() != null) {
+      box.setDeleteAfterAccept(body.deleteAfterAccept());
+    }
     return detail(inboxes.save(box));
+  }
+
+  @PostMapping("/inboxes/{id}/delete-seen")
+  public Map<String, Object> deleteSeen(@PathVariable String id) {
+    requireInbox(id);
+    try {
+      int deleted = ingest.deleteSeenMessages(id);
+      return Map.of("deleted", deleted, "message", "deleted " + deleted + " seen message(s)");
+    } catch (IllegalStateException ex) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
+    }
   }
 
   @DeleteMapping("/inboxes/{id}")
@@ -391,6 +408,7 @@ public class MtsAdminController {
         box.getPollIntervalMinutes(),
         box.isEnabled(),
         box.isAutoQueue(),
+        box.isDeleteAfterAccept(),
         emails,
         maps,
         box.getLastPolledAt() == null ? null : box.getLastPolledAt().toString(),
@@ -477,7 +495,8 @@ public class MtsAdminController {
       boolean useTls,
       int pollIntervalMinutes,
       Boolean enabled,
-      Boolean autoQueue) {}
+      Boolean autoQueue,
+      Boolean deleteAfterAccept) {}
 
   public record ConnectionTestRequest(
       String host,
@@ -515,6 +534,7 @@ public class MtsAdminController {
       int pollIntervalMinutes,
       boolean enabled,
       boolean autoQueue,
+      boolean deleteAfterAccept,
       List<String> authorizedSenders,
       List<MappingSummary> mappings,
       String lastPolledAt,

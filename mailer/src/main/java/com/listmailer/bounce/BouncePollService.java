@@ -176,7 +176,7 @@ public class BouncePollService {
                     + raw.subject()
                     + " messageId="
                     + raw.messageId());
-            return true;
+            return MailboxPort.HandleResult.SEEN;
           });
       finish(box, true);
       activity.write(ActivityLogService.BOUNCE, "DISCONNECT", mailboxRef(box));

@@ -4,8 +4,8 @@ import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailboxQueryException;
+import com.listmailer.mailbox.MimeBodyParser;
 import com.listmailer.ops.ActivityLogService;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -102,6 +102,29 @@ public class MtsIngestService {
     inboxes.save(box);
   }
 
+  /** Removes SEEN messages left behind when delete-after-accept was off (test cleanup). */
+  public int deleteSeenMessages(String id) {
+    MtsInboxEntity box =
+        inboxes.findById(id).orElseThrow(() -> new IllegalArgumentException("not found"));
+    if (locks.stillHeld(box.isPolling(), box.getLastPollingUpdate(), Instant.now())) {
+      throw new IllegalStateException("mailbox is polling; break lock or wait, then retry");
+    }
+    int n =
+        mailbox.deleteSeen(
+            new MailboxPort.MailboxConn(
+                box.getHost(),
+                box.getPort(),
+                box.getUsername(),
+                box.getPassword(),
+                box.isUseSsl(),
+                box.isUseTls(),
+                "INBOX"));
+    activity.write(
+        ActivityLogService.MTS, "CLEANUP", mailboxRef(box) + " deletedSeen=" + n);
+    ops.opsLog("mts.cleanup", "inbox=" + box.getName() + " deletedSeen=" + n);
+    return n;
+  }
+
   private boolean due(MtsInboxEntity box, Instant now) {
     if (box.getLastPolledAt() == null) {
       return true;
@@ -181,17 +204,29 @@ public class MtsIngestService {
                 ops.opsLog(
                     "mts.ingest",
                     "authorized but no list grants inbox=" + box.getId() + " sender=" + email);
-                return true;
+                return MailboxPort.HandleResult.SEEN;
               }
               var issue =
                   fromDomain.validateOrOpenIssue(box, senderGrants, email, raw.subject());
               if (issue != null) {
-                return true;
+                // hold-back: leave SEEN so it is not re-polled, but do not delete
+                return MailboxPort.HandleResult.SEEN;
               }
-              String html = extractHtml(raw);
-              String text = extractText(raw);
+              MimeBodyParser.Parsed parts = MimeBodyParser.parse(raw.bytes());
+              String html = parts.html();
+              String text = parts.text();
+              if (!StringUtils.hasText(html) && !StringUtils.hasText(text) && StringUtils.hasText(raw.subject())) {
+                text = raw.subject();
+                html = "<p>" + escape(raw.subject()) + "</p>";
+              }
               var campaign =
-                  campaigns.create(raw.subject(), html, text, senderGrants, box.isAutoQueue());
+                  campaigns.create(
+                      raw.subject(),
+                      html,
+                      text,
+                      senderGrants,
+                      box.isAutoQueue(),
+                      parts.attachments());
               String listIds =
                   senderGrants.stream()
                       .map(MtsSenderListGrantEntity::getListId)
@@ -206,10 +241,15 @@ public class MtsIngestService {
                       + " lists="
                       + listIds
                       + " subject="
-                      + campaign.getSubject());
+                      + campaign.getSubject()
+                      + " attachments="
+                      + parts.attachments().size());
               created.incrementAndGet();
               ops.opsLog(
                   "mts.accept", "inbox=" + box.getName() + " sender=" + email);
+              return box.isDeleteAfterAccept()
+                  ? MailboxPort.HandleResult.DELETE
+                  : MailboxPort.HandleResult.SEEN;
             } else if (decision.result() == MtsGateResult.NOTIFY_CROSS_INBOX) {
               drops.record(box.getId(), sender, decision.reason(), false);
               drops.notifyCrossInbox(sender, box.getName());
@@ -218,7 +258,7 @@ public class MtsIngestService {
               drops.record(
                   box.getId(), sender, decision.reason(), decision.countAutoBlock());
             }
-            return true;
+            return MailboxPort.HandleResult.SEEN;
           });
       finish(box, true);
       activity.write(ActivityLogService.MTS, "DISCONNECT", mailboxRef(box));
@@ -244,27 +284,6 @@ public class MtsIngestService {
   /** Keep mailboxId= for per-box log filters; name is for operators. */
   static String mailboxRef(MtsInboxEntity box) {
     return "mailbox=" + box.getName() + " mailboxId=" + box.getId();
-  }
-
-  static String extractHtml(MailboxPort.RawMessage raw) {
-    return "<p>" + escape(bodyContent(raw)) + "</p>";
-  }
-
-  static String extractText(MailboxPort.RawMessage raw) {
-    return bodyContent(raw);
-  }
-
-  private static String bodyContent(MailboxPort.RawMessage raw) {
-    String body = new String(raw.bytes(), StandardCharsets.UTF_8);
-    int sep = body.indexOf("\r\n\r\n");
-    if (sep < 0) {
-      sep = body.indexOf("\n\n");
-    }
-    String content = sep >= 0 ? body.substring(sep).trim() : body.trim();
-    if (!StringUtils.hasText(content) && StringUtils.hasText(raw.subject())) {
-      return raw.subject();
-    }
-    return content;
   }
 
   private static String escape(String s) {

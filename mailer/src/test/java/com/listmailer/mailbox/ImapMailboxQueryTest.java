@@ -61,7 +61,7 @@ class ImapMailboxQueryTest {
           peakHeld.set(Math.max(peakHeld.get(), 1)); // handler sees one at a time
           assertTrue(msg.bytes().length > 0);
           assertTrue(msg.headers() != null);
-          return true;
+          return MailboxPort.HandleResult.SEEN;
         });
 
     assertEquals(5, subjects.size());
@@ -75,7 +75,9 @@ class ImapMailboxQueryTest {
         new MailboxPort.MailboxConn(
             "127.0.0.1", greenMail.getImap().getPort(), "mailer", "wrong", false, false, "INBOX");
     MailboxQueryException ex =
-        assertThrows(MailboxQueryException.class, () -> query.poll(bad, m -> true));
+        assertThrows(
+            MailboxQueryException.class,
+            () -> query.poll(bad, m -> MailboxPort.HandleResult.SEEN));
     assertTrue(ex.getMessage().contains("IMAP poll failed"));
   }
 
@@ -100,7 +102,7 @@ class ImapMailboxQueryTest {
                   int n = active.incrementAndGet();
                   maxActive.accumulateAndGet(n, Math::max);
                   active.decrementAndGet();
-                  return true;
+                  return MailboxPort.HandleResult.SEEN;
                 });
     pass.run();
     pass.run(); // second pass: already SEEN → zero messages, still sequential

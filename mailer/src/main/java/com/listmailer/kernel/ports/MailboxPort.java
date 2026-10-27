@@ -15,10 +15,22 @@ public interface MailboxPort {
 
   void poll(MailboxConn conn, MessageHandler handler);
 
+  /** Deletes messages already marked SEEN. Returns how many were removed. */
+  int deleteSeen(MailboxConn conn);
+
   @FunctionalInterface
   interface MessageHandler {
-    /** Return true to mark the message handled (SEEN); false leaves it for re-read. */
-    boolean onMessage(RawMessage message) throws Exception;
+    /**
+     * {@link HandleResult#SEEN} marks read and keeps the message; {@link HandleResult#DELETE}
+     * removes it; {@link HandleResult#LEAVE} leaves it unread for a later poll.
+     */
+    HandleResult onMessage(RawMessage message) throws Exception;
+  }
+
+  enum HandleResult {
+    LEAVE,
+    SEEN,
+    DELETE
   }
 
   record MailboxConn(

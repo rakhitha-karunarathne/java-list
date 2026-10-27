@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.listmailer.campaigns.CampaignAttachmentRepository;
 import com.listmailer.campaigns.CampaignEntity;
 import com.listmailer.campaigns.CampaignListRepository;
 import com.listmailer.campaigns.CampaignRepository;
@@ -27,6 +28,7 @@ class MtsCampaignFactoryTest {
 
   @Mock CampaignRepository campaigns;
   @Mock CampaignListRepository campaignLists;
+  @Mock CampaignAttachmentRepository attachments;
   @Mock CampaignSendService sendService;
   @Mock FooterRepository footers;
   @Mock ListRepository lists;
@@ -62,6 +64,22 @@ class MtsCampaignFactoryTest {
     CampaignEntity out = factory.create("Hi", "<p>x</p>", "x", List.of(grant), false);
 
     assertEquals(CampaignStatus.DRAFT, out.getStatus());
+    verify(sendService, never()).queueAndSend(anyString());
+  }
+
+  @Test
+  void createPersistsAttachments() {
+    when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(campaignLists.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(attachments.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, null, 0);
+    var file =
+        new com.listmailer.mailbox.MimeBodyParser.Attachment(
+            "Receipt_562459.pdf", "application/pdf", new byte[] {1, 2, 3});
+
+    factory.create("Hi", "<p>x</p>", "x", List.of(grant), false, List.of(file));
+
+    verify(attachments).save(any());
     verify(sendService, never()).queueAndSend(anyString());
   }
 }

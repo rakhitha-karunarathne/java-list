@@ -29,6 +29,8 @@ const PHRASES = {
   fromEmail: 'From Email',
   fromName: 'From Name',
   pollIntervalMinutes: 'Poll Interval Minutes',
+  autoQueue: 'Auto Queue',
+  deleteAfterAccept: 'Delete After Accept',
   spamThreshold: 'Spam Threshold',
   sendingPathId: 'Sending Path',
   footerId: 'Footer',

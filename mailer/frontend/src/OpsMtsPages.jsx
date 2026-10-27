@@ -27,6 +27,7 @@ const INBOX_BLANK = {
   pollIntervalMinutes: 5,
   enabled: true,
   autoQueue: true,
+  deleteAfterAccept: true,
 }
 
 function grantsSig(rows) {
@@ -135,6 +136,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             pollIntervalMinutes: d.pollIntervalMinutes || 5,
             enabled: !!d.enabled,
             autoQueue: d.autoQueue !== false,
+            deleteAfterAccept: d.deleteAfterAccept !== false,
           })
         })
         .catch((e) => onError(e.message))
@@ -197,9 +199,29 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         pollIntervalMinutes: d.pollIntervalMinutes || 5,
         enabled: !!d.enabled,
         autoQueue: d.autoQueue !== false,
+        deleteAfterAccept: d.deleteAfterAccept !== false,
       })
       setConnTest(null)
       await loadInboxes()
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  async function deleteSeenMessages() {
+    if (
+      !window.confirm(
+        'Delete all previously processed (seen) messages from this mailbox on the server?',
+      )
+    ) {
+      return
+    }
+    try {
+      const r = await apiJson(token, `/api/mts/inboxes/${nav.inboxId}/delete-seen`, {
+        method: 'POST',
+      })
+      setPollMsg(r.message || `Deleted ${r.deleted} seen message(s)`)
+      setLogReload((n) => n + 1)
     } catch (err) {
       onError(err.message)
     }
@@ -379,12 +401,21 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           />
         </label>
         <label className="field">
-          {fieldLabel('auto queue')}
+          {fieldLabel('autoQueue')}
           <Toggle
             checked={!!inboxForm.autoQueue}
             dirty={!valuesEqual(inboxForm.autoQueue, inboxBase('autoQueue'))}
-            aria-label={fieldLabel('auto queue')}
+            aria-label={fieldLabel('autoQueue')}
             onChange={(on) => setInboxForm({ ...inboxForm, autoQueue: on })}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('deleteAfterAccept')}
+          <Toggle
+            checked={!!inboxForm.deleteAfterAccept}
+            dirty={!valuesEqual(inboxForm.deleteAfterAccept, inboxBase('deleteAfterAccept'))}
+            aria-label={fieldLabel('deleteAfterAccept')}
+            onChange={(on) => setInboxForm({ ...inboxForm, deleteAfterAccept: on })}
           />
         </label>
         {!creating ? (
@@ -596,8 +627,15 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             </button>{' '}
             <button type="button" className="btn secondary" onClick={deleteInbox}>
               Delete Inbox
+            </button>{' '}
+            <button type="button" className="btn secondary" onClick={deleteSeenMessages}>
+              Delete Processed Messages
             </button>
           </form>
+          <p className="hint">
+            When Delete After Accept is off, accepted mail stays SEEN for testing. Use Delete
+            Processed Messages to purge those after you are done.
+          </p>
         </section>
 
         <section className="card">

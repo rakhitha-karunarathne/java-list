@@ -575,6 +575,14 @@ export function OpsLogs({ token, onError }) {
           onOpen={(r) => openRow(r.id)}
           empty="No ops log entries."
           columns={[
+            {
+              key: 'createdAt',
+              label: 'Time',
+              render: (r) =>
+                r.createdAt
+                  ? String(r.createdAt).replace('T', ' ').replace('Z', ' UTC')
+                  : '—',
+            },
             { key: 'severity', label: 'Severity' },
             { key: 'category', label: 'Category' },
             {

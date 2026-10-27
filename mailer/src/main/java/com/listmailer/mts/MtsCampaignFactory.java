@@ -1,5 +1,7 @@
 package com.listmailer.mts;
 
+import com.listmailer.campaigns.CampaignAttachmentEntity;
+import com.listmailer.campaigns.CampaignAttachmentRepository;
 import com.listmailer.campaigns.CampaignEntity;
 import com.listmailer.campaigns.CampaignListEntity;
 import com.listmailer.campaigns.CampaignListRepository;
@@ -11,6 +13,7 @@ import com.listmailer.catalogs.FooterRepository;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
+import com.listmailer.mailbox.MimeBodyParser;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -25,6 +28,7 @@ public class MtsCampaignFactory {
 
   private final CampaignRepository campaigns;
   private final CampaignListRepository campaignLists;
+  private final CampaignAttachmentRepository attachments;
   private final CampaignSendService sendService;
   private final FooterRepository footers;
   private final ListRepository lists;
@@ -32,11 +36,13 @@ public class MtsCampaignFactory {
   public MtsCampaignFactory(
       CampaignRepository campaigns,
       CampaignListRepository campaignLists,
+      CampaignAttachmentRepository attachments,
       CampaignSendService sendService,
       FooterRepository footers,
       ListRepository lists) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
+    this.attachments = attachments;
     this.sendService = sendService;
     this.footers = footers;
     this.lists = lists;
@@ -48,7 +54,7 @@ public class MtsCampaignFactory {
       String htmlBody,
       String textBody,
       List<MtsSenderListGrantEntity> grants) {
-    return create(subject, htmlBody, textBody, grants, true);
+    return create(subject, htmlBody, textBody, grants, true, List.of());
   }
 
   /**
@@ -62,6 +68,17 @@ public class MtsCampaignFactory {
       String textBody,
       List<MtsSenderListGrantEntity> grants,
       boolean autoQueue) {
+    return create(subject, htmlBody, textBody, grants, autoQueue, List.of());
+  }
+
+  @Transactional
+  public CampaignEntity create(
+      String subject,
+      String htmlBody,
+      String textBody,
+      List<MtsSenderListGrantEntity> grants,
+      boolean autoQueue,
+      List<MimeBodyParser.Attachment> files) {
     if (grants == null || grants.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sender has no list grants");
     }
@@ -82,6 +99,17 @@ public class MtsCampaignFactory {
     int i = 0;
     for (MtsSenderListGrantEntity g : grants) {
       campaignLists.save(new CampaignListEntity(id, g.getListId(), i++));
+    }
+    if (files != null) {
+      for (MimeBodyParser.Attachment a : files) {
+        if (a == null || a.content() == null || a.content().length == 0) {
+          continue;
+        }
+        String name = StringUtils.hasText(a.filename()) ? a.filename() : "attachment.bin";
+        String ct =
+            StringUtils.hasText(a.contentType()) ? a.contentType() : "application/octet-stream";
+        attachments.save(new CampaignAttachmentEntity(Guids.newGuid(), id, name, ct, a.content()));
+      }
     }
     if (!autoQueue) {
       return c;

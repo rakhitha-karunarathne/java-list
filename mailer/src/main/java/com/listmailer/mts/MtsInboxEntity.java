@@ -56,6 +56,9 @@ public class MtsInboxEntity {
   @Column(name = "auto_queue", nullable = false)
   private boolean autoQueue = true;
 
+  @Column(name = "delete_after_accept", nullable = false)
+  private boolean deleteAfterAccept = true;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -81,6 +84,7 @@ public class MtsInboxEntity {
     this.pollIntervalMinutes = pollIntervalMinutes;
     this.enabled = true;
     this.autoQueue = true;
+    this.deleteAfterAccept = true;
     this.createdAt = createdAt;
   }
 
@@ -198,5 +202,13 @@ public class MtsInboxEntity {
 
   public void setAutoQueue(boolean autoQueue) {
     this.autoQueue = autoQueue;
+  }
+
+  public boolean isDeleteAfterAccept() {
+    return deleteAfterAccept;
+  }
+
+  public void setDeleteAfterAccept(boolean deleteAfterAccept) {
+    this.deleteAfterAccept = deleteAfterAccept;
   }
 }
