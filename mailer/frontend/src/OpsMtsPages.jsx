@@ -674,7 +674,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     try {
       const r = await apiJson(token, `/api/mts/inboxes/${row.id}/poll`, { method: 'POST' })
       setPollMsg(r.message || 'process started')
-      await load()
+      await loadInboxes()
     } catch (e) {
       onError(e.message)
     }
