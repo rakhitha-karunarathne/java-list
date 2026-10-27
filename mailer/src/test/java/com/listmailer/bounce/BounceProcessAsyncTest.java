@@ -1,7 +1,8 @@
 package com.listmailer.bounce;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.listmailer.campaigns.SendQueueRepository;
@@ -31,6 +32,7 @@ class BounceProcessAsyncTest {
   void secondStartRejectedWhileRunning() throws Exception {
     CountDownLatch started = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
+    when(events.findIdsByStatus("CORRELATED")).thenReturn(List.of("b1"));
     when(events.findByStatus("CORRELATED"))
         .thenAnswer(
             inv -> {
@@ -41,9 +43,20 @@ class BounceProcessAsyncTest {
     BounceProcessService process =
         new BounceProcessService(events, queue, members, parameters, ops, activity);
 
-    assertTrue(process.startProcessAsync());
+    assertEquals(BounceProcessService.StartOutcome.STARTED, process.startProcessAsync());
     assertTrue(started.await(5, TimeUnit.SECONDS));
-    assertFalse(process.startProcessAsync());
+    assertEquals(BounceProcessService.StartOutcome.ALREADY_RUNNING, process.startProcessAsync());
     release.countDown();
+  }
+
+  @Test
+  void skippedWhenNoCorrelatedThenCanStart() {
+    when(events.findIdsByStatus("CORRELATED"))
+        .thenReturn(List.of(), List.of("b1"), List.of("b1"), List.of("b1"), List.of("b1"));
+    lenient().when(events.findByStatus("CORRELATED")).thenReturn(List.of());
+    BounceProcessService process =
+        new BounceProcessService(events, queue, members, parameters, ops, activity);
+    assertEquals(BounceProcessService.StartOutcome.SKIPPED, process.startProcessAsync());
+    assertEquals(BounceProcessService.StartOutcome.STARTED, process.startProcessAsync());
   }
 }

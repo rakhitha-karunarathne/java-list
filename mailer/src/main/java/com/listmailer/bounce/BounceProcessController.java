@@ -19,9 +19,11 @@ public class BounceProcessController {
 
   @PostMapping("/run")
   public Map<String, String> runNow() {
-    if (!process.startProcessAsync()) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "bounce process already running");
-    }
-    return Map.of("message", "process started");
+    return switch (process.startProcessAsync()) {
+      case ALREADY_RUNNING ->
+          throw new ResponseStatusException(HttpStatus.CONFLICT, "bounce process already running");
+      case SKIPPED -> Map.of("message", "skipped — no new bounces since last run");
+      case STARTED -> Map.of("message", "process started");
+    };
   }
 }

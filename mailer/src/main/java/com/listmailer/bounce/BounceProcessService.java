@@ -18,10 +18,18 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
 public class BounceProcessService {
+
+  public enum StartOutcome {
+    STARTED,
+    ALREADY_RUNNING,
+    SKIPPED
+  }
 
   private final BounceEventRepository events;
   private final SendQueueRepository queue;
@@ -30,6 +38,7 @@ public class BounceProcessService {
   private final OpsHooksPort ops;
   private final ActivityLogService activity;
   private final AtomicBoolean running = new AtomicBoolean(false);
+  private final AtomicReference<String> lastCorrelatedSig = new AtomicReference<>(null);
   private final ExecutorService async = Executors.newCachedThreadPool();
 
   public BounceProcessService(
@@ -47,10 +56,19 @@ public class BounceProcessService {
     this.activity = activity;
   }
 
-  /** Start daily bounce processing on a background thread. Returns false if already running. */
-  public boolean startProcessAsync() {
+  /**
+   * Start bounce processing on a background thread when the CORRELATED set changed since last run.
+   */
+  public StartOutcome startProcessAsync() {
+    if (isIdle()) {
+      return StartOutcome.SKIPPED;
+    }
     if (!running.compareAndSet(false, true)) {
-      return false;
+      return StartOutcome.ALREADY_RUNNING;
+    }
+    if (isIdle()) {
+      running.set(false);
+      return StartOutcome.SKIPPED;
     }
     async.execute(
         () -> {
@@ -60,27 +78,47 @@ public class BounceProcessService {
             running.set(false);
           }
         });
-    return true;
+    return StartOutcome.STARTED;
   }
 
   public int processDaily() {
+    if (isIdle()) {
+      return 0;
+    }
     if (!running.compareAndSet(false, true)) {
       return 0;
     }
     try {
+      if (isIdle()) {
+        return 0;
+      }
       return runProcess();
     } finally {
       running.set(false);
     }
   }
 
+  /** True when there is nothing new to walk vs the last completed process input set. */
+  boolean isIdle() {
+    List<String> ids = events.findIdsByStatus("CORRELATED");
+    if (ids.isEmpty()) {
+      return true;
+    }
+    return signature(ids).equals(lastCorrelatedSig.get());
+  }
+
   private int runProcess() {
+    List<String> inputIds = events.findIdsByStatus("CORRELATED");
+    if (inputIds.isEmpty()) {
+      return 0;
+    }
+    Set<String> inputSet = new HashSet<>(inputIds);
     activity.write(ActivityLogService.BOUNCE, "START", "bounce process");
     int disabled = 0;
     try {
       Set<String> memberIds = new HashSet<>();
       for (BounceEventEntity ev : events.findByStatus("CORRELATED")) {
-        if (ev.getMemberId() != null) {
+        if (ev.getMemberId() != null && inputSet.contains(ev.getId())) {
           memberIds.add(ev.getMemberId());
         }
       }
@@ -89,10 +127,18 @@ public class BounceProcessService {
           disabled++;
         }
       }
+      // Stamp only leftovers from this input — ids that arrived mid-run stay unseen.
+      List<String> knownRemaining =
+          events.findIdsByStatus("CORRELATED").stream().filter(inputSet::contains).toList();
+      lastCorrelatedSig.set(signature(knownRemaining));
       return disabled;
     } finally {
       activity.write(ActivityLogService.BOUNCE, "END", "bounce process disabled=" + disabled);
     }
+  }
+
+  static String signature(List<String> ids) {
+    return ids.stream().sorted().collect(Collectors.joining(","));
   }
 
   /** @return true if member was disabled */

@@ -71,3 +71,15 @@ after = [3, 4]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 7
+type = "story"
+title = "Bounce process skips when no new correlated bounces"
+description = "Bounce-process (not poll) idles unless the CORRELATED id set changed since last run; no START/END on skip."
+verify = "Second run with same CORRELATED set skips; new correlated id runs; empty skips; manual API skipped message."
+covers = ["R2"]
+after = [4]
+hitl = false
+risk = "medium"
+refine = true

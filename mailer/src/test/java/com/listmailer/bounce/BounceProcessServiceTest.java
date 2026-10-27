@@ -4,7 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.listmailer.campaigns.SendQueueEntity;
@@ -14,6 +19,7 @@ import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
+import com.listmailer.ops.ActivityLogService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +68,12 @@ class BounceProcessServiceTest {
       b.setClassification("HARD");
       bounces.add(b);
     }
+    when(events.findIdsByStatus("CORRELATED"))
+        .thenReturn(
+            List.of("b0", "b1", "b2"),
+            List.of("b0", "b1", "b2"),
+            List.of("b0", "b1", "b2"),
+            List.of());
     when(events.findByStatus("CORRELATED")).thenReturn(bounces);
     when(events.findByStatusAndMemberId("CORRELATED", "m1")).thenReturn(bounces);
     when(queue.findByMemberIdAndStatus("m1", "SENT")).thenReturn(sends);
@@ -78,9 +90,40 @@ class BounceProcessServiceTest {
   }
 
   @Test
-  void uncorrelatedNeverDisables() {
+  void emptyCorrelatedSkipsWithoutLog() {
+    when(events.findIdsByStatus("CORRELATED")).thenReturn(List.of());
+    assertEquals(0, service.processDaily());
+    verify(activity, never()).write(anyString(), anyString(), anyString());
+    verify(events, never()).findByStatus("CORRELATED");
+  }
+
+  @Test
+  void skipsWhenCorrelatedSetUnchanged() {
+    when(events.findIdsByStatus("CORRELATED")).thenReturn(List.of("b0"));
     when(events.findByStatus("CORRELATED")).thenReturn(List.of());
     assertEquals(0, service.processDaily());
+    assertEquals(0, service.processDaily());
+    verify(events, times(1)).findByStatus("CORRELATED");
+    verify(activity, times(1)).write(eq(ActivityLogService.BOUNCE), eq("START"), anyString());
+    verify(activity, times(1)).write(eq(ActivityLogService.BOUNCE), eq("END"), anyString());
+  }
+
+  @Test
+  void newCorrelatedIdRunsAgain() {
+    when(events.findIdsByStatus("CORRELATED"))
+        .thenReturn(
+            List.of("b0"),
+            List.of("b0"),
+            List.of("b0"),
+            List.of("b0"),
+            List.of("b0", "b1"),
+            List.of("b0", "b1"),
+            List.of("b0", "b1"),
+            List.of("b0", "b1"));
+    when(events.findByStatus("CORRELATED")).thenReturn(List.of());
+    assertEquals(0, service.processDaily());
+    assertEquals(0, service.processDaily());
+    verify(events, times(2)).findByStatus("CORRELATED");
   }
 
   @Test
@@ -102,6 +145,8 @@ class BounceProcessServiceTest {
       b.setClassification("SOFT");
       bounces.add(b);
     }
+    when(events.findIdsByStatus("CORRELATED"))
+        .thenReturn(List.of("b0", "b1"), List.of("b0", "b1"), List.of("b0", "b1"), List.of());
     when(events.findByStatus("CORRELATED")).thenReturn(bounces);
     when(events.findByStatusAndMemberId("CORRELATED", "m1")).thenReturn(bounces);
     when(queue.findByMemberIdAndStatus("m1", "SENT")).thenReturn(sends);
