@@ -8,7 +8,7 @@ after: [7]
 hitl: false
 risk: low
 refined: true
-status: ready
+status: done
 ---
 
 # Compose Queue opens the campaign

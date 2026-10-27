@@ -3,7 +3,7 @@ import { apiJson } from './api.js'
 import { authHeaders } from './auth.js'
 import { ActivityLogPage } from './ActivityLogPage.jsx'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
-import { useRegisterUnsaved } from './Unsaved.jsx'
+import { useRegisterUnsaved, useUnsavedGate } from './Unsaved.jsx'
 import {
   BounceMailboxesPage,
   FootersPage,
@@ -24,7 +24,8 @@ import {
 import Placeholder from './Placeholder.jsx'
 import { MyAccountPage, UsersPage } from './UsersPages.jsx'
 
-export function Compose({ token, onError, editId, onBack }) {
+export function Compose({ token, onError, editId, onBack, onQueued }) {
+  const unsaved = useUnsavedGate()
   const [lists, setLists] = useState([])
   const [selected, setSelected] = useState([])
   const [subject, setSubject] = useState('')
@@ -191,6 +192,12 @@ export function Compose({ token, onError, editId, onBack }) {
         return
       }
       const body = await res.json()
+      if (onQueued) {
+        // Queue already saved the draft; leave without the unsaved prompt.
+        unsaved?.setKeyDirty('compose-draft', false)
+        onQueued(body.id || campaignId)
+        return
+      }
       setStatus(body.status)
       setMsg(`Queued (${body.status}); sent so far ${body.sentCount}`)
     } catch (e) {
@@ -610,6 +617,7 @@ export function MainView({
           onError={onError}
           editId={detailId}
           onBack={detailId ? () => openInView('campaigns', detailId) : null}
+          onQueued={(id) => openInView('campaigns', id)}
         />
       )
     case 'campaigns':
