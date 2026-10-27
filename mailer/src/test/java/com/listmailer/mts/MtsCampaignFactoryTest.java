@@ -3,6 +3,7 @@ package com.listmailer.mts;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -71,6 +72,20 @@ class MtsCampaignFactoryTest {
 
     assertEquals(CampaignStatus.DRAFT, out.getStatus());
     verify(sendService, never()).queueAndSend(anyString());
+  }
+
+  @Test
+  void createWithoutSenderPathLeavesCampaignPathNull() {
+    when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(campaignLists.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, 0);
+
+    CampaignEntity out =
+        factory.create("Hi", "<p>x</p>", "x", List.of(grant), false, List.of(), null);
+
+    assertNull(out.getSendingPathId());
+    verify(sendingPaths, never()).existsById(anyString());
+    verify(references, never()).add(any(), anyString(), anyString(), anyString(), anyString());
   }
 
   @Test

@@ -40,7 +40,7 @@ Move **Substitute From** from per list-grant to **per authorized sender**. Add o
    **Given** the sender has a Sending Path
    **When** MTS creates a Campaign
    **Then** `campaigns.sending_path_id` is set to that path (Used By / queue override)
-   **And** when unset, Campaign path stays null → first List path as today
+   **And** when unset, no sending path is copied onto the Campaign (null); queue uses normal Campaign rules (first List path), not an MTS default
 
 5. **Migration**
    **Given** existing grant-level `substitute_from` values

@@ -526,7 +526,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
               onChange={(ev) => setSendingPathId(ev.target.value)}
               {...dirtyControlProps(!valuesEqual(sendingPathId, savedSendingPathId))}
             >
-              <option value="">— Default (first list) —</option>
+              <option value="">— None —</option>
               {paths.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
