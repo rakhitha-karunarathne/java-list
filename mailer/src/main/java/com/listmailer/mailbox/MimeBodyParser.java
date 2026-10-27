@@ -13,14 +13,20 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import org.springframework.util.StringUtils;
 
 /**
  * Walks a raw RFC822 message and pulls text/html bodies plus binary attachments. Jakarta Mail
  * decodes quoted-printable / base64; callers must not treat {@code RawMessage.bytes} as the body.
+ *
+ * <p>Inline {@code multipart/related} images (Content-ID) become attachments and {@code cid:}
+ * references in HTML are rewritten to those filenames so Campaign send can publish {@code /dl/}
+ * URLs. External {@code https://} image links are left unchanged.
  */
 public final class MimeBodyParser {
 
@@ -44,6 +50,7 @@ public final class MimeBodyParser {
       if (!StringUtils.hasText(html) && StringUtils.hasText(text)) {
         html = "<p>" + escape(text) + "</p>";
       }
+      html = rewriteCidRefs(html, c.cidToFilename);
       return new Parsed(html, text, List.copyOf(c.attachments));
     } catch (Exception ex) {
       String fallback = new String(rawBytes, StandardCharsets.UTF_8);
@@ -59,15 +66,31 @@ public final class MimeBodyParser {
       }
       return;
     }
+    String contentId = contentId(part);
     String filename = decodeFilename(part.getFileName());
+    String type = primaryType(part);
     String disposition = part.getDisposition();
-    boolean attachment =
-        (disposition != null && disposition.equalsIgnoreCase(Part.ATTACHMENT))
-            || (StringUtils.hasText(filename)
-                && (disposition == null || !disposition.equalsIgnoreCase(Part.INLINE)));
-    if (attachment && StringUtils.hasText(filename)) {
-      c.attachments.add(
-          new Attachment(filename, primaryType(part), readBytes(part.getInputStream())));
+    if (!StringUtils.hasText(filename)) {
+      if (StringUtils.hasText(contentId)) {
+        filename = filenameFromCid(contentId, type);
+      } else if (type.startsWith("image/")) {
+        filename = "image-" + (c.attachments.size() + 1) + extFor(type);
+      }
+    }
+    boolean explicitAttachment =
+        disposition != null && disposition.equalsIgnoreCase(Part.ATTACHMENT);
+    boolean namedNonInline =
+        StringUtils.hasText(filename)
+            && (disposition == null || !disposition.equalsIgnoreCase(Part.INLINE));
+    boolean inlineBinary =
+        !part.isMimeType("text/*")
+            && (type.startsWith("image/")
+                || (disposition != null && disposition.equalsIgnoreCase(Part.INLINE))
+                || StringUtils.hasText(contentId));
+    if (StringUtils.hasText(filename) && (explicitAttachment || namedNonInline || inlineBinary)) {
+      byte[] bytes = readBytes(part.getInputStream());
+      c.attachments.add(new Attachment(filename, type, bytes));
+      rememberCid(c, contentId, filename);
       return;
     }
     if (part.isMimeType("text/html") && c.html == null) {
@@ -76,13 +99,68 @@ public final class MimeBodyParser {
     }
     if (part.isMimeType("text/plain") && c.text == null) {
       c.text = readText(part);
+    }
+  }
+
+  private static void rememberCid(Collector c, String contentId, String filename) {
+    if (!StringUtils.hasText(contentId) || !StringUtils.hasText(filename)) {
       return;
     }
-    // unnamed binary without disposition still counts as attachment
-    if (!part.isMimeType("text/*") && StringUtils.hasText(filename)) {
-      c.attachments.add(
-          new Attachment(filename, primaryType(part), readBytes(part.getInputStream())));
+    c.cidToFilename.put(contentId, filename);
+    int at = contentId.indexOf('@');
+    if (at > 0) {
+      c.cidToFilename.putIfAbsent(contentId.substring(0, at), filename);
     }
+  }
+
+  private static String rewriteCidRefs(String html, Map<String, String> cidToFilename) {
+    if (!StringUtils.hasText(html) || cidToFilename.isEmpty()) {
+      return html == null ? "" : html;
+    }
+    String out = html;
+    for (Map.Entry<String, String> e : cidToFilename.entrySet()) {
+      out = out.replace("cid:" + e.getKey(), e.getValue());
+    }
+    return out;
+  }
+
+  private static String contentId(Part part) throws MessagingException {
+    String[] headers = part.getHeader("Content-ID");
+    if (headers == null || headers.length == 0 || !StringUtils.hasText(headers[0])) {
+      return null;
+    }
+    String id = headers[0].trim();
+    if (id.startsWith("<") && id.endsWith(">") && id.length() > 2) {
+      id = id.substring(1, id.length() - 1);
+    }
+    return StringUtils.hasText(id) ? id : null;
+  }
+
+  private static String filenameFromCid(String contentId, String type) {
+    String base = contentId.replaceAll("[^a-zA-Z0-9._-]", "_");
+    if (base.isBlank()) {
+      base = "inline";
+    }
+    if (base.length() > 180) {
+      base = base.substring(0, 180);
+    }
+    if (!base.contains(".")) {
+      base = base + extFor(type);
+    }
+    return base;
+  }
+
+  private static String extFor(String type) {
+    if (type == null) {
+      return ".bin";
+    }
+    return switch (type.toLowerCase(Locale.ROOT)) {
+      case "image/png" -> ".png";
+      case "image/gif" -> ".gif";
+      case "image/webp" -> ".webp";
+      case "image/jpeg", "image/jpg" -> ".jpg";
+      default -> ".bin";
+    };
   }
 
   private static String readText(Part part) throws MessagingException, IOException {
@@ -141,5 +219,6 @@ public final class MimeBodyParser {
     String html;
     String text;
     final List<Attachment> attachments = new ArrayList<>();
+    final Map<String, String> cidToFilename = new LinkedHashMap<>();
   }
 }

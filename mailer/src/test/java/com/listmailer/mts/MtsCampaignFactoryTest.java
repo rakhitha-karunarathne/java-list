@@ -1,6 +1,8 @@
 package com.listmailer.mts;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -78,6 +80,32 @@ class MtsCampaignFactoryTest {
             "Receipt_562459.pdf", "application/pdf", new byte[] {1, 2, 3});
 
     factory.create("Hi", "<p>x</p>", "x", List.of(grant), false, List.of(file));
+
+    verify(attachments).save(any());
+    verify(sendService, never()).queueAndSend(anyString());
+  }
+
+  @Test
+  void createKeepsExternalImageLinksInHtmlAndStoresMultipartImage() {
+    when(campaigns.save(any()))
+        .thenAnswer(
+            inv -> {
+              CampaignEntity c = inv.getArgument(0);
+              assertTrue(c.getHtmlBody().contains("src=\"https://cdn.example.com/banner.png\""));
+              assertTrue(c.getHtmlBody().contains("src=\"logo.png\""));
+              assertFalse(c.getHtmlBody().contains("cid:"));
+              return c;
+            });
+    when(campaignLists.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(attachments.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    var grant = new MtsSenderListGrantEntity("g1", "i1", "a@x.com", "list-a", null, null, 0);
+    String html =
+        "<p><img src=\"logo.png\"/><img src=\"https://cdn.example.com/banner.png\"/></p>";
+    var inline =
+        new com.listmailer.mailbox.MimeBodyParser.Attachment(
+            "logo.png", "image/png", new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47});
+
+    factory.create("Images", html, "Images", List.of(grant), false, List.of(inline));
 
     verify(attachments).save(any());
     verify(sendService, never()).queueAndSend(anyString());
