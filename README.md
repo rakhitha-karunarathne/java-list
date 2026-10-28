@@ -86,3 +86,7 @@ Uses `jdbc:mariadb://localhost:3306/mailer` by default.
 - [docs/user-guide.md](docs/user-guide.md) — how to use the operator UI  
 - [docs/deploy.md](docs/deploy.md) — HTTPS, secrets placement, Compose shapes, campaign E2E gate  
 - Planning / tickets under `_bmad-output/initiative-java-list-mailer/`
+
+## License
+
+[MIT](LICENSE) © 2026 Rakhitha Karunarathne
