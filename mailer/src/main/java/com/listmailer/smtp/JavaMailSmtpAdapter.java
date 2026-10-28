@@ -4,6 +4,7 @@ import com.listmailer.catalogs.SendingPathEntity;
 import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.mailbox.MailSecurity;
+import com.listmailer.secrets.SecretStore;
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
 import jakarta.mail.PasswordAuthentication;
@@ -23,9 +24,11 @@ import org.springframework.util.StringUtils;
 public class JavaMailSmtpAdapter implements SmtpPort {
 
   private final SendingPathRepository paths;
+  private final SecretStore secrets;
 
-  public JavaMailSmtpAdapter(SendingPathRepository paths) {
+  public JavaMailSmtpAdapter(SendingPathRepository paths, SecretStore secrets) {
     this.paths = paths;
+    this.secrets = secrets;
   }
 
   @Override
@@ -47,7 +50,8 @@ public class JavaMailSmtpAdapter implements SmtpPort {
             new Authenticator() {
               @Override
               protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(path.getUsername(), path.getPassword());
+                return new PasswordAuthentication(
+                    path.getUsername(), secrets.requirePlain(path.getPasswordSecretId()));
               }
             });
     try {

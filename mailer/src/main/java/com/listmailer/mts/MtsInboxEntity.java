@@ -26,8 +26,8 @@ public class MtsInboxEntity {
   @Column(nullable = false, length = 255)
   private String username;
 
-  @Column(nullable = false, length = 255)
-  private String password;
+  @Column(name = "password_secret_id", nullable = false, length = 36)
+  private String passwordSecretId;
 
   @Column(name = "use_ssl", nullable = false)
   private boolean useSsl;
@@ -70,7 +70,7 @@ public class MtsInboxEntity {
       String host,
       int port,
       String username,
-      String password,
+      String passwordSecretId,
       boolean useSsl,
       int pollIntervalMinutes,
       Instant createdAt) {
@@ -79,7 +79,7 @@ public class MtsInboxEntity {
     this.host = host;
     this.port = port;
     this.username = username;
-    this.password = password;
+    this.passwordSecretId = passwordSecretId;
     this.useSsl = useSsl;
     this.pollIntervalMinutes = pollIntervalMinutes;
     this.enabled = true;
@@ -124,12 +124,12 @@ public class MtsInboxEntity {
     this.username = username;
   }
 
-  public String getPassword() {
-    return password;
+  public String getPasswordSecretId() {
+    return passwordSecretId;
   }
 
-  public void setPassword(String password) {
-    this.password = password;
+  public void setPasswordSecretId(String passwordSecretId) {
+    this.passwordSecretId = passwordSecretId;
   }
 
   public boolean isUseSsl() {

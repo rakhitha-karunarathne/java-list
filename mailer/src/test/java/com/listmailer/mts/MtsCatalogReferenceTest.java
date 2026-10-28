@@ -31,6 +31,9 @@ class MtsCatalogReferenceTest {
   @Mock MtsDropService drops;
   @Mock CatalogReferenceService references;
   @Mock MailConnectionProbe probe;
+  @Mock MtsIngestService ingest;
+  @Mock com.listmailer.mailbox.MailboxPollLock locks;
+  @Mock com.listmailer.secrets.SecretStore secrets;
   @InjectMocks MtsAdminController controller;
 
   @Test

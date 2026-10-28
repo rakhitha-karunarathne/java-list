@@ -26,6 +26,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/mailer
       SPRING_DATASOURCE_USERNAME: mailer
       SPRING_DATASOURCE_PASSWORD: mailer
+      MAILER_SECRETS_KEY_1: dev-only-secrets-key-32chars-minimum!
     ports:
       - "8080:8080"
     healthcheck:

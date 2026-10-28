@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,7 @@ import com.listmailer.catalogs.BounceMailboxRepository;
 import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.mailbox.MailboxPollLock;
+import com.listmailer.secrets.SecretStore;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -34,13 +36,21 @@ class BouncePollServiceTest {
   @Mock MailboxPort mailbox;
   @Mock OpsHooksPort ops;
   @Mock com.listmailer.ops.ActivityLogService activity;
+  @Mock SecretStore secrets;
   BouncePollService service;
 
   @BeforeEach
   void setUp() {
+    lenient().when(secrets.requirePlain(any())).thenReturn("p");
     service =
         new BouncePollService(
-            mailboxes, events, mailbox, ops, activity, new MailboxPollLock(Duration.ofHours(1)));
+            mailboxes,
+            events,
+            mailbox,
+            ops,
+            activity,
+            new MailboxPollLock(Duration.ofHours(1)),
+            secrets);
   }
 
   @Test

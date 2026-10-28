@@ -18,10 +18,12 @@ class BounceMailboxesControllerTest {
   @Mock com.listmailer.mailbox.MailConnectionProbe probe;
   @Mock com.listmailer.bounce.BouncePollService poll;
   @Mock com.listmailer.mailbox.MailboxPollLock locks;
+  @Mock com.listmailer.secrets.SecretStore secrets;
   @InjectMocks BounceMailboxesController controller;
 
   @Test
   void createDefaultsPollTo15() {
+    when(secrets.create("p")).thenReturn("sid-1");
     when(mailboxes.save(any()))
         .thenAnswer(
             inv -> {

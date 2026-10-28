@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.listmailer.mailbox.MailConnectionProbe;
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ class BounceMailboxConnectionTest {
   @Mock MailConnectionProbe probe;
   @Mock com.listmailer.bounce.BouncePollService poll;
   @Mock com.listmailer.mailbox.MailboxPollLock locks;
+  @Mock SecretStore secrets;
   @InjectMocks BounceMailboxesController controller;
 
   @Test
@@ -33,7 +35,8 @@ class BounceMailboxConnectionTest {
         .thenReturn(
             Optional.of(
                 new BounceMailboxEntity(
-                    "b1", "B", "h", 143, "u", "secret", false, 15, Instant.now())));
+                    "b1", "B", "h", 143, "u", "sid-1", false, 15, Instant.now())));
+    when(secrets.requirePlain("sid-1")).thenReturn("secret");
     when(probe.testImap(anyString(), anyInt(), anyString(), anyString(), anyBoolean(), anyBoolean()))
         .thenReturn(MailConnectionProbe.Result.success());
 

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.listmailer.mailbox.MailConnectionProbe;
 import com.listmailer.mts.MtsFromDomainService;
+import com.listmailer.secrets.SecretStore;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ class SendingPathReturnPathTest {
   @Mock CatalogReferenceService references;
   @Mock MtsFromDomainService fromDomain;
   @Mock MailConnectionProbe probe;
+  @Mock SecretStore secrets;
   @InjectMocks SendingPathsController controller;
 
   @Test
@@ -48,6 +50,7 @@ class SendingPathReturnPathTest {
 
   @Test
   void createStoresMatchingReturnPath() {
+    when(secrets.create("p")).thenReturn("sid-1");
     when(paths.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     SendingPathsController.PathRequest body =

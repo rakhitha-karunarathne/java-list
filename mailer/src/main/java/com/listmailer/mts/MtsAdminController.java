@@ -9,6 +9,7 @@ import com.listmailer.lists.ListRepository;
 import com.listmailer.mailbox.MailConnectionProbe;
 import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailSecurity;
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,7 @@ public class MtsAdminController {
   private final MailConnectionProbe probe;
   private final MtsIngestService ingest;
   private final MailboxPollLock locks;
+  private final SecretStore secrets;
 
   public MtsAdminController(
       MtsInboxRepository inboxes,
@@ -58,7 +60,8 @@ public class MtsAdminController {
       CatalogReferenceService references,
       MailConnectionProbe probe,
       MtsIngestService ingest,
-      MailboxPollLock locks) {
+      MailboxPollLock locks,
+      SecretStore secrets) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.grants = grants;
@@ -70,6 +73,7 @@ public class MtsAdminController {
     this.probe = probe;
     this.ingest = ingest;
     this.locks = locks;
+    this.secrets = secrets;
   }
 
   @GetMapping("/drop-log")
@@ -186,7 +190,7 @@ public class MtsAdminController {
     }
     String password = body.password();
     if (!StringUtils.hasText(password) && StringUtils.hasText(body.inboxId())) {
-      password = requireInbox(body.inboxId()).getPassword();
+      password = secrets.requirePlain(requireInbox(body.inboxId()).getPasswordSecretId());
     }
     MailConnectionProbe.Result result =
         probe.testImap(
@@ -205,7 +209,7 @@ public class MtsAdminController {
             body.host().trim(),
             body.port(),
             body.username(),
-            body.password(),
+            secrets.create(body.password()),
             body.useSsl(),
             poll,
             Instant.now());
@@ -234,7 +238,7 @@ public class MtsAdminController {
     box.setPort(body.port());
     box.setUsername(body.username());
     if (StringUtils.hasText(body.password())) {
-      box.setPassword(body.password());
+      secrets.update(box.getPasswordSecretId(), body.password());
     }
     box.setUseSsl(body.useSsl());
     box.setUseTls(body.useTls());
@@ -273,8 +277,10 @@ public class MtsAdminController {
       clearGrantReferences(id, sender.getEmail());
     }
     drops.deleteDropsForInbox(id);
+    String secretId = box.getPasswordSecretId();
     // DB cascades: senders → grants; from-domain issues
     inboxes.delete(box);
+    secrets.delete(secretId);
     return Map.of("status", "deleted");
   }
 

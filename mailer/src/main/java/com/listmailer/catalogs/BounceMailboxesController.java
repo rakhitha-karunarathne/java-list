@@ -5,6 +5,7 @@ import com.listmailer.kernel.ids.Guids;
 import com.listmailer.mailbox.MailConnectionProbe;
 import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailSecurity;
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +32,19 @@ public class BounceMailboxesController {
   private final MailConnectionProbe probe;
   private final BouncePollService poll;
   private final MailboxPollLock locks;
+  private final SecretStore secrets;
 
   public BounceMailboxesController(
       BounceMailboxRepository mailboxes,
       MailConnectionProbe probe,
       BouncePollService poll,
-      MailboxPollLock locks) {
+      MailboxPollLock locks,
+      SecretStore secrets) {
     this.mailboxes = mailboxes;
     this.probe = probe;
     this.poll = poll;
     this.locks = locks;
+    this.secrets = secrets;
   }
 
   @PostMapping("/test-connection")
@@ -53,7 +57,7 @@ public class BounceMailboxesController {
     }
     String password = body.password();
     if (!StringUtils.hasText(password) && StringUtils.hasText(body.mailboxId())) {
-      password = require(body.mailboxId()).getPassword();
+      password = secrets.requirePlain(require(body.mailboxId()).getPasswordSecretId());
     }
     MailConnectionProbe.Result result =
         probe.testImap(
@@ -78,7 +82,7 @@ public class BounceMailboxesController {
               body.host().trim(),
               body.port(),
               body.username(),
-              body.password(),
+              secrets.create(body.password()),
               body.useSsl(),
               poll,
               Instant.now());
@@ -103,7 +107,7 @@ public class BounceMailboxesController {
     box.setPort(body.port());
     box.setUsername(body.username());
     if (StringUtils.hasText(body.password())) {
-      box.setPassword(body.password());
+      secrets.update(box.getPasswordSecretId(), body.password());
     }
     box.setUseSsl(body.useSsl());
     box.setUseTls(body.useTls());
@@ -118,8 +122,9 @@ public class BounceMailboxesController {
 
   @DeleteMapping("/{id}")
   public void delete(@PathVariable String id) {
-    require(id);
+    String secretId = require(id).getPasswordSecretId();
     mailboxes.deleteById(id);
+    secrets.delete(secretId);
   }
 
   @PostMapping("/{id}/poll")

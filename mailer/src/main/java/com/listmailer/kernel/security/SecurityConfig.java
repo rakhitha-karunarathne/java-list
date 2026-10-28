@@ -44,6 +44,7 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/api/users/**",
                         "/api/parameters/**",
+                        "/api/secrets/**",
                         "/api/sending-paths/**",
                         "/api/bounce-mailboxes/**",
                         "/api/bounce-process/**",

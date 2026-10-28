@@ -77,3 +77,15 @@ after = [1]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 8
+type = "story"
+title = "Encrypted secrets store (versioned keys)"
+description = "Shared secrets table AES-GCM; path/bounce/MTS/TOTP; config key versions; Admin rewrap; migrate plaintext."
+verify = "Passwords/TOTP not plaintext in DB; decrypt works; rewrap button; Flyway migrates existing."
+covers = ["R1", "R2"]
+after = [1, 2, 7]
+hitl = false
+risk = "high"
+refine = true

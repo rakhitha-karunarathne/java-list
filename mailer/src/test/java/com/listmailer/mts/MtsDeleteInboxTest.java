@@ -32,6 +32,9 @@ class MtsDeleteInboxTest {
   @Mock MtsDropService drops;
   @Mock CatalogReferenceService references;
   @Mock MailConnectionProbe probe;
+  @Mock com.listmailer.mts.MtsIngestService ingest;
+  @Mock com.listmailer.mailbox.MailboxPollLock locks;
+  @Mock com.listmailer.secrets.SecretStore secrets;
   @InjectMocks MtsAdminController controller;
 
   @Test
@@ -60,6 +63,7 @@ class MtsDeleteInboxTest {
         .remove(eq(CatalogTargetType.FOOTER), eq("footer-1"), eq("MTS_SENDER_GRANT"), eq("g1"));
     verify(drops).deleteDropsForInbox("i1");
     verify(inboxes).delete(box);
+    verify(secrets).delete("p");
     verify(grants, never()).deleteByInboxIdAndSenderEmail(eq("i1"), eq("a@x.com"));
   }
 }

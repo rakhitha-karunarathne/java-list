@@ -8,6 +8,7 @@ import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailboxQueryException;
 import com.listmailer.ops.ActivityLogService;
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class BouncePollService {
   private final OpsHooksPort ops;
   private final ActivityLogService activity;
   private final MailboxPollLock locks;
+  private final SecretStore secrets;
   private final ExecutorService async = Executors.newCachedThreadPool();
 
   public BouncePollService(
@@ -41,13 +43,15 @@ public class BouncePollService {
       MailboxPort mailbox,
       OpsHooksPort ops,
       ActivityLogService activity,
-      MailboxPollLock locks) {
+      MailboxPollLock locks,
+      SecretStore secrets) {
     this.mailboxes = mailboxes;
     this.events = events;
     this.mailbox = mailbox;
     this.ops = ops;
     this.activity = activity;
     this.locks = locks;
+    this.secrets = secrets;
   }
 
   /** Sequential poll of due bounce mailboxes. */
@@ -147,7 +151,7 @@ public class BouncePollService {
               box.getHost(),
               box.getPort(),
               box.getUsername(),
-              box.getPassword(),
+              secrets.requirePlain(box.getPasswordSecretId()),
               box.isUseSsl(),
               box.isUseTls(),
               "INBOX"),

@@ -1,6 +1,7 @@
 package com.listmailer.users;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.secrets.SecretStore;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 public class MfaService {
@@ -17,12 +19,17 @@ public class MfaService {
   private final UserRepository users;
   private final UserBackupCodeRepository backupCodes;
   private final PasswordEncoder passwordEncoder;
+  private final SecretStore secrets;
 
   public MfaService(
-      UserRepository users, UserBackupCodeRepository backupCodes, PasswordEncoder passwordEncoder) {
+      UserRepository users,
+      UserBackupCodeRepository backupCodes,
+      PasswordEncoder passwordEncoder,
+      SecretStore secrets) {
     this.users = users;
     this.backupCodes = backupCodes;
     this.passwordEncoder = passwordEncoder;
+    this.secrets = secrets;
   }
 
   public Setup startSetup(UserEntity user) {
@@ -30,7 +37,8 @@ public class MfaService {
       throw new IllegalStateException("MFA already enabled");
     }
     String secret = Totp.newSecret();
-    user.setTotpSecret(secret);
+    String secretId = secrets.put(user.getTotpSecretId(), secret);
+    user.setTotpSecretId(secretId);
     user.setTotpEnabled(false);
     users.save(user);
     return new Setup(secret, Totp.otpAuthUrl("List Mailer", user.getEmail(), secret));
@@ -38,10 +46,11 @@ public class MfaService {
 
   @Transactional
   public List<String> confirmSetup(UserEntity user, String code) {
-    if (user.getTotpSecret() == null || user.isTotpEnabled()) {
+    if (!StringUtils.hasText(user.getTotpSecretId()) || user.isTotpEnabled()) {
       throw new IllegalStateException("MFA setup not started");
     }
-    if (!Totp.verify(user.getTotpSecret(), code, Instant.now())) {
+    String totp = secrets.requirePlain(user.getTotpSecretId());
+    if (!Totp.verify(totp, code, Instant.now())) {
       throw new IllegalArgumentException("Invalid TOTP code");
     }
     user.setTotpEnabled(true);
@@ -59,14 +68,17 @@ public class MfaService {
       throw new IllegalArgumentException("Invalid MFA code");
     }
     user.setTotpEnabled(false);
-    user.setTotpSecret(null);
+    String secretId = user.getTotpSecretId();
+    user.setTotpSecretId(null);
     users.save(user);
+    secrets.delete(secretId);
     backupCodes.deleteByUserId(user.getId());
   }
 
   @Transactional
   public boolean verifyCode(UserEntity user, String code) {
-    if (user.getTotpSecret() != null && Totp.verify(user.getTotpSecret(), code, Instant.now())) {
+    if (StringUtils.hasText(user.getTotpSecretId())
+        && Totp.verify(secrets.requirePlain(user.getTotpSecretId()), code, Instant.now())) {
       return true;
     }
     if (code == null) {

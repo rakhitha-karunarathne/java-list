@@ -4,6 +4,7 @@ import com.listmailer.kernel.ids.Guids;
 import com.listmailer.mailbox.MailConnectionProbe;
 import com.listmailer.mailbox.MailSecurity;
 import com.listmailer.mts.MtsFromDomainService;
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,16 +32,19 @@ public class SendingPathsController {
   private final CatalogReferenceService references;
   private final MtsFromDomainService fromDomain;
   private final MailConnectionProbe probe;
+  private final SecretStore secrets;
 
   public SendingPathsController(
       SendingPathRepository paths,
       CatalogReferenceService references,
       MtsFromDomainService fromDomain,
-      MailConnectionProbe probe) {
+      MailConnectionProbe probe,
+      SecretStore secrets) {
     this.paths = paths;
     this.references = references;
     this.fromDomain = fromDomain;
     this.probe = probe;
+    this.secrets = secrets;
   }
 
   @PostMapping("/test-connection")
@@ -50,7 +54,7 @@ public class SendingPathsController {
     }
     String password = body.password();
     if (!StringUtils.hasText(password) && StringUtils.hasText(body.pathId())) {
-      password = require(body.pathId()).getPassword();
+      password = secrets.requirePlain(require(body.pathId()).getPasswordSecretId());
     }
     MailConnectionProbe.Result result =
         probe.testSmtp(
@@ -67,6 +71,7 @@ public class SendingPathsController {
   public PathDetail create(@RequestBody PathRequest body) {
     validate(body, true);
     try {
+      String secretId = secrets.create(body.password());
       SendingPathEntity entity =
           path(
               new SendingPathEntity(
@@ -75,7 +80,7 @@ public class SendingPathsController {
                   body.host().trim(),
                   body.port(),
                   body.username(),
-                  body.password(),
+                  secretId,
                   body.fromEmail().trim(),
                   body.fromName().trim(),
                   body.useTls(),
@@ -103,7 +108,7 @@ public class SendingPathsController {
     path.setPort(body.port());
     path.setUsername(body.username());
     if (StringUtils.hasText(body.password())) {
-      path.setPassword(body.password());
+      secrets.update(path.getPasswordSecretId(), body.password());
     }
     path.setFromEmail(body.fromEmail().trim());
     path.setFromName(body.fromName().trim());
@@ -132,7 +137,9 @@ public class SendingPathsController {
       body.put("usedBy", used);
       return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
+    String secretId = require(id).getPasswordSecretId();
     paths.deleteById(id);
+    secrets.delete(secretId);
     return ResponseEntity.noContent().build();
   }
 

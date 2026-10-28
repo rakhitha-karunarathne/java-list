@@ -26,8 +26,8 @@ public class SendingPathEntity {
   @Column(nullable = false, length = 255)
   private String username;
 
-  @Column(nullable = false, length = 255)
-  private String password;
+  @Column(name = "password_secret_id", nullable = false, length = 36)
+  private String passwordSecretId;
 
   @Column(name = "from_email", nullable = false, length = 320)
   private String fromEmail;
@@ -55,7 +55,7 @@ public class SendingPathEntity {
       String host,
       int port,
       String username,
-      String password,
+      String passwordSecretId,
       String fromEmail,
       String fromName,
       boolean useTls,
@@ -65,7 +65,7 @@ public class SendingPathEntity {
     this.host = host;
     this.port = port;
     this.username = username;
-    this.password = password;
+    this.passwordSecretId = passwordSecretId;
     this.fromEmail = fromEmail;
     this.fromName = fromName;
     this.useTls = useTls;
@@ -108,12 +108,12 @@ public class SendingPathEntity {
     this.username = username;
   }
 
-  public String getPassword() {
-    return password;
+  public String getPasswordSecretId() {
+    return passwordSecretId;
   }
 
-  public void setPassword(String password) {
-    this.password = password;
+  public void setPasswordSecretId(String passwordSecretId) {
+    this.passwordSecretId = passwordSecretId;
   }
 
   public String getFromEmail() {

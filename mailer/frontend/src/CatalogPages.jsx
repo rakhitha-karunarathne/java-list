@@ -1084,8 +1084,17 @@ export function ParametersPage({ token, onError }) {
   const [params, setParams] = useState([])
   const [drafts, setDrafts] = useState({})
   const [forbidden, setForbidden] = useState(false)
+  const [secretStatus, setSecretStatus] = useState(null)
+  const [secretMsg, setSecretMsg] = useState('')
+  const [rewrapping, setRewrapping] = useState(false)
   const anyDirty = params.some((p) => !valuesEqual(drafts[p.key], p.value))
   useRegisterUnsaved(anyDirty, 'parameters')
+
+  function loadSecretsStatus() {
+    apiJson(token, '/api/secrets/status')
+      .then(setSecretStatus)
+      .catch(() => setSecretStatus(null))
+  }
 
   useEffect(() => {
     apiJson(token, '/api/parameters')
@@ -1093,6 +1102,7 @@ export function ParametersPage({ token, onError }) {
         setParams(rows)
         setDrafts(Object.fromEntries(rows.map((p) => [p.key, p.value])))
         setForbidden(false)
+        loadSecretsStatus()
       })
       .catch((e) => {
         if (e.status === 403) {
@@ -1118,6 +1128,24 @@ export function ParametersPage({ token, onError }) {
     }
   }
 
+  async function rewrapSecrets() {
+    if (rewrapping) return
+    onError('')
+    setSecretMsg('')
+    setRewrapping(true)
+    try {
+      const r = await apiJson(token, '/api/secrets/rewrap', { method: 'POST' })
+      setSecretMsg(
+        `Migrated ${r.migrated}, already current ${r.alreadyCurrent}, failed ${r.failed} (key v${r.currentKeyVersion}).`,
+      )
+      loadSecretsStatus()
+    } catch (e) {
+      onError(e.message)
+    } finally {
+      setRewrapping(false)
+    }
+  }
+
   if (forbidden) {
     return (
       <div className="card">
@@ -1128,6 +1156,21 @@ export function ParametersPage({ token, onError }) {
   }
 
   return (
+    <div className="page-sections">
+    <section className="card">
+      <h2>Secrets</h2>
+      <p className="hint">
+        Reversible credentials (mail passwords, MFA seed) are encrypted. Highest configured key
+        version is current
+        {secretStatus
+          ? ` (v${secretStatus.currentKeyVersion}; ${secretStatus.outdatedCount} on older keys).`
+          : '.'}
+      </p>
+      {secretMsg ? <p className="hint">{secretMsg}</p> : null}
+      <button type="button" className="btn secondary" disabled={rewrapping} onClick={rewrapSecrets}>
+        Migrate secrets to latest key
+      </button>
+    </section>
     <div className="card">
       <h2>Parameters</h2>
       <p className="hint">Admin runtime settings — no SMTP/IMAP passwords or signing secrets here.</p>
@@ -1169,6 +1212,7 @@ export function ParametersPage({ token, onError }) {
           </div>
         )
       })}
+    </div>
     </div>
   )
 }

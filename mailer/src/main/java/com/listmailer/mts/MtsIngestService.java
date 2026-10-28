@@ -6,6 +6,7 @@ import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailboxQueryException;
 import com.listmailer.mailbox.MimeBodyParser;
 import com.listmailer.ops.ActivityLogService;
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class MtsIngestService {
   private final OpsHooksPort ops;
   private final ActivityLogService activity;
   private final MailboxPollLock locks;
+  private final SecretStore secrets;
   private final ExecutorService async = Executors.newCachedThreadPool();
 
   public MtsIngestService(
@@ -49,7 +51,8 @@ public class MtsIngestService {
       MtsDropService drops,
       OpsHooksPort ops,
       ActivityLogService activity,
-      MailboxPollLock locks) {
+      MailboxPollLock locks,
+      SecretStore secrets) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.grants = grants;
@@ -61,6 +64,7 @@ public class MtsIngestService {
     this.ops = ops;
     this.activity = activity;
     this.locks = locks;
+    this.secrets = secrets;
   }
 
   public int pollDue() {
@@ -118,7 +122,7 @@ public class MtsIngestService {
                 box.getHost(),
                 box.getPort(),
                 box.getUsername(),
-                box.getPassword(),
+                secrets.requirePlain(box.getPasswordSecretId()),
                 box.isUseSsl(),
                 box.isUseTls(),
                 "INBOX"));
@@ -180,7 +184,7 @@ public class MtsIngestService {
               box.getHost(),
               box.getPort(),
               box.getUsername(),
-              box.getPassword(),
+              secrets.requirePlain(box.getPasswordSecretId()),
               box.isUseSsl(),
               box.isUseTls(),
               "INBOX"),
