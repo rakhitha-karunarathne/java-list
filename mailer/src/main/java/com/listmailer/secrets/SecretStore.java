@@ -2,12 +2,16 @@ package com.listmailer.secrets;
 
 import com.listmailer.kernel.ids.Guids;
 import java.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
 public class SecretStore {
+
+  private static final Logger log = LoggerFactory.getLogger(SecretStore.class);
 
   private final SecretRepository secrets;
   private final SecretsCrypto crypto;
@@ -23,6 +27,11 @@ public class SecretStore {
 
   public long outdatedCount() {
     return secrets.countByKeyVersionLessThan(crypto.currentVersion());
+  }
+
+  /** Rows encrypted with a key version higher than any configured key (config was rolled back). */
+  public long countWithKeyVersionAboveCurrent() {
+    return secrets.countByKeyVersionGreaterThan(crypto.currentVersion());
   }
 
   public String requirePlain(String secretId) {
@@ -88,14 +97,27 @@ public class SecretStore {
     int migrated = 0;
     int failed = 0;
     for (SecretEntity row : secrets.findByKeyVersionLessThan(current)) {
+      int oldVer = row.getKeyVersion();
+      byte[] oldCipher = row.getCiphertext();
       try {
-        String plain = crypto.decryptUtf8(row.getKeyVersion(), row.getCiphertext());
+        // Encrypt before mutating the entity so a failed encrypt cannot leave
+        // key_version bumped with the old ciphertext (undecryptable on flush).
+        String plain = crypto.decryptUtf8(oldVer, oldCipher);
+        byte[] next = crypto.encryptCurrent(plain);
         row.setKeyVersion(current);
-        row.setCiphertext(crypto.encryptCurrent(plain));
+        row.setCiphertext(next);
         secrets.save(row);
         migrated++;
       } catch (RuntimeException ex) {
+        row.setKeyVersion(oldVer);
+        row.setCiphertext(oldCipher);
         failed++;
+        log.warn(
+            "secret rewrap failed id={} fromKeyVersion={} toKeyVersion={}",
+            row.getId(),
+            oldVer,
+            current,
+            ex);
       }
     }
     return new RewrapResult(migrated, alreadyCurrent, failed, current);

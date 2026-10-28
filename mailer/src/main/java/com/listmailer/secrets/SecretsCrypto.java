@@ -32,7 +32,7 @@ public final class SecretsCrypto {
       byte[] raw = e.getValue().getBytes(StandardCharsets.UTF_8);
       if (raw.length < 32) {
         throw new IllegalStateException(
-            "mailer.secrets.keys." + e.getKey() + " must be at least 32 bytes");
+            "mailer.secrets.keys version " + e.getKey() + " key must be at least 32 bytes");
       }
       map.put(e.getKey(), Arrays.copyOf(raw, 32));
     }

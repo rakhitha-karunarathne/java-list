@@ -9,6 +9,8 @@ public interface SecretRepository extends JpaRepository<SecretEntity, String> {
 
   long countByKeyVersionLessThan(int version);
 
+  long countByKeyVersionGreaterThan(int version);
+
   @Query("select s from SecretEntity s where s.keyVersion < :version")
   List<SecretEntity> findByKeyVersionLessThan(@Param("version") int version);
 }

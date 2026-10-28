@@ -10,6 +10,7 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import com.listmailer.catalogs.SendingPathEntity;
 import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.lists.ListEntity;
+import com.listmailer.secrets.SecretStore;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.members.ListMemberEntity;
 import com.listmailer.members.ListMemberRepository;
@@ -88,6 +89,7 @@ class CampaignsE2ETest {
   @Autowired ListRepository lists;
   @Autowired MemberRepository members;
   @Autowired ListMemberRepository listMembers;
+  @Autowired SecretStore secrets;
 
   private String pathId;
   private RestClient api;
@@ -103,7 +105,7 @@ class CampaignsE2ETest {
             "127.0.0.1",
             smtpPort,
             "mailer",
-            "mailer",
+            secrets.create("mailer"),
             "from@localhost",
             "Mailer",
             false,

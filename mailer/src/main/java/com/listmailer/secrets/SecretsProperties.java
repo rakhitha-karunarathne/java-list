@@ -1,20 +1,52 @@
 package com.listmailer.secrets;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "mailer.secrets")
 public class SecretsProperties {
 
-  /** version → key material (≥32 bytes). Highest version is current. */
-  private Map<Integer, String> keys = new LinkedHashMap<>();
+  /** Master keys; each entry’s {@code version} is stored on secret rows as {@code key_version}. */
+  private List<KeyEntry> keys = new ArrayList<>();
 
-  public Map<Integer, String> getKeys() {
+  /** When true, rewrap every secret to the highest configured key version on startup. */
+  private boolean migrateOnStartup = false;
+
+  public List<KeyEntry> getKeys() {
     return keys;
   }
 
-  public void setKeys(Map<Integer, String> keys) {
-    this.keys = keys != null ? keys : new LinkedHashMap<>();
+  public void setKeys(List<KeyEntry> keys) {
+    this.keys = keys != null ? keys : new ArrayList<>();
+  }
+
+  public boolean isMigrateOnStartup() {
+    return migrateOnStartup;
+  }
+
+  public void setMigrateOnStartup(boolean migrateOnStartup) {
+    this.migrateOnStartup = migrateOnStartup;
+  }
+
+  public static class KeyEntry {
+    private int version;
+    private String key;
+
+    public int getVersion() {
+      return version;
+    }
+
+    public void setVersion(int version) {
+      this.version = version;
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    public void setKey(String key) {
+      this.key = key;
+    }
   }
 }

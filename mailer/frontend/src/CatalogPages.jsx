@@ -1135,9 +1135,12 @@ export function ParametersPage({ token, onError }) {
     setRewrapping(true)
     try {
       const r = await apiJson(token, '/api/secrets/rewrap', { method: 'POST' })
-      setSecretMsg(
-        `Migrated ${r.migrated}, already current ${r.alreadyCurrent}, failed ${r.failed} (key v${r.currentKeyVersion}).`,
-      )
+      const summary = `Migrated ${r.migrated}, already current ${r.alreadyCurrent}, failed ${r.failed} (key v${r.currentKeyVersion}).`
+      if (r.failed > 0) {
+        onError(summary)
+      } else {
+        setSecretMsg(summary)
+      }
       loadSecretsStatus()
     } catch (e) {
       onError(e.message)

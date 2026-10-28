@@ -26,7 +26,8 @@ public class V41__MigratePlaintextSecrets extends BaseJavaMigration {
     Map<Integer, String> keys = new LinkedHashMap<>();
     String key1 = System.getenv("MAILER_SECRETS_KEY_1");
     if (key1 == null || key1.isBlank()) {
-      key1 = System.getProperty("mailer.secrets.keys.1", DEFAULT_KEY);
+      // Flyway has no Spring YAML binding; same default as application.yml keys[0].key
+      key1 = DEFAULT_KEY;
     }
     keys.put(1, key1);
     SecretsCrypto crypto = new SecretsCrypto(keys);

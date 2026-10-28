@@ -26,7 +26,7 @@ Reversible credentials (Sending Path / Bounce / MTS passwords, MFA TOTP seed) li
    **And** deleting the parent deletes the secret row
 
 2. **Keys**
-   **Given** `mailer.secrets.keys` maps version → key material (≥32 bytes)
+   **Given** `mailer.secrets.keys` is a list of `{version, key}` (≥32 bytes each)
    **When** encrypting
    **Then** the highest version is used
    **And** decrypt uses the row’s `key_version` (must still be configured)
@@ -63,7 +63,7 @@ Reversible credentials (Sending Path / Bounce / MTS passwords, MFA TOTP seed) li
 
 ### Completion Notes
 
-- `secrets` table + `SecretStore` (AES-GCM); versioned `mailer.secrets.keys` (max = current).
+- `secrets` table + `SecretStore` (AES-GCM); `mailer.secrets.keys: [{version, key}]` (max version = current).
 - Path / bounce / MTS passwords and user TOTP seed use `*_secret_id`; Flyway V40–V41 migrates plaintext and drops old columns.
 - Parameters page: Secrets card + migrate-to-latest; `GET/POST /api/secrets/*` Admin-only.
 

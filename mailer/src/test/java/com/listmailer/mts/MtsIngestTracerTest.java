@@ -13,6 +13,7 @@ import com.listmailer.campaigns.CampaignStatus;
 import com.listmailer.catalogs.SendingPathEntity;
 import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.lists.ListEntity;
+import com.listmailer.secrets.SecretStore;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.members.ListMemberEntity;
 import com.listmailer.members.ListMemberRepository;
@@ -79,6 +80,7 @@ class MtsIngestTracerTest {
   @Autowired ListRepository lists;
   @Autowired MemberRepository members;
   @Autowired ListMemberRepository listMembers;
+  @Autowired SecretStore secrets;
 
   private String pathId;
   private String listId;
@@ -93,7 +95,7 @@ class MtsIngestTracerTest {
             "127.0.0.1",
             greenMail.getSmtp().getPort(),
             "mailer",
-            "mailer",
+            secrets.create("mailer"),
             "from@localhost",
             "Mailer",
             false,
@@ -117,7 +119,7 @@ class MtsIngestTracerTest {
             "127.0.0.1",
             greenMail.getImap().getPort(),
             "mts@localhost",
-            "mts",
+            secrets.create("mts"),
             false,
             1,
             Instant.now()));
