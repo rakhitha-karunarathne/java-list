@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.listmailer.bounce.BounceEventRepository;
 import com.listmailer.kernel.ports.OpsHooksPort;
+import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
@@ -32,6 +33,7 @@ class CampaignDetailStatsTest {
   @Mock BounceEventRepository bounces;
   @Mock OpsHooksPort ops;
   @Mock SendPauseCache pauseCache;
+  @Mock ParametersPort parameters;
   @InjectMocks CampaignsController controller;
 
   @Test

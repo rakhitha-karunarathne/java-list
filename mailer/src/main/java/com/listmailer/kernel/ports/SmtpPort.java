@@ -8,7 +8,12 @@ public interface SmtpPort {
 
   void send(SmtpMessage message);
 
-  record Attachment(String filename, String contentType, byte[] content) {}
+  record Attachment(
+      String filename, String contentType, byte[] content, String contentId, boolean inline) {
+    public Attachment(String filename, String contentType, byte[] content) {
+      this(filename, contentType, content, null, false);
+    }
+  }
 
   record SmtpMessage(
       String sendingPathId,

@@ -165,3 +165,15 @@ after = [1]
 hitl = false
 risk = "medium"
 refine = true
+
+[[entry]]
+id = 15
+type = "story"
+title = "Inline CID embed for fetched campaign images"
+description = "Embed images in message flag (compose default on; MTS Admin copy); Parameters inline max/total KB (256/2048); CID under limits else /dl; inbound CID preserved."
+verify = "Unit/integration tests: flag off→/dl; under/over per-image KB; total KB demote; test-send; MTS copy; inbound CID preserved; defaults 256/2048 and compose on."
+covers = ["R5", "R6", "R17"]
+after = [5, 7]
+hitl = false
+risk = "medium"
+refine = true

@@ -24,15 +24,19 @@ import org.springframework.util.StringUtils;
  * Walks a raw RFC822 message and pulls text/html bodies plus binary attachments. Jakarta Mail
  * decodes quoted-printable / base64; callers must not treat {@code RawMessage.bytes} as the body.
  *
- * <p>Inline {@code multipart/related} images (Content-ID) become attachments and {@code cid:}
- * references in HTML are rewritten to those filenames so Campaign send can publish {@code /dl/}
- * URLs. External {@code https://} image links are left unchanged.
+ * <p>Inline {@code multipart/related} images (Content-ID) become attachments with {@code contentId}
+ * set; {@code cid:} references in HTML are <strong>kept</strong> so send can preserve inbound CID.
+ * External {@code https://} image links are left unchanged (Campaign image-fetch / embed handles them).
  */
 public final class MimeBodyParser {
 
   private MimeBodyParser() {}
 
-  public record Attachment(String filename, String contentType, byte[] content) {}
+  public record Attachment(String filename, String contentType, byte[] content, String contentId) {
+    public Attachment(String filename, String contentType, byte[] content) {
+      this(filename, contentType, content, null);
+    }
+  }
 
   public record Parsed(String html, String text, List<Attachment> attachments) {}
 
@@ -50,7 +54,6 @@ public final class MimeBodyParser {
       if (!StringUtils.hasText(html) && StringUtils.hasText(text)) {
         html = "<p>" + escape(text) + "</p>";
       }
-      html = rewriteCidRefs(html, c.cidToFilename);
       return new Parsed(html, text, List.copyOf(c.attachments));
     } catch (Exception ex) {
       String fallback = new String(rawBytes, StandardCharsets.UTF_8);
@@ -89,7 +92,7 @@ public final class MimeBodyParser {
                 || StringUtils.hasText(contentId));
     if (StringUtils.hasText(filename) && (explicitAttachment || namedNonInline || inlineBinary)) {
       byte[] bytes = readBytes(part.getInputStream());
-      c.attachments.add(new Attachment(filename, type, bytes));
+      c.attachments.add(new Attachment(filename, type, bytes, contentId));
       rememberCid(c, contentId, filename);
       return;
     }
@@ -111,17 +114,6 @@ public final class MimeBodyParser {
     if (at > 0) {
       c.cidToFilename.putIfAbsent(contentId.substring(0, at), filename);
     }
-  }
-
-  private static String rewriteCidRefs(String html, Map<String, String> cidToFilename) {
-    if (!StringUtils.hasText(html) || cidToFilename.isEmpty()) {
-      return html == null ? "" : html;
-    }
-    String out = html;
-    for (Map.Entry<String, String> e : cidToFilename.entrySet()) {
-      out = out.replace("cid:" + e.getKey(), e.getValue());
-    }
-    return out;
   }
 
   private static String contentId(Part part) throws MessagingException {

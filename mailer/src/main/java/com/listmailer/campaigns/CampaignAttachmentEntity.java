@@ -27,15 +27,30 @@ public class CampaignAttachmentEntity {
   @Column(nullable = false, columnDefinition = "LONGBLOB")
   private byte[] content;
 
+  /** Original MIME Content-ID when ingested from inbound CID (preserved at send). */
+  @Column(name = "content_id", length = 255)
+  private String contentId;
+
   protected CampaignAttachmentEntity() {}
 
   public CampaignAttachmentEntity(
       String id, String campaignId, String filename, String contentType, byte[] content) {
+    this(id, campaignId, filename, contentType, content, null);
+  }
+
+  public CampaignAttachmentEntity(
+      String id,
+      String campaignId,
+      String filename,
+      String contentType,
+      byte[] content,
+      String contentId) {
     this.id = id;
     this.campaignId = campaignId;
     this.filename = filename;
     this.contentType = contentType;
     this.content = content;
+    this.contentId = contentId;
   }
 
   public String getId() {
@@ -56,5 +71,13 @@ public class CampaignAttachmentEntity {
 
   public byte[] getContent() {
     return content;
+  }
+
+  public String getContentId() {
+    return contentId;
+  }
+
+  public void setContentId(String contentId) {
+    this.contentId = contentId;
   }
 }

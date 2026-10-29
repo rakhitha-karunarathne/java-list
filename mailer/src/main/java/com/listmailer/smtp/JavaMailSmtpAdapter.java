@@ -14,6 +14,7 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
+import java.util.List;
 import java.util.Properties;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -72,38 +73,27 @@ public class JavaMailSmtpAdapter implements SmtpPort {
         }
       }
 
+      List<Attachment> inline =
+          message.attachments().stream().filter(Attachment::inline).toList();
+      List<Attachment> files =
+          message.attachments().stream().filter(a -> !a.inline()).toList();
+
       boolean hasHtml = StringUtils.hasText(message.htmlBody());
       boolean hasText = StringUtils.hasText(message.textBody());
-      boolean hasAttachments = !message.attachments().isEmpty();
 
-      MimeBodyPart bodyPart = new MimeBodyPart();
-      if (hasHtml && hasText) {
-        MimeMultipart alt = new MimeMultipart("alternative");
-        MimeBodyPart textPart = new MimeBodyPart();
-        textPart.setText(message.textBody(), "UTF-8");
-        MimeBodyPart htmlPart = new MimeBodyPart();
-        htmlPart.setContent(message.htmlBody(), "text/html; charset=UTF-8");
-        alt.addBodyPart(textPart);
-        alt.addBodyPart(htmlPart);
-        bodyPart.setContent(alt);
-      } else if (hasHtml) {
-        bodyPart.setContent(message.htmlBody(), "text/html; charset=UTF-8");
-      } else {
-        bodyPart.setText(hasText ? message.textBody() : "", "UTF-8");
-      }
-
-      if (hasAttachments) {
+      MimeBodyPart root = buildBody(message, hasHtml, hasText, inline);
+      if (!files.isEmpty()) {
         MimeMultipart mixed = new MimeMultipart("mixed");
-        mixed.addBodyPart(bodyPart);
-        for (Attachment a : message.attachments()) {
+        mixed.addBodyPart(root);
+        for (Attachment a : files) {
           MimeBodyPart filePart = new MimeBodyPart();
           filePart.setFileName(a.filename());
           filePart.setContent(a.content(), a.contentType());
           mixed.addBodyPart(filePart);
         }
         mime.setContent(mixed);
-      } else if (hasHtml && hasText) {
-        mime.setContent((MimeMultipart) bodyPart.getContent());
+      } else if (root.getContent() instanceof MimeMultipart mp) {
+        mime.setContent(mp);
       } else if (hasHtml) {
         mime.setContent(message.htmlBody(), "text/html; charset=UTF-8");
       } else {
@@ -113,5 +103,50 @@ public class JavaMailSmtpAdapter implements SmtpPort {
     } catch (Exception ex) {
       throw new IllegalStateException("SMTP send failed: " + ex.getMessage(), ex);
     }
+  }
+
+  private static MimeBodyPart buildBody(
+      SmtpMessage message, boolean hasHtml, boolean hasText, List<Attachment> inline)
+      throws Exception {
+    MimeBodyPart bodyPart = new MimeBodyPart();
+    if (hasHtml && hasText) {
+      MimeMultipart alt = new MimeMultipart("alternative");
+      MimeBodyPart textPart = new MimeBodyPart();
+      textPart.setText(message.textBody(), "UTF-8");
+      MimeBodyPart htmlPart = new MimeBodyPart();
+      htmlPart.setContent(message.htmlBody(), "text/html; charset=UTF-8");
+      alt.addBodyPart(textPart);
+      alt.addBodyPart(htmlPart);
+      bodyPart.setContent(alt);
+    } else if (hasHtml) {
+      bodyPart.setContent(message.htmlBody(), "text/html; charset=UTF-8");
+    } else {
+      bodyPart.setText(hasText ? message.textBody() : "", "UTF-8");
+    }
+
+    if (inline.isEmpty()) {
+      return bodyPart;
+    }
+    MimeMultipart related = new MimeMultipart("related");
+    related.addBodyPart(bodyPart);
+    for (Attachment a : inline) {
+      MimeBodyPart img = new MimeBodyPart();
+      img.setContent(a.content(), a.contentType());
+      img.setDisposition(MimeBodyPart.INLINE);
+      String cid = a.contentId();
+      if (StringUtils.hasText(cid)) {
+        if (!cid.startsWith("<")) {
+          cid = "<" + cid + ">";
+        }
+        img.setContentID(cid);
+      }
+      if (StringUtils.hasText(a.filename())) {
+        img.setFileName(a.filename());
+      }
+      related.addBodyPart(img);
+    }
+    MimeBodyPart wrap = new MimeBodyPart();
+    wrap.setContent(related);
+    return wrap;
   }
 }

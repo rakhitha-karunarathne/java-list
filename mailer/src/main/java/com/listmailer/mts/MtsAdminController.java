@@ -5,6 +5,8 @@ import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.catalogs.SendingPathEntity;
 import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.mailbox.MailConnectionProbe;
 import com.listmailer.mailbox.MailboxPollLock;
@@ -48,6 +50,7 @@ public class MtsAdminController {
   private final MtsIngestService ingest;
   private final MailboxPollLock locks;
   private final SecretStore secrets;
+  private final ParametersPort parameters;
 
   public MtsAdminController(
       MtsInboxRepository inboxes,
@@ -61,7 +64,8 @@ public class MtsAdminController {
       MailConnectionProbe probe,
       MtsIngestService ingest,
       MailboxPollLock locks,
-      SecretStore secrets) {
+      SecretStore secrets,
+      ParametersPort parameters) {
     this.inboxes = inboxes;
     this.senders = senders;
     this.grants = grants;
@@ -74,6 +78,7 @@ public class MtsAdminController {
     this.ingest = ingest;
     this.locks = locks;
     this.secrets = secrets;
+    this.parameters = parameters;
   }
 
   @GetMapping("/drop-log")
@@ -217,6 +222,9 @@ public class MtsAdminController {
     if (body.autoQueue() != null) {
       box.setAutoQueue(body.autoQueue());
     }
+    if (body.embedImages() != null) {
+      box.setEmbedImages(body.embedImages());
+    }
     if (body.deleteAfterAccept() != null) {
       box.setDeleteAfterAccept(body.deleteAfterAccept());
     }
@@ -250,6 +258,9 @@ public class MtsAdminController {
     }
     if (body.autoQueue() != null) {
       box.setAutoQueue(body.autoQueue());
+    }
+    if (body.embedImages() != null) {
+      box.setEmbedImages(body.embedImages());
     }
     if (body.deleteAfterAccept() != null) {
       box.setDeleteAfterAccept(body.deleteAfterAccept());
@@ -468,13 +479,44 @@ public class MtsAdminController {
         box.getPollIntervalMinutes(),
         box.isEnabled(),
         box.isAutoQueue(),
+        box.isEmbedImages(),
         box.isDeleteAfterAccept(),
         emails,
         maps,
         box.getLastPolledAt() == null ? null : box.getLastPolledAt().toString(),
         box.getLastPollingUpdate() == null ? null : box.getLastPollingUpdate().toString(),
         pollResult(box),
-        held);
+        held,
+        inlineMaxKb(),
+        inlineTotalMaxKb());
+  }
+
+  private int inlineMaxKb() {
+    return parameters
+        .get(ParameterKeys.CAMPAIGN_IMAGE_INLINE_MAX_KB)
+        .map(
+            v -> {
+              try {
+                return Math.max(1, Integer.parseInt(v.trim()));
+              } catch (NumberFormatException e) {
+                return 256;
+              }
+            })
+        .orElse(256);
+  }
+
+  private int inlineTotalMaxKb() {
+    return parameters
+        .get(ParameterKeys.CAMPAIGN_IMAGE_INLINE_TOTAL_MAX_KB)
+        .map(
+            v -> {
+              try {
+                return Math.max(1, Integer.parseInt(v.trim()));
+              } catch (NumberFormatException e) {
+                return 2048;
+              }
+            })
+        .orElse(2048);
   }
 
   private static String pollResult(MtsInboxEntity b) {
@@ -572,6 +614,7 @@ public class MtsAdminController {
       int pollIntervalMinutes,
       Boolean enabled,
       Boolean autoQueue,
+      Boolean embedImages,
       Boolean deleteAfterAccept) {}
 
   public record ConnectionTestRequest(
@@ -610,13 +653,16 @@ public class MtsAdminController {
       int pollIntervalMinutes,
       boolean enabled,
       boolean autoQueue,
+      boolean embedImages,
       boolean deleteAfterAccept,
       List<String> authorizedSenders,
       List<MappingSummary> mappings,
       String lastPolledAt,
       String lastPollingUpdate,
       String result,
-      boolean polling) {}
+      boolean polling,
+      int imageInlineMaxKb,
+      int imageInlineTotalMaxKb) {}
 
   public record SenderDetail(
       String email, String substituteFrom, String sendingPathId, List<GrantView> grants) {}

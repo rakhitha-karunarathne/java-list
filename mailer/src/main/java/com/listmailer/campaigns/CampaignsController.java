@@ -6,6 +6,8 @@ import com.listmailer.catalogs.CatalogTargetType;
 import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.kernel.ids.Guids;
 import com.listmailer.kernel.ports.OpsHooksPort;
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.lists.ListRepository;
 import com.listmailer.users.ListAccessService;
 import java.nio.charset.StandardCharsets;
@@ -50,6 +52,7 @@ public class CampaignsController {
   private final SendPauseCache pauseCache;
   private final SendingPathRepository sendingPaths;
   private final CatalogReferenceService references;
+  private final ParametersPort parameters;
 
   public CampaignsController(
       CampaignRepository campaigns,
@@ -64,7 +67,8 @@ public class CampaignsController {
       OpsHooksPort ops,
       SendPauseCache pauseCache,
       SendingPathRepository sendingPaths,
-      CatalogReferenceService references) {
+      CatalogReferenceService references,
+      ParametersPort parameters) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -78,6 +82,7 @@ public class CampaignsController {
     this.pauseCache = pauseCache;
     this.sendingPaths = sendingPaths;
     this.references = references;
+    this.parameters = parameters;
   }
 
   @GetMapping
@@ -103,6 +108,9 @@ public class CampaignsController {
                 CampaignStatus.DRAFT,
                 Instant.now()));
     applySendingPath(saved, null, body.sendingPathId());
+    if (body.embedImages() != null) {
+      saved.setEmbedImages(body.embedImages());
+    }
     campaigns.save(saved);
     replaceLists(id, body.listIds());
     if (body.attachments() != null) {
@@ -125,6 +133,9 @@ public class CampaignsController {
     c.setSubject(body.subject().trim());
     c.setHtmlBody(nullToEmpty(body.htmlBody()));
     c.setTextBody(nullToEmpty(body.textBody()));
+    if (body.embedImages() != null) {
+      c.setEmbedImages(body.embedImages());
+    }
     applySendingPath(c, c.getSendingPathId(), body.sendingPathId());
     campaigns.save(c);
     // null listIds/attachments = leave unchanged; empty list = clear
@@ -499,6 +510,9 @@ public class CampaignsController {
         c.getStatus().name(),
         listIds,
         c.getSendingPathId(),
+        c.isEmbedImages(),
+        inlineMaxKb(),
+        inlineTotalMaxKb(),
         sent,
         uniqueOpens,
         totalOpens,
@@ -512,6 +526,34 @@ public class CampaignsController {
         totalOpens,
         listRefs,
         recipients);
+  }
+
+  private int inlineMaxKb() {
+    return parameters
+        .get(ParameterKeys.CAMPAIGN_IMAGE_INLINE_MAX_KB)
+        .map(
+            v -> {
+              try {
+                return Math.max(1, Integer.parseInt(v.trim()));
+              } catch (NumberFormatException e) {
+                return 256;
+              }
+            })
+        .orElse(256);
+  }
+
+  private int inlineTotalMaxKb() {
+    return parameters
+        .get(ParameterKeys.CAMPAIGN_IMAGE_INLINE_TOTAL_MAX_KB)
+        .map(
+            v -> {
+              try {
+                return Math.max(1, Integer.parseInt(v.trim()));
+              } catch (NumberFormatException e) {
+                return 2048;
+              }
+            })
+        .orElse(2048);
   }
 
   private void applySendingPath(CampaignEntity c, String oldPathId, String raw) {
@@ -545,6 +587,7 @@ public class CampaignsController {
       String textBody,
       List<String> listIds,
       String sendingPathId,
+      Boolean embedImages,
       List<AttachmentIn> attachments) {}
 
   public record CampaignSummary(String id, String subject, String status, Instant createdAt, Instant queuedAt) {
@@ -591,6 +634,9 @@ public class CampaignsController {
       String status,
       List<String> listIds,
       String sendingPathId,
+      boolean embedImages,
+      int imageInlineMaxKb,
+      int imageInlineTotalMaxKb,
       long sentCount,
       long uniqueOpens,
       long totalOpens,

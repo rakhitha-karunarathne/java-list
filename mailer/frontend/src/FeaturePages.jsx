@@ -4,6 +4,7 @@ import { authHeaders } from './auth.js'
 import { confirmDelete } from './confirmDelete.js'
 import { ActivityLogPage } from './ActivityLogPage.jsx'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
+import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved, useUnsavedGate } from './Unsaved.jsx'
 import {
   BounceMailboxesPage,
@@ -45,6 +46,9 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
   const [testAddresses, setTestAddresses] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [embedImages, setEmbedImages] = useState(true)
+  const [inlineMaxKb, setInlineMaxKb] = useState(256)
+  const [inlineTotalMaxKb, setInlineTotalMaxKb] = useState(2048)
   const fileInput = useRef(null)
   const saved = useRef({
     subject: '',
@@ -52,6 +56,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
     textBody: 'Hello',
     listIds: [],
     sendingPathId: '',
+    embedImages: true,
     hasFile: false,
   })
   const draftDirty =
@@ -60,6 +65,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
     !valuesEqual(textBody, saved.current.textBody) ||
     !valuesEqual(selected, saved.current.listIds) ||
     !valuesEqual(sendingPathId, saved.current.sendingPathId) ||
+    !valuesEqual(embedImages, saved.current.embedImages) ||
     !!attachment !== saved.current.hasFile
   useRegisterUnsaved(draftDirty, 'compose-draft')
 
@@ -82,6 +88,9 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         setTextBody(body.textBody || '')
         setSelected(listIds)
         setSendingPathId(body.sendingPathId || '')
+        setEmbedImages(body.embedImages !== false)
+        if (body.imageInlineMaxKb) setInlineMaxKb(body.imageInlineMaxKb)
+        if (body.imageInlineTotalMaxKb) setInlineTotalMaxKb(body.imageInlineTotalMaxKb)
         setKeptAttachments(body.attachments || [])
         setAttachment(null)
         saved.current = {
@@ -90,6 +99,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
           textBody: body.textBody || '',
           listIds,
           sendingPathId: body.sendingPathId || '',
+          embedImages: body.embedImages !== false,
           hasFile: false,
         }
         setLoaded(true)
@@ -169,6 +179,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
       textBody,
       listIds: selected,
       sendingPathId: sendingPathId || null,
+      embedImages,
     }
     if (attachment) payload.attachments = [await fileToAttachment(attachment)]
     return payload
@@ -195,6 +206,9 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
       const listIds = body.listIds || []
       setSelected(listIds)
       setSendingPathId(body.sendingPathId || '')
+      if (body.embedImages != null) setEmbedImages(!!body.embedImages)
+      if (body.imageInlineMaxKb) setInlineMaxKb(body.imageInlineMaxKb)
+      if (body.imageInlineTotalMaxKb) setInlineTotalMaxKb(body.imageInlineTotalMaxKb)
       if (body.subject != null) setSubject(body.subject)
       if (body.htmlBody != null) setHtmlBody(body.htmlBody)
       if (body.textBody != null) setTextBody(body.textBody)
@@ -206,6 +220,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         textBody: body.textBody ?? textBody,
         listIds,
         sendingPathId: body.sendingPathId || '',
+        embedImages: body.embedImages !== false,
         hasFile: false,
       }
       setMsg(`Saved Draft ${body.id}`)
@@ -303,6 +318,22 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
             {...dirtyControlProps(!valuesEqual(textBody, saved.current.textBody))}
           />
         </label>
+        <p className="field">
+          <span>Embed Images In Message</span>
+          <Toggle
+            checked={!!embedImages}
+            dirty={!valuesEqual(embedImages, saved.current.embedImages)}
+            aria-label="Embed Images In Message"
+            onChange={setEmbedImages}
+          />
+        </p>
+        <p className="hint">
+          When on, remote images fetched at queue are included inside the email (CID) so recipients
+          do not load them from this server. Only images at or under {inlineMaxKb} KB each are
+          embedded, and the total embedded size cannot exceed {inlineTotalMaxKb} KB (Parameters).
+          Larger images still use hosted /dl links. Images that already arrived inline (for example
+          from Mail-to-Send) stay inline.
+        </p>
       </section>
 
       <section className="card">

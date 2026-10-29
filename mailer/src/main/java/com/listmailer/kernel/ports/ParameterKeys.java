@@ -27,6 +27,11 @@ public final class ParameterKeys {
   public static final String IMAGE_FETCH_MODE = "campaign.image.fetch.mode";
   public static final String CAMPAIGN_PAYLOAD_MAX_BYTES = "campaign.payload.max.bytes";
   public static final String CAMPAIGN_IMAGE_MAX_BYTES = "campaign.image.max.bytes";
+  /** Per-image max size (KB) for CID embed when Campaign embed flag is on. */
+  public static final String CAMPAIGN_IMAGE_INLINE_MAX_KB = "campaign.image.inline.max.kb";
+  /** Max total CID image bytes (KB) per outbound message. */
+  public static final String CAMPAIGN_IMAGE_INLINE_TOTAL_MAX_KB =
+      "campaign.image.inline.total.max.kb";
   public static final String BOUNCE_HARD_LIMIT = "bounce.hard.limit";
   public static final String BOUNCE_SOFT_LIMIT = "bounce.soft.limit";
   public static final String BOUNCE_HOLDBACK_MULTIPLIER = "bounce.holdback.multiplier";

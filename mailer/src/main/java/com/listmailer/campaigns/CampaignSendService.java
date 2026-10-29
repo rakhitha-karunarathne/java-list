@@ -46,7 +46,6 @@ public class CampaignSendService {
   private final SmtpPort smtp;
   private final OpsHooksPort ops;
   private final ParametersPort parameters;
-  private final CampaignHtmlRewriter htmlRewriter;
   private final RemoteImageFetchService imageFetch;
   private final OpaqueTokenHelper opaqueTokens;
   private final SendingPathRepository sendingPaths;
@@ -65,7 +64,6 @@ public class CampaignSendService {
       SmtpPort smtp,
       OpsHooksPort ops,
       ParametersPort parameters,
-      CampaignHtmlRewriter htmlRewriter,
       RemoteImageFetchService imageFetch,
       OpaqueTokenHelper opaqueTokens,
       SendingPathRepository sendingPaths,
@@ -82,7 +80,6 @@ public class CampaignSendService {
     this.smtp = smtp;
     this.ops = ops;
     this.parameters = parameters;
-    this.htmlRewriter = htmlRewriter;
     this.imageFetch = imageFetch;
     this.opaqueTokens = opaqueTokens;
     this.sendingPaths = sendingPaths;
@@ -118,15 +115,7 @@ public class CampaignSendService {
             .findById(linked.get(0).getListId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "list missing"));
     String pathId = resolveSendingPathId(campaign, firstList);
-    List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaignId);
-    List<SmtpPort.Attachment> files =
-        blobs.stream()
-            .map(
-                a ->
-                    new SmtpPort.Attachment(
-                        a.getFilename(), a.getContentType(), a.getContent()))
-            .toList();
-    String html = rewriteHtml(campaignId, campaign.getHtmlBody(), blobs);
+    InlineImagePlanner.Plan plan = planOutbound(campaign);
     int sent = 0;
     for (String to : addresses) {
       try {
@@ -136,8 +125,8 @@ public class CampaignSendService {
                 to,
                 "[TEST] " + campaign.getSubject(),
                 campaign.getTextBody(),
-                html,
-                files));
+                plan.html(),
+                mergeParts(plan)));
         sent++;
       } catch (RuntimeException ex) {
         ops.opsLog("send.test", "test send failed to " + to + ": " + ex.getMessage());
@@ -149,16 +138,27 @@ public class CampaignSendService {
     return sent;
   }
 
-  private String rewriteHtml(
-      String campaignId, String html, List<CampaignAttachmentEntity> blobs) {
-    if (blobs == null || blobs.isEmpty()) {
-      return html == null ? "" : html;
-    }
-    return htmlRewriter.rewrite(
-        html,
-        campaignId,
+  private InlineImagePlanner.Plan planOutbound(CampaignEntity campaign) {
+    List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaign.getId());
+    int perKb =
+        intParam(ParameterKeys.CAMPAIGN_IMAGE_INLINE_MAX_KB, 256);
+    int totalKb =
+        intParam(ParameterKeys.CAMPAIGN_IMAGE_INLINE_TOTAL_MAX_KB, 2048);
+    return InlineImagePlanner.plan(
+        campaign.isEmbedImages(),
+        campaign.getId(),
         publicBase(),
-        blobs.stream().map(CampaignAttachmentEntity::getFilename).toList());
+        campaign.getHtmlBody(),
+        blobs,
+        perKb,
+        totalKb);
+  }
+
+  private static List<SmtpPort.Attachment> mergeParts(InlineImagePlanner.Plan plan) {
+    List<SmtpPort.Attachment> all = new ArrayList<>();
+    all.addAll(plan.inlineParts());
+    all.addAll(plan.fileParts());
+    return all;
   }
 
   private String injectTracking(
@@ -554,14 +554,7 @@ public class CampaignSendService {
       campaign.setStatus(CampaignStatus.SENDING);
       campaigns.save(campaign);
     }
-    List<CampaignAttachmentEntity> blobs = attachments.findByCampaignId(campaign.getId());
-    List<SmtpPort.Attachment> files =
-        blobs.stream()
-            .map(
-                a ->
-                    new SmtpPort.Attachment(
-                        a.getFilename(), a.getContentType(), a.getContent()))
-            .toList();
+    InlineImagePlanner.Plan plan = planOutbound(campaign);
     String pixelToken = Guids.newGuid();
     List<String> listSnapshot =
         campaignLists.findByCampaignIdOrderByPositionAscListIdAsc(campaign.getId()).stream()
@@ -594,8 +587,7 @@ public class CampaignSendService {
                 }
               });
     }
-    String html = rewriteHtml(campaign.getId(), campaign.getHtmlBody(), blobs);
-    html = injectTracking(html, campaign.getId(), pixelToken, unsubToken);
+    String html = injectTracking(plan.html(), campaign.getId(), pixelToken, unsubToken);
     String unsubUrl = publicBase() + "/unsubscribe/" + unsubToken;
     java.util.Map<String, String> headers = new java.util.LinkedHashMap<>();
     headers.put("X-JavaList-Token", corrToken);
@@ -607,7 +599,7 @@ public class CampaignSendService {
             campaign.getSubject(),
             campaign.getTextBody(),
             html,
-            files,
+            mergeParts(plan),
             unsubUrl,
             headers));
     row.setStatus("SENT");

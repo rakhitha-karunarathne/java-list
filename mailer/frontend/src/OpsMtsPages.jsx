@@ -28,6 +28,7 @@ const INBOX_BLANK = {
   pollIntervalMinutes: 5,
   enabled: true,
   autoQueue: true,
+  embedImages: true,
   deleteAfterAccept: true,
 }
 
@@ -153,6 +154,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             pollIntervalMinutes: d.pollIntervalMinutes || 5,
             enabled: !!d.enabled,
             autoQueue: d.autoQueue !== false,
+            embedImages: d.embedImages !== false,
             deleteAfterAccept: d.deleteAfterAccept !== false,
           })
         })
@@ -221,6 +223,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         pollIntervalMinutes: d.pollIntervalMinutes || 5,
         enabled: !!d.enabled,
         autoQueue: d.autoQueue !== false,
+        embedImages: d.embedImages !== false,
         deleteAfterAccept: d.deleteAfterAccept !== false,
       })
       setConnTest(null)
@@ -437,6 +440,21 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             onChange={(on) => setInboxForm({ ...inboxForm, autoQueue: on })}
           />
         </label>
+        <label className="field">
+          {fieldLabel('embedImages')}
+          <Toggle
+            checked={!!inboxForm.embedImages}
+            dirty={!valuesEqual(inboxForm.embedImages, inboxBase('embedImages'))}
+            aria-label={fieldLabel('embedImages')}
+            onChange={(on) => setInboxForm({ ...inboxForm, embedImages: on })}
+          />
+        </label>
+        <p className="hint">
+          Copied onto new campaigns from this inbox. When on, fetched remote images are embedded in
+          the message (CID) up to {detail?.imageInlineMaxKb ?? 256} KB each /{' '}
+          {detail?.imageInlineTotalMaxKb ?? 2048} KB total (Parameters); larger images use hosted
+          /dl links. Images already inline in the received mail stay inline.
+        </p>
         <label className="field">
           {fieldLabel('deleteAfterAccept')}
           <Toggle

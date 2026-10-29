@@ -244,7 +244,8 @@ public class MtsIngestService {
                       senderGrants,
                       box.isAutoQueue(),
                       parts.attachments(),
-                      auth.getSendingPathId());
+                      auth.getSendingPathId(),
+                      box.isEmbedImages());
               String listIds =
                   senderGrants.stream()
                       .map(MtsSenderListGrantEntity::getListId)

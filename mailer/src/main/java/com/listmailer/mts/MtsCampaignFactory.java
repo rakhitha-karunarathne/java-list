@@ -100,6 +100,19 @@ public class MtsCampaignFactory {
       boolean autoQueue,
       List<MimeBodyParser.Attachment> files,
       String sendingPathId) {
+    return create(subject, htmlBody, textBody, grants, autoQueue, files, sendingPathId, true);
+  }
+
+  @Transactional
+  public CampaignEntity create(
+      String subject,
+      String htmlBody,
+      String textBody,
+      List<MtsSenderListGrantEntity> grants,
+      boolean autoQueue,
+      List<MimeBodyParser.Attachment> files,
+      String sendingPathId,
+      boolean embedImages) {
     if (grants == null || grants.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sender has no list grants");
     }
@@ -117,16 +130,17 @@ public class MtsCampaignFactory {
                 text,
                 CampaignStatus.DRAFT,
                 Instant.now()));
+    c.setEmbedImages(embedImages);
     if (StringUtils.hasText(sendingPathId)) {
       String pathId = sendingPathId.trim();
       if (!sendingPaths.existsById(pathId)) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown sending path");
       }
       c.setSendingPathId(pathId);
-      campaigns.save(c);
       references.add(
           CatalogTargetType.SENDING_PATH, pathId, "CAMPAIGN", c.getId(), c.getSubject());
     }
+    campaigns.save(c);
     int i = 0;
     for (MtsSenderListGrantEntity g : grants) {
       campaignLists.save(new CampaignListEntity(id, g.getListId(), i++));
@@ -139,7 +153,9 @@ public class MtsCampaignFactory {
         String name = StringUtils.hasText(a.filename()) ? a.filename() : "attachment.bin";
         String ct =
             StringUtils.hasText(a.contentType()) ? a.contentType() : "application/octet-stream";
-        attachments.save(new CampaignAttachmentEntity(Guids.newGuid(), id, name, ct, a.content()));
+        attachments.save(
+            new CampaignAttachmentEntity(
+                Guids.newGuid(), id, name, ct, a.content(), a.contentId()));
       }
     }
     if (!autoQueue) {

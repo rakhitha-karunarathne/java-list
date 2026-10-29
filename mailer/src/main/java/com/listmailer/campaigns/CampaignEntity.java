@@ -42,6 +42,10 @@ public class CampaignEntity {
   @Column(name = "sending_path_id", length = 36)
   private String sendingPathId;
 
+  /** When true, eligible fetched images are CID-inlined at send (see Parameters KB caps). */
+  @Column(name = "embed_images", nullable = false)
+  private boolean embedImages = true;
+
   protected CampaignEntity() {}
 
   public CampaignEntity(
@@ -57,6 +61,7 @@ public class CampaignEntity {
     this.textBody = textBody;
     this.status = status;
     this.createdAt = createdAt;
+    this.embedImages = true;
   }
 
   public String getId() {
@@ -113,5 +118,13 @@ public class CampaignEntity {
 
   public void setSendingPathId(String sendingPathId) {
     this.sendingPathId = sendingPathId;
+  }
+
+  public boolean isEmbedImages() {
+    return embedImages;
+  }
+
+  public void setEmbedImages(boolean embedImages) {
+    this.embedImages = embedImages;
   }
 }

@@ -109,6 +109,14 @@ public final class ParameterDefinitions {
         "512000",
         "Hard upper for a single fetched/stored Campaign image. Integer >= 1. Default 512000.");
     put(
+        ParameterKeys.CAMPAIGN_IMAGE_INLINE_MAX_KB,
+        "256",
+        "When Embed images in message is on, max size in KB for one image to send as CID (larger use /dl). Integer >= 1. Default 256.");
+    put(
+        ParameterKeys.CAMPAIGN_IMAGE_INLINE_TOTAL_MAX_KB,
+        "2048",
+        "When Embed images in message is on, max total KB of CID images per message (excess use /dl). Integer >= 1. Default 2048.");
+    put(
         ParameterKeys.BOUNCE_HARD_LIMIT,
         "3",
         "Consecutive hard bounce limit before Member Disabled. Integer >= 1. Default 3.");

@@ -56,6 +56,10 @@ public class MtsInboxEntity {
   @Column(name = "auto_queue", nullable = false)
   private boolean autoQueue = true;
 
+  /** Copied onto new Campaigns as embed_images at MTS create time. */
+  @Column(name = "embed_images", nullable = false)
+  private boolean embedImages = true;
+
   @Column(name = "delete_after_accept", nullable = false)
   private boolean deleteAfterAccept = true;
 
@@ -84,6 +88,7 @@ public class MtsInboxEntity {
     this.pollIntervalMinutes = pollIntervalMinutes;
     this.enabled = true;
     this.autoQueue = true;
+    this.embedImages = true;
     this.deleteAfterAccept = true;
     this.createdAt = createdAt;
   }
@@ -202,6 +207,14 @@ public class MtsInboxEntity {
 
   public void setAutoQueue(boolean autoQueue) {
     this.autoQueue = autoQueue;
+  }
+
+  public boolean isEmbedImages() {
+    return embedImages;
+  }
+
+  public void setEmbedImages(boolean embedImages) {
+    this.embedImages = embedImages;
   }
 
   public boolean isDeleteAfterAccept() {

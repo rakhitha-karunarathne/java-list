@@ -53,7 +53,6 @@ class CampaignSendServiceTest {
   @Mock SmtpPort smtp;
   @Mock OpsHooksPort ops;
   @Mock ParametersPort parameters;
-  @Mock CampaignHtmlRewriter htmlRewriter;
   @Mock RemoteImageFetchService imageFetch;
   @Mock OpaqueTokenHelper opaqueTokens;
   @Mock SendingPathRepository sendingPaths;
@@ -79,11 +78,15 @@ class CampaignSendServiceTest {
         .when(parameters.get(ParameterKeys.IMAGE_FETCH_MODE))
         .thenReturn(Optional.of("Off"));
     lenient()
-        .when(htmlRewriter.rewrite(any(), anyString(), anyString(), any()))
-        .thenAnswer(inv -> inv.getArgument(0));
+        .when(parameters.get(ParameterKeys.CAMPAIGN_IMAGE_INLINE_MAX_KB))
+        .thenReturn(Optional.of("256"));
+    lenient()
+        .when(parameters.get(ParameterKeys.CAMPAIGN_IMAGE_INLINE_TOTAL_MAX_KB))
+        .thenReturn(Optional.of("2048"));
     lenient()
         .when(imageFetch.ingest(anyString(), any(), any(), any()))
         .thenAnswer(inv -> inv.getArgument(1));
+    lenient().when(attachments.findByCampaignId(anyString())).thenReturn(List.of());
     lenient().when(opaqueTokens.seal(any())).thenReturn("opaque-unsub-token");
     lenient().when(pauseCache.globalPaused()).thenReturn(false);
     lenient().when(pauseCache.campaignPaused(anyString())).thenReturn(false);

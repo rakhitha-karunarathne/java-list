@@ -109,8 +109,8 @@ class MimeBodyParserTest {
     assertEquals(1, parsed.attachments().size());
     assertEquals("image/png", parsed.attachments().get(0).contentType());
     assertEquals(png.length, parsed.attachments().get(0).content().length);
-    assertFalse(parsed.html().contains("cid:"));
-    assertTrue(parsed.html().contains("src=\"" + parsed.attachments().get(0).filename() + "\""));
+    assertEquals("logo@domain", parsed.attachments().get(0).contentId());
+    assertTrue(parsed.html().contains("cid:logo@domain"));
     assertTrue(parsed.html().contains("<p>Hi</p>"));
   }
 
@@ -170,8 +170,8 @@ class MimeBodyParserTest {
 
     assertEquals(1, parsed.attachments().size());
     assertEquals("pixel.gif", parsed.attachments().get(0).filename());
-    assertTrue(parsed.html().contains("src=\"pixel.gif\""));
+    assertEquals("ii_local", parsed.attachments().get(0).contentId());
+    assertTrue(parsed.html().contains("src=\"cid:ii_local\""));
     assertTrue(parsed.html().contains("src=\"https://cdn.example.com/ext.jpg\""));
-    assertFalse(parsed.html().contains("cid:"));
   }
 }

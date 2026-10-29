@@ -43,7 +43,6 @@ class CampaignSendingPathOverrideTest {
   @Mock SmtpPort smtp;
   @Mock OpsHooksPort ops;
   @Mock ParametersPort parameters;
-  @Mock CampaignHtmlRewriter htmlRewriter;
   @Mock RemoteImageFetchService imageFetch;
   @Mock OpaqueTokenHelper opaqueTokens;
   @Mock ActivityLogService activity;
@@ -66,7 +65,6 @@ class CampaignSendingPathOverrideTest {
             smtp,
             ops,
             parameters,
-            htmlRewriter,
             imageFetch,
             opaqueTokens,
             sendingPaths,
