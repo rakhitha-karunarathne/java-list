@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiJson } from './api.js'
 import { confirmDelete } from './confirmDelete.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
+import { FieldDesc } from './FieldDesc.jsx'
+import { fieldHelp } from './fieldHelp.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { listTimeZones } from './formatWhen.js'
@@ -163,6 +165,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         <form onSubmit={create}>
           <label className="field">
             {fieldLabel('email')}
+            <FieldDesc>{fieldHelp.email}</FieldDesc>
             <input
               value={form.email}
               onChange={(ev) => setForm({ ...form, email: ev.target.value })}
@@ -172,6 +175,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           </label>
           <label className="field">
             {fieldLabel('password')}
+            <FieldDesc>{fieldHelp.password}</FieldDesc>
             <input
               type="password"
               value={form.password}
@@ -182,6 +186,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           </label>
           <label className="field">
             {fieldLabel('role')}
+            <FieldDesc>{fieldHelp.role}</FieldDesc>
             <select
               value={form.role}
               onChange={(ev) => setForm({ ...form, role: ev.target.value })}
@@ -221,6 +226,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           <form onSubmit={savePatch}>
             <label className="field">
               {fieldLabel('role')}
+              <FieldDesc>{fieldHelp.role}</FieldDesc>
               <select
                 value={patch.role}
                 onChange={(ev) => setPatch({ ...patch, role: ev.target.value })}
@@ -235,6 +241,7 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             </label>
             <label className="field">
               {fieldLabel('enabled')}
+              <FieldDesc>{fieldHelp.userEnabled}</FieldDesc>
               <Toggle
                 checked={!!patch.enabled}
                 dirty={!valuesEqual(patch.enabled, savedPatch.enabled)}
@@ -407,6 +414,7 @@ export function MyAccountPage({ token, onError }) {
         <form onSubmit={changePassword}>
           <label className="field">
             {fieldLabel('current password')}
+            <FieldDesc>{fieldHelp.currentPassword}</FieldDesc>
             <input
               type="password"
               value={form.currentPassword}
@@ -418,6 +426,7 @@ export function MyAccountPage({ token, onError }) {
           </label>
           <label className="field">
             {fieldLabel('new password')}
+            <FieldDesc>{fieldHelp.newPassword}</FieldDesc>
             <input
               type="password"
               value={form.newPassword}
@@ -429,6 +438,7 @@ export function MyAccountPage({ token, onError }) {
           </label>
           <label className="field">
             {fieldLabel('confirm new password')}
+            <FieldDesc>{fieldHelp.confirmNewPassword}</FieldDesc>
             <input
               type="password"
               value={form.confirmPassword}
@@ -449,11 +459,13 @@ export function MyAccountPage({ token, onError }) {
       </section>
       <section className="card">
         <h3>Time Zone</h3>
-        <p className="hint">Timestamps in the app use this zone. Values are still stored in UTC.</p>
         {zoneMsg ? <p className="hint">{zoneMsg}</p> : null}
         <form onSubmit={saveTimeZone}>
           <label className="field">
             {fieldLabel('timeZone')}
+            <FieldDesc>
+              {fieldHelp.timeZone} Timestamps use this zone; values are still stored in UTC.
+            </FieldDesc>
             <select
               value={zoneDraft}
               onChange={(ev) => {
@@ -554,6 +566,7 @@ function SecurityMfaPanel({ token, onError }) {
           <form onSubmit={confirm}>
             <label className="field">
               {fieldLabel('verification code')}
+              <FieldDesc>{fieldHelp.verificationCode}</FieldDesc>
               <input
                 value={code}
                 onChange={(ev) => setCode(ev.target.value)}
@@ -588,6 +601,7 @@ function SecurityMfaPanel({ token, onError }) {
       <form onSubmit={unenroll}>
         <label className="field">
           {fieldLabel('unenroll')} (TOTP Or Backup Code)
+          <FieldDesc>{fieldHelp.unenrollCode}</FieldDesc>
           <input
             value={unenrollCode}
             onChange={(ev) => setUnenrollCode(ev.target.value)}

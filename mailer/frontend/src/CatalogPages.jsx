@@ -13,6 +13,8 @@ import {
   testBounceImapConnection,
   testSmtpConnection,
 } from './ConnectionTest.jsx'
+import { FieldDesc } from './FieldDesc.jsx'
+import { fieldHelp } from './fieldHelp.js'
 import { btnDirtyClass, dirtyControlProps, isFormDirty, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { RecordTable } from './RecordTable.jsx'
@@ -190,8 +192,135 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     }
   }
 
+  function pathBase(k) {
+    if (creating) return blank.current[k]
+    return saved ? saved[k] : blank.current[k]
+  }
+
+  function pathAccountFields({ requirePassword }) {
+    return (
+      <>
+        <label className="field">
+          {fieldLabel('name')}
+          <FieldDesc>{fieldHelp.name}</FieldDesc>
+          <input
+            value={form.name}
+            onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+            required
+            {...dirtyControlProps(!valuesEqual(form.name, pathBase('name')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('host')}
+          <FieldDesc>{fieldHelp.host}</FieldDesc>
+          <input
+            value={form.host}
+            onChange={(ev) => setForm({ ...form, host: ev.target.value })}
+            required
+            {...dirtyControlProps(!valuesEqual(form.host, pathBase('host')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('port')}
+          <FieldDesc>{fieldHelp.port}</FieldDesc>
+          <input
+            type="number"
+            value={form.port}
+            onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+            {...dirtyControlProps(!valuesEqual(form.port, pathBase('port')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('username')}
+          <FieldDesc>{fieldHelp.username}</FieldDesc>
+          <input
+            value={form.username}
+            onChange={(ev) => setForm({ ...form, username: ev.target.value })}
+            required
+            {...dirtyControlProps(!valuesEqual(form.username, pathBase('username')))}
+          />
+        </label>
+        <label className="field">
+          {requirePassword ? fieldLabel('password') : `${fieldLabel('password')} (Blank = Keep)`}
+          <FieldDesc>{requirePassword ? fieldHelp.password : fieldHelp.passwordKeep}</FieldDesc>
+          <input
+            type="password"
+            value={form.password}
+            onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+            required={requirePassword}
+            autoComplete={requirePassword ? undefined : 'new-password'}
+            {...dirtyControlProps(!valuesEqual(form.password, pathBase('password')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('fromEmail')}
+          <FieldDesc>{fieldHelp.fromEmail}</FieldDesc>
+          <input
+            value={form.fromEmail}
+            onChange={(ev) => setForm({ ...form, fromEmail: ev.target.value })}
+            required
+            {...dirtyControlProps(!valuesEqual(form.fromEmail, pathBase('fromEmail')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('fromName')}
+          <FieldDesc>{fieldHelp.fromName}</FieldDesc>
+          <input
+            value={form.fromName}
+            onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
+            {...dirtyControlProps(!valuesEqual(form.fromName, pathBase('fromName')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('returnPathEmail')}
+          <FieldDesc>{fieldHelp.returnPathEmail}</FieldDesc>
+          <input
+            value={form.returnPathEmail}
+            onChange={(ev) => setForm({ ...form, returnPathEmail: ev.target.value })}
+            placeholder="Optional; domain must match From"
+            {...dirtyControlProps(!valuesEqual(form.returnPathEmail, pathBase('returnPathEmail')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('useTls')}
+          <FieldDesc>{fieldHelp.useTls}</FieldDesc>
+          <Toggle
+            checked={!!form.useTls}
+            dirty={!valuesEqual(form.useTls, pathBase('useTls'))}
+            aria-label={fieldLabel('useTls')}
+            onChange={(on) =>
+              setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
+            }
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('useSsl')}
+          <FieldDesc>{fieldHelp.useSsl}</FieldDesc>
+          <Toggle
+            checked={!!form.useSsl}
+            dirty={!valuesEqual(form.useSsl, pathBase('useSsl'))}
+            aria-label={fieldLabel('useSsl')}
+            onChange={(on) =>
+              setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
+            }
+          />
+        </label>
+        <ConnectionTestBanner result={connTest} />
+        <p>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={testing}
+            onClick={runSmtpTest}
+          >
+            {testing ? 'Testing…' : 'Test Connection'}
+          </button>
+        </p>
+      </>
+    )
+  }
+
   if (creating) {
-    const base = blank.current
     return (
       <div className="card">
         <button type="button" className="btn secondary" onClick={onCloseDetail}>
@@ -199,110 +328,8 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         </button>
         <h2>Create Sending Path</h2>
         <form onSubmit={create}>
-          <label className="field">
-            {fieldLabel('name')}
-            <input
-              value={form.name}
-              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.name, base.name))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('host')}
-            <input
-              value={form.host}
-              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.host, base.host))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('port')}
-            <input
-              type="number"
-              value={form.port}
-              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
-              {...dirtyControlProps(!valuesEqual(form.port, base.port))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('username')}
-            <input
-              value={form.username}
-              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.username, base.username))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('password')}
-            <input
-              type="password"
-              value={form.password}
-              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.password, base.password))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('fromEmail')}
-            <input
-              value={form.fromEmail}
-              onChange={(ev) => setForm({ ...form, fromEmail: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.fromEmail, base.fromEmail))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('fromName')}
-            <input
-              value={form.fromName}
-              onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.fromName, base.fromName))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('returnPathEmail')}
-            <input
-              value={form.returnPathEmail}
-              onChange={(ev) => setForm({ ...form, returnPathEmail: ev.target.value })}
-              placeholder="Optional; domain must match From"
-              {...dirtyControlProps(!valuesEqual(form.returnPathEmail, base.returnPathEmail))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('useTls')}
-            <Toggle
-              checked={!!form.useTls}
-              dirty={!valuesEqual(form.useTls, base.useTls)}
-              aria-label={fieldLabel('useTls')}
-              onChange={(on) =>
-                setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
-              }
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('useSsl')}
-            <Toggle
-              checked={!!form.useSsl}
-              dirty={!valuesEqual(form.useSsl, base.useSsl)}
-              aria-label={fieldLabel('useSsl')}
-              onChange={(on) =>
-                setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
-              }
-            />
-          </label>
-          <ConnectionTestBanner result={connTest} />
+          {pathAccountFields({ requirePassword: true })}
           <p>
-            <button
-              type="button"
-              className="btn secondary"
-              disabled={testing}
-              onClick={runSmtpTest}
-            >
-              {testing ? 'Testing…' : 'Test Connection'}
-            </button>{' '}
             <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Create Sending Path
             </button>
@@ -321,110 +348,8 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
           </button>
           <h2>{detail.name}</h2>
           <form onSubmit={save}>
-            <label className="field">
-              {fieldLabel('name')}
-              <input
-                value={form.name}
-                onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-                required
-                {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('host')}
-              <input
-                value={form.host}
-                onChange={(ev) => setForm({ ...form, host: ev.target.value })}
-                required
-                {...dirtyControlProps(!valuesEqual(form.host, saved.host))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('port')}
-              <input
-                type="number"
-                value={form.port}
-                onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
-                {...dirtyControlProps(!valuesEqual(form.port, saved.port))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('username')}
-              <input
-                value={form.username}
-                onChange={(ev) => setForm({ ...form, username: ev.target.value })}
-                required
-                {...dirtyControlProps(!valuesEqual(form.username, saved.username))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('password')} (Blank = Keep)
-              <input
-                type="password"
-                value={form.password}
-                onChange={(ev) => setForm({ ...form, password: ev.target.value })}
-                autoComplete="new-password"
-                {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('fromEmail')}
-              <input
-                value={form.fromEmail}
-                onChange={(ev) => setForm({ ...form, fromEmail: ev.target.value })}
-                required
-                {...dirtyControlProps(!valuesEqual(form.fromEmail, saved.fromEmail))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('fromName')}
-              <input
-                value={form.fromName}
-                onChange={(ev) => setForm({ ...form, fromName: ev.target.value })}
-                {...dirtyControlProps(!valuesEqual(form.fromName, saved.fromName))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('returnPathEmail')}
-              <input
-                value={form.returnPathEmail}
-                onChange={(ev) => setForm({ ...form, returnPathEmail: ev.target.value })}
-                placeholder="Optional; domain must match From"
-                {...dirtyControlProps(!valuesEqual(form.returnPathEmail, saved.returnPathEmail))}
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('useTls')}
-              <Toggle
-                checked={!!form.useTls}
-                dirty={!valuesEqual(form.useTls, saved.useTls)}
-                aria-label={fieldLabel('useTls')}
-                onChange={(on) =>
-                  setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
-                }
-              />
-            </label>
-            <label className="field">
-              {fieldLabel('useSsl')}
-              <Toggle
-                checked={!!form.useSsl}
-                dirty={!valuesEqual(form.useSsl, saved.useSsl)}
-                aria-label={fieldLabel('useSsl')}
-                onChange={(on) =>
-                  setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
-                }
-              />
-            </label>
-            <ConnectionTestBanner result={connTest} />
+            {pathAccountFields({ requirePassword: false })}
             <p>
-              <button
-                type="button"
-                className="btn secondary"
-                disabled={testing}
-                onClick={runSmtpTest}
-              >
-                {testing ? 'Testing…' : 'Test Connection'}
-              </button>{' '}
               <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
                 Save
               </button>{' '}
@@ -569,6 +494,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
         <form onSubmit={create}>
           <label className="field">
             {fieldLabel('name')}
+            <FieldDesc>{fieldHelp.name}</FieldDesc>
             <input
               value={form.name}
               onChange={(ev) => setForm({ ...form, name: ev.target.value })}
@@ -578,6 +504,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
           </label>
           <label className="field">
             {fieldLabel('htmlBody')}
+            <FieldDesc>{fieldHelp.footerHtml}</FieldDesc>
             <textarea
               rows={4}
               style={{ maxWidth: '100%' }}
@@ -588,6 +515,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
           </label>
           <label className="field">
             {fieldLabel('textBody')}
+            <FieldDesc>{fieldHelp.footerText}</FieldDesc>
             <textarea
               rows={3}
               style={{ maxWidth: '100%' }}
@@ -615,6 +543,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
           <form onSubmit={save}>
             <label className="field">
               {fieldLabel('name')}
+              <FieldDesc>{fieldHelp.name}</FieldDesc>
               <input
                 value={form.name}
                 onChange={(ev) => setForm({ ...form, name: ev.target.value })}
@@ -623,6 +552,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
             </label>
             <label className="field">
               {fieldLabel('htmlBody')}
+              <FieldDesc>{fieldHelp.footerHtml}</FieldDesc>
               <textarea
                 rows={6}
                 style={{ maxWidth: '100%' }}
@@ -633,6 +563,7 @@ export function FootersPage({ token, onError, detailId, onOpen, onCloseDetail })
             </label>
             <label className="field">
               {fieldLabel('textBody')}
+              <FieldDesc>{fieldHelp.footerText}</FieldDesc>
               <textarea
                 rows={4}
                 style={{ maxWidth: '100%' }}
@@ -814,6 +745,117 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
     }
   }
 
+  function bounceBase(k) {
+    if (creating) return blank[k]
+    return saved ? saved[k] : blank[k]
+  }
+
+  function bounceAccountFields({ requirePassword }) {
+    return (
+      <>
+        <label className="field">
+          {fieldLabel('name')}
+          <FieldDesc>{fieldHelp.name}</FieldDesc>
+          <input
+            value={form.name}
+            onChange={(ev) => setForm({ ...form, name: ev.target.value })}
+            required={requirePassword}
+            {...dirtyControlProps(!valuesEqual(form.name, bounceBase('name')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('host')}
+          <FieldDesc>{fieldHelp.host}</FieldDesc>
+          <input
+            value={form.host}
+            onChange={(ev) => setForm({ ...form, host: ev.target.value })}
+            required={requirePassword}
+            {...dirtyControlProps(!valuesEqual(form.host, bounceBase('host')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('port')}
+          <FieldDesc>{fieldHelp.port}</FieldDesc>
+          <input
+            type="number"
+            value={form.port}
+            onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
+            {...dirtyControlProps(!valuesEqual(form.port, bounceBase('port')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('username')}
+          <FieldDesc>{fieldHelp.username}</FieldDesc>
+          <input
+            value={form.username}
+            onChange={(ev) => setForm({ ...form, username: ev.target.value })}
+            required={requirePassword}
+            {...dirtyControlProps(!valuesEqual(form.username, bounceBase('username')))}
+          />
+        </label>
+        <label className="field">
+          {requirePassword ? fieldLabel('password') : `${fieldLabel('password')} (Blank = Keep)`}
+          <FieldDesc>{requirePassword ? fieldHelp.password : fieldHelp.passwordKeep}</FieldDesc>
+          <input
+            type="password"
+            value={form.password}
+            onChange={(ev) => setForm({ ...form, password: ev.target.value })}
+            required={requirePassword}
+            autoComplete={requirePassword ? undefined : 'new-password'}
+            {...dirtyControlProps(!valuesEqual(form.password, bounceBase('password')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('pollIntervalMinutes')}
+          <FieldDesc>{fieldHelp.pollIntervalMinutes}</FieldDesc>
+          <input
+            type="number"
+            value={form.pollIntervalMinutes}
+            onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
+            {...dirtyControlProps(
+              !valuesEqual(form.pollIntervalMinutes, bounceBase('pollIntervalMinutes')),
+            )}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('useSsl')}
+          <FieldDesc>{fieldHelp.useSsl}</FieldDesc>
+          <Toggle
+            checked={!!form.useSsl}
+            dirty={!valuesEqual(form.useSsl, bounceBase('useSsl'))}
+            aria-label={fieldLabel('useSsl')}
+            onChange={(on) =>
+              setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
+            }
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('useTls')}
+          <FieldDesc>{fieldHelp.useTls}</FieldDesc>
+          <Toggle
+            checked={!!form.useTls}
+            dirty={!valuesEqual(form.useTls, bounceBase('useTls'))}
+            aria-label={fieldLabel('useTls')}
+            onChange={(on) =>
+              setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
+            }
+          />
+        </label>
+        <ConnectionTestBanner result={connTest} />
+        <p>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={testing}
+            onClick={runBounceImapTest}
+          >
+            {testing ? 'Testing…' : 'Test Connection'}
+          </button>
+        </p>
+      </>
+    )
+  }
+
   if (creating) {
     return (
       <div className="card">
@@ -825,93 +867,8 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
           The mailbox is created on the mail server. This only adds it to the Bounce polling list.
         </p>
         <form onSubmit={create}>
-          <label className="field">
-            {fieldLabel('name')}
-            <input
-              value={form.name}
-              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.name, blank.name))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('host')}
-            <input
-              value={form.host}
-              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.host, blank.host))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('port')}
-            <input
-              type="number"
-              value={form.port}
-              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
-              {...dirtyControlProps(!valuesEqual(form.port, blank.port))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('username')}
-            <input
-              value={form.username}
-              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.username, blank.username))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('password')}
-            <input
-              type="password"
-              value={form.password}
-              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
-              required
-              {...dirtyControlProps(!valuesEqual(form.password, blank.password))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('pollIntervalMinutes')}
-            <input
-              type="number"
-              value={form.pollIntervalMinutes}
-              onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
-              {...dirtyControlProps(!valuesEqual(form.pollIntervalMinutes, blank.pollIntervalMinutes))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('useSsl')}
-            <Toggle
-              checked={!!form.useSsl}
-              dirty={!valuesEqual(form.useSsl, blank.useSsl)}
-              aria-label={fieldLabel('useSsl')}
-              onChange={(on) =>
-                setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
-              }
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('useTls')}
-            <Toggle
-              checked={!!form.useTls}
-              dirty={!valuesEqual(form.useTls, blank.useTls)}
-              aria-label={fieldLabel('useTls')}
-              onChange={(on) =>
-                setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
-              }
-            />
-          </label>
-          <ConnectionTestBanner result={connTest} />
+          {bounceAccountFields({ requirePassword: true })}
           <p>
-            <button
-              type="button"
-              className="btn secondary"
-              disabled={testing}
-              onClick={runBounceImapTest}
-            >
-              {testing ? 'Testing…' : 'Test Connection'}
-            </button>{' '}
             <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Add Mail Box
             </button>
@@ -944,90 +901,8 @@ export function BounceMailboxesPage({ token, onError, detailId, onOpen, onCloseD
         </section>
         <section className="card">
         <form onSubmit={save}>
-          <label className="field">
-            {fieldLabel('name')}
-            <input
-              value={form.name}
-              onChange={(ev) => setForm({ ...form, name: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.name, saved.name))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('host')}
-            <input
-              value={form.host}
-              onChange={(ev) => setForm({ ...form, host: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.host, saved.host))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('port')}
-            <input
-              type="number"
-              value={form.port}
-              onChange={(ev) => setForm({ ...form, port: Number(ev.target.value) })}
-              {...dirtyControlProps(!valuesEqual(form.port, saved.port))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('username')}
-            <input
-              value={form.username}
-              onChange={(ev) => setForm({ ...form, username: ev.target.value })}
-              {...dirtyControlProps(!valuesEqual(form.username, saved.username))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('password')} (Blank = Keep)
-            <input
-              type="password"
-              value={form.password}
-              onChange={(ev) => setForm({ ...form, password: ev.target.value })}
-              autoComplete="new-password"
-              {...dirtyControlProps(!valuesEqual(form.password, saved.password))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('pollIntervalMinutes')}
-            <input
-              type="number"
-              value={form.pollIntervalMinutes}
-              onChange={(ev) => setForm({ ...form, pollIntervalMinutes: Number(ev.target.value) })}
-              {...dirtyControlProps(!valuesEqual(form.pollIntervalMinutes, saved.pollIntervalMinutes))}
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('useSsl')}
-            <Toggle
-              checked={!!form.useSsl}
-              dirty={!valuesEqual(form.useSsl, saved.useSsl)}
-              aria-label={fieldLabel('useSsl')}
-              onChange={(on) =>
-                setForm({ ...form, useSsl: on, useTls: on ? false : !!form.useTls })
-              }
-            />
-          </label>
-          <label className="field">
-            {fieldLabel('useTls')}
-            <Toggle
-              checked={!!form.useTls}
-              dirty={!valuesEqual(form.useTls, saved.useTls)}
-              aria-label={fieldLabel('useTls')}
-              onChange={(on) =>
-                setForm({ ...form, useTls: on, useSsl: on ? false : !!form.useSsl })
-              }
-            />
-          </label>
-          <ConnectionTestBanner result={connTest} />
+          {bounceAccountFields({ requirePassword: false })}
           <p>
-            <button
-              type="button"
-              className="btn secondary"
-              disabled={testing}
-              onClick={runBounceImapTest}
-            >
-              {testing ? 'Testing…' : 'Test Connection'}
-            </button>{' '}
             <button type="submit" className={btnDirtyClass(dirty)} title={dirty ? 'Unsaved changes' : undefined}>
               Save
             </button>{' '}
@@ -1184,7 +1059,7 @@ export function ParametersPage({ token, onError }) {
           <div key={p.key} style={{ marginBottom: '1.5rem' }}>
             <label className="field">
               {fieldLabel(p.key)}
-              <span className="hint field-desc">{p.description}</span>
+              <FieldDesc>{p.description}</FieldDesc>
               <div className="field-control-row">
                 {asToggle ? (
                   <Toggle
@@ -1261,14 +1136,14 @@ export function NoticePathPage({ token, onError }) {
   return (
     <div className="card">
       <h2>Notice Sending Path</h2>
-      <p className="hint">
-        Used for system/consent/admin notices — not Campaign queue. Empty = notices are skipped
-        until a path is set.
-      </p>
       {!loaded ? <p className="hint">Loading…</p> : null}
       <form onSubmit={save}>
         <label className="field">
           Sending Path
+          <FieldDesc>
+            Used for system/consent/admin notices — not Campaign queue. Empty = notices are
+            skipped until a path is set.
+          </FieldDesc>
           <select
             value={pathId}
             onChange={(ev) => setPathId(ev.target.value)}

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { FieldDesc } from './FieldDesc.jsx'
+import { fieldHelp } from './fieldHelp.js'
 
 /**
  * Email + password; MFA step-up when API returns mfaRequired.
@@ -90,6 +92,7 @@ export default function LoginCard({ onToken, onError }) {
           <form onSubmit={submitPassword}>
             <label className="field">
               Email
+              <FieldDesc>{fieldHelp.loginEmail}</FieldDesc>
               <input
                 type="email"
                 value={email}
@@ -100,6 +103,7 @@ export default function LoginCard({ onToken, onError }) {
             </label>
             <label className="field">
               Password
+              <FieldDesc>{fieldHelp.loginPassword}</FieldDesc>
               <input
                 type="password"
                 value={password}
@@ -121,6 +125,7 @@ export default function LoginCard({ onToken, onError }) {
             </p>
             <label className="field">
               Authenticator Code
+              <FieldDesc>{fieldHelp.authenticatorCode}</FieldDesc>
               <input
                 type="text"
                 inputMode="text"
@@ -128,12 +133,8 @@ export default function LoginCard({ onToken, onError }) {
                 value={code}
                 onChange={(ev) => setCode(ev.target.value)}
                 required
-                aria-describedby="mfa-hint"
               />
             </label>
-            <p id="mfa-hint" className="hint">
-              Backup code accepted when authenticator is unavailable.
-            </p>
             <p style={{ marginTop: '1rem' }}>
               <button type="submit" className="btn" disabled={busy}>
                 Verify

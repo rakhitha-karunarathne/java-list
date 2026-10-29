@@ -3,6 +3,8 @@ import { apiJson } from './api.js'
 import { authHeaders } from './auth.js'
 import { confirmDelete } from './confirmDelete.js'
 import { ActivityLogPage } from './ActivityLogPage.jsx'
+import { FieldDesc } from './FieldDesc.jsx'
+import { fieldHelp } from './fieldHelp.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved, useUnsavedGate } from './Unsaved.jsx'
@@ -292,6 +294,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         ) : null}
         <label className="field">
           Subject
+          <FieldDesc>{fieldHelp.subject}</FieldDesc>
           <input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
@@ -300,6 +303,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         </label>
         <label className="field">
           HTML Body
+          <FieldDesc>{fieldHelp.htmlBody}</FieldDesc>
           <textarea
             value={htmlBody}
             onChange={(e) => setHtmlBody(e.target.value)}
@@ -310,6 +314,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         </label>
         <label className="field">
           Text Body
+          <FieldDesc>{fieldHelp.textBody}</FieldDesc>
           <textarea
             value={textBody}
             onChange={(e) => setTextBody(e.target.value)}
@@ -318,22 +323,22 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
             {...dirtyControlProps(!valuesEqual(textBody, saved.current.textBody))}
           />
         </label>
-        <p className="field">
-          <span>Embed Images In Message</span>
+        <label className="field">
+          Embed Images In Message
+          <FieldDesc>
+            When on, remote images fetched at queue are included inside the email (CID) so
+            recipients do not load them from this server. Only images at or under {inlineMaxKb} KB
+            each are embedded, and the total embedded size cannot exceed {inlineTotalMaxKb} KB
+            (Parameters). Larger images still use hosted /dl links. Images that already arrived
+            inline (for example from Mail-to-Send) stay inline.
+          </FieldDesc>
           <Toggle
             checked={!!embedImages}
             dirty={!valuesEqual(embedImages, saved.current.embedImages)}
             aria-label="Embed Images In Message"
             onChange={setEmbedImages}
           />
-        </p>
-        <p className="hint">
-          When on, remote images fetched at queue are included inside the email (CID) so recipients
-          do not load them from this server. Only images at or under {inlineMaxKb} KB each are
-          embedded, and the total embedded size cannot exceed {inlineTotalMaxKb} KB (Parameters).
-          Larger images still use hosted /dl links. Images that already arrived inline (for example
-          from Mail-to-Send) stay inline.
-        </p>
+        </label>
       </section>
 
       <section className="card">
@@ -358,6 +363,7 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         )}
         <label className="field">
           {keptAttachments.length > 0 ? 'Replace with file' : 'Add file'}
+          <FieldDesc>{fieldHelp.attachFile}</FieldDesc>
           <input
             ref={fileInput}
             type="file"
@@ -460,9 +466,9 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
 
       <section className="card">
         <h3>Sending Path</h3>
-        <p className="hint">Optional. When none, send uses the first included list’s path.</p>
         <label className="field">
           Sending Path
+          <FieldDesc>{fieldHelp.composeSendingPath}</FieldDesc>
           <select
             value={sendingPathId}
             onChange={(e) => setSendingPathId(e.target.value)}
@@ -482,6 +488,9 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
         <h3>Testing</h3>
         <label className="field">
           Test Send Addresses (Comma Or Newline)
+          <FieldDesc>
+            {fieldHelp.testAddresses} Test Send ignores bounce-disable.
+          </FieldDesc>
           <textarea
             value={testAddresses}
             onChange={(e) => setTestAddresses(e.target.value)}
@@ -489,7 +498,6 @@ export function Compose({ token, onError, editId, onBack, onQueued }) {
             style={{ maxWidth: '100%' }}
           />
         </label>
-        <p className="hint">Test Send Ignores Bounce-Disable.</p>
         <button
           type="button"
           className="btn secondary"

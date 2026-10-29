@@ -10,6 +10,8 @@ import {
   filterCampaigns,
 } from './campaignStatus.js'
 import { confirmDelete } from './confirmDelete.js'
+import { FieldDesc } from './FieldDesc.jsx'
+import { fieldHelp } from './fieldHelp.js'
 import { RecordTable } from './RecordTable.jsx'
 import { useFormatWhen } from './TimeZone.jsx'
 
@@ -283,6 +285,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
             <form onSubmit={addList}>
               <label className="field">
                 Add List
+                <FieldDesc>{fieldHelp.addList}</FieldDesc>
                 <select value={addListId} onChange={(ev) => setAddListId(ev.target.value)} required>
                   <option value="">— Select —</option>
                   {lists.map((l) => (
@@ -422,6 +425,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
           <h3>Recipients</h3>
           <label className="field">
             Search
+            <FieldDesc>{fieldHelp.search}</FieldDesc>
             <input
               value={recipientQ}
               onChange={(ev) => setRecipientQ(ev.target.value)}
@@ -453,6 +457,7 @@ export function CampaignsPage({ token, onError, detailId, onOpen, onCloseDetail,
       <h2>Campaigns</h2>
       <label className="field">
         Status Filter
+        <FieldDesc>{fieldHelp.statusFilter}</FieldDesc>
         <select value={filter} onChange={(ev) => setFilter(ev.target.value)}>
           <option value="">All</option>
           {CAMPAIGN_STATUSES.map((s) => (

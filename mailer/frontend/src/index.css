@@ -492,7 +492,7 @@ body.nav-open .backdrop {
   line-height: 1.4;
 }
 
-/* Parameter: description sits between label and control (not after). */
+/* Field help sits between label and control (FieldDesc / .field-desc). */
 label.field > .field-desc {
   font-weight: 400;
   margin: 0;

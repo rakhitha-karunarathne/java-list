@@ -3,6 +3,8 @@ import { apiJson } from './api.js'
 import { confirmDelete } from './confirmDelete.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import { ConnectionTestBanner, testImapConnection } from './ConnectionTest.jsx'
+import { FieldDesc } from './FieldDesc.jsx'
+import { fieldHelp } from './fieldHelp.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { mtsSenderDetailId, parseMtsDetailId } from './mtsNav.js'
@@ -342,6 +344,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       <>
         <label className="field">
           {fieldLabel('name')}
+          <FieldDesc>{fieldHelp.name}</FieldDesc>
           <input
             value={inboxForm.name}
             onChange={(ev) => setInboxForm({ ...inboxForm, name: ev.target.value })}
@@ -351,6 +354,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('host')}
+          <FieldDesc>{fieldHelp.host}</FieldDesc>
           <input
             value={inboxForm.host}
             onChange={(ev) => setInboxForm({ ...inboxForm, host: ev.target.value })}
@@ -360,6 +364,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('port')}
+          <FieldDesc>{fieldHelp.port}</FieldDesc>
           <input
             type="number"
             value={inboxForm.port}
@@ -369,6 +374,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('username')}
+          <FieldDesc>{fieldHelp.username}</FieldDesc>
           <input
             value={inboxForm.username}
             onChange={(ev) => setInboxForm({ ...inboxForm, username: ev.target.value })}
@@ -380,6 +386,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           {fieldLabel(
             requirePassword ? 'password' : 'password (leave blank to keep)',
           )}
+          <FieldDesc>{requirePassword ? fieldHelp.password : fieldHelp.passwordKeep}</FieldDesc>
           <input
             type="password"
             value={inboxForm.password}
@@ -390,6 +397,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('poll interval minutes')}
+          <FieldDesc>{fieldHelp.pollIntervalMinutes}</FieldDesc>
           <input
             type="number"
             value={inboxForm.pollIntervalMinutes}
@@ -403,6 +411,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('useSsl')}
+          <FieldDesc>{fieldHelp.useSsl}</FieldDesc>
           <Toggle
             checked={!!inboxForm.useSsl}
             dirty={!valuesEqual(inboxForm.useSsl, inboxBase('useSsl'))}
@@ -418,6 +427,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('useTls')}
+          <FieldDesc>{fieldHelp.useTls}</FieldDesc>
           <Toggle
             checked={!!inboxForm.useTls}
             dirty={!valuesEqual(inboxForm.useTls, inboxBase('useTls'))}
@@ -433,6 +443,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('autoQueue')}
+          <FieldDesc>{fieldHelp.autoQueue}</FieldDesc>
           <Toggle
             checked={!!inboxForm.autoQueue}
             dirty={!valuesEqual(inboxForm.autoQueue, inboxBase('autoQueue'))}
@@ -442,6 +453,12 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         </label>
         <label className="field">
           {fieldLabel('embedImages')}
+          <FieldDesc>
+            Copied onto new campaigns from this inbox. When on, fetched remote images are embedded
+            in the message (CID) up to {detail?.imageInlineMaxKb ?? 256} KB each /{' '}
+            {detail?.imageInlineTotalMaxKb ?? 2048} KB total (Parameters); larger images use hosted
+            /dl links. Images already inline in the received mail stay inline.
+          </FieldDesc>
           <Toggle
             checked={!!inboxForm.embedImages}
             dirty={!valuesEqual(inboxForm.embedImages, inboxBase('embedImages'))}
@@ -449,14 +466,9 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
             onChange={(on) => setInboxForm({ ...inboxForm, embedImages: on })}
           />
         </label>
-        <p className="hint">
-          Copied onto new campaigns from this inbox. When on, fetched remote images are embedded in
-          the message (CID) up to {detail?.imageInlineMaxKb ?? 256} KB each /{' '}
-          {detail?.imageInlineTotalMaxKb ?? 2048} KB total (Parameters); larger images use hosted
-          /dl links. Images already inline in the received mail stay inline.
-        </p>
         <label className="field">
           {fieldLabel('deleteAfterAccept')}
+          <FieldDesc>{fieldHelp.deleteAfterAccept}</FieldDesc>
           <Toggle
             checked={!!inboxForm.deleteAfterAccept}
             dirty={!valuesEqual(inboxForm.deleteAfterAccept, inboxBase('deleteAfterAccept'))}
@@ -467,6 +479,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         {!creating ? (
           <label className="field">
             {fieldLabel('enabled')}
+            <FieldDesc>{fieldHelp.enabled}</FieldDesc>
             <Toggle
               checked={!!inboxForm.enabled}
               dirty={!valuesEqual(inboxForm.enabled, inboxBase('enabled'))}
@@ -532,6 +545,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         <form onSubmit={saveGrants}>
           <label className="field">
             {fieldLabel('substituteFrom')}
+            <FieldDesc>{fieldHelp.substituteFrom}</FieldDesc>
             <input
               value={substituteFrom}
               onChange={(ev) => setSubstituteFrom(ev.target.value)}
@@ -541,6 +555,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           </label>
           <label className="field">
             {fieldLabel('sendingPathId')}
+            <FieldDesc>{fieldHelp.sendingPathId}</FieldDesc>
             <select
               value={sendingPathId}
               onChange={(ev) => setSendingPathId(ev.target.value)}
@@ -711,6 +726,7 @@ export function MtsPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           <form onSubmit={addSender}>
             <label className="field">
               {fieldLabel('sender email')}
+              <FieldDesc>{fieldHelp.senderEmail}</FieldDesc>
               <input
                 value={senderEmail}
                 onChange={(ev) => setSenderEmail(ev.target.value)}
@@ -1004,6 +1020,7 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
         >
           <label className="field">
             Block Sender
+            <FieldDesc>{fieldHelp.blockSender}</FieldDesc>
             <input
               value={blockEmail}
               onChange={(ev) => setBlockEmail(ev.target.value)}
@@ -1037,6 +1054,7 @@ export function GlobalBlocksPage({ token, onError, detailId, onOpen, onCloseDeta
         >
           <label className="field">
             Block Domain
+            <FieldDesc>{fieldHelp.blockDomain}</FieldDesc>
             <input
               value={blockDomain}
               onChange={(ev) => setBlockDomain(ev.target.value)}
@@ -1282,6 +1300,7 @@ export function BounceMessagesPage({
         {msg ? <p>{msg}</p> : null}
         <label className="field">
           Filter
+          <FieldDesc>{fieldHelp.filter}</FieldDesc>
           <select value={filter} onChange={(ev) => setFilter(ev.target.value)}>
             <option value="all">All</option>
             <option value="correlated">Correlated</option>

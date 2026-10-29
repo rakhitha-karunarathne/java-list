@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
 import { CONSENT_REQUEST_HINT } from './consentCopy.js'
 import { emptyHint } from './emptyHint.js'
+import { FieldDesc } from './FieldDesc.jsx'
+import { fieldHelp } from './fieldHelp.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
 import { membersSearchPath } from './membersSearch.js'
@@ -163,6 +165,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
         <form onSubmit={create}>
           <label className="field">
             {fieldLabel('name')}
+            <FieldDesc>{fieldHelp.name}</FieldDesc>
             <input
               value={form.name}
               onChange={(ev) => setForm({ ...form, name: ev.target.value })}
@@ -172,6 +175,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
           </label>
           <label className="field">
             {fieldLabel('sending path')}
+            <FieldDesc>{fieldHelp.listSendingPath}</FieldDesc>
             <select
               value={form.sendingPathId}
               onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
@@ -246,6 +250,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
             <form onSubmit={save}>
               <label className="field">
                 {fieldLabel('name')}
+                <FieldDesc>{fieldHelp.name}</FieldDesc>
                 <input
                   value={form.name}
                   onChange={(ev) => setForm({ ...form, name: ev.target.value })}
@@ -254,6 +259,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               </label>
               <label className="field">
                 {fieldLabel('sending path')}
+                <FieldDesc>{fieldHelp.listSendingPath}</FieldDesc>
                 <select
                   value={form.sendingPathId}
                   onChange={(ev) => setForm({ ...form, sendingPathId: ev.target.value })}
@@ -268,6 +274,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               </label>
               <label className="field">
                 {fieldLabel('footer')}
+                <FieldDesc>{fieldHelp.footerId}</FieldDesc>
                 <select
                   value={form.footerId}
                   onChange={(ev) => setForm({ ...form, footerId: ev.target.value })}
@@ -283,6 +290,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
               </label>
               <label className="field">
                 {fieldLabel('spamThreshold')}
+                <FieldDesc>{fieldHelp.spamThreshold}</FieldDesc>
                 <input
                   value={form.spamThreshold}
                   onChange={(ev) => setForm({ ...form, spamThreshold: ev.target.value })}
@@ -328,6 +336,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
             <form onSubmit={bulkAdd}>
               <label className="field">
                 Addresses (Newline, Comma, Or Semicolon)
+                <FieldDesc>{fieldHelp.bulkAddresses}</FieldDesc>
                 <textarea
                   rows={5}
                   style={{ maxWidth: '100%' }}
@@ -489,12 +498,13 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
         <h3>Enable / disable</h3>
         {detail.enabled ? (
           <>
-            <label className="field">
-              {fieldLabel('disable reason')}
-              <input
-                value={disableReason}
-                onChange={(ev) => setDisableReason(ev.target.value)}
-                required
+              <label className="field">
+                {fieldLabel('disable reason')}
+                <FieldDesc>{fieldHelp.disableReason}</FieldDesc>
+                <input
+                  value={disableReason}
+                  onChange={(ev) => setDisableReason(ev.target.value)}
+                  required
               />
             </label>
             <button type="button" className="btn secondary" onClick={disable}>
@@ -542,6 +552,7 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
       <h2>Members</h2>
       <label className="field">
         Search
+        <FieldDesc>{fieldHelp.search}</FieldDesc>
         <input
           value={q}
           onChange={(ev) => {
