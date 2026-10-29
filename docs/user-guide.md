@@ -51,9 +51,10 @@ Subscribers who unsubscribe via the link in campaign mail are marked unsubscribe
 **Campaigns → Compose** (or edit a draft from the campaign detail):
 
 1. Subject, HTML and/or text body.
-2. Choose one or more **lists** (first list’s sending path is used unless you override where the UI allows).
-3. Optional attachments, footer, test send to yourself.
-4. **Queue** — saves and enqueues sends (status becomes Queued / Sending).
+2. **Embed Images In Message** (default on) — when remote images are fetched at queue, include them inside the email (CID) so recipients do not load them from this server’s hosted `/dl` links. Only images at or under the per-image Parameter limit are embedded; total embedded size cannot exceed the total Parameter limit (defaults **256 KB** each / **2048 KB** total under **System → Parameters**). Larger images still use `/dl`. Editable on Draft only.
+3. Choose one or more **lists** (first list’s sending path is used unless you override where the UI allows).
+4. Optional attachments, sending-path override, test send to yourself (test send follows the same embed rules).
+5. **Queue** — saves and enqueues sends (status becomes Queued / Sending).
 
 Duplicate addresses across selected lists are sent **once** per campaign.
 
@@ -71,10 +72,11 @@ From **Campaigns**, open a row:
 
 Turn email-to-list into queued campaigns:
 
-1. **Mail-to-Send → Inboxes** — IMAP inbox; poll interval; test connection.
+1. **Mail-to-Send → Inboxes** — IMAP inbox; poll interval; **Embed Images In Message** (default on, copied onto each new campaign from this inbox); test connection. Later inbox changes do not alter existing campaigns.
 2. Open the inbox → add **authorized senders** and **list grants** (which lists that sender may target). Optional per-sender substitute From / sending path.
 3. Poll (scheduled or **Poll now**). Authorized mail becomes a **Queued** campaign; strangers are dropped (see Drop Log), not rejected with a courtesy bounce.
-4. **Drop Log** — review/resolve drops. **Global Blocks** — block sender or domain. **Issues** — From-domain / related holds. **Mail-To-Send Processing Log** — poll processing history.
+4. Images that already arrived **inline** in the received mail stay inline. Remote URL images follow the campaign embed flag and Parameter KB limits (same as Compose).
+5. **Drop Log** — review/resolve drops. **Global Blocks** — block sender or domain. **Issues** — From-domain / related holds. **Mail-To-Send Processing Log** — poll processing history.
 
 ## Bounces
 
@@ -97,7 +99,7 @@ Delete is blocked while a catalog row is still referenced (UI shows **Used by**)
 
 ## System (Admin)
 
-- **Parameters** — runtime settings (retention, pacing, public URL, feature toggles). Not for JWT or mailbox passwords.
+- **Parameters** — runtime settings (retention, pacing, public URL, feature toggles, campaign image inline max/total KB). Not for JWT or mailbox passwords.
 - **Secrets** (on the Parameters page) — shows current encryption key version and outdated count; **Migrate secrets to latest key** rewraps rows after you add a higher key version in config.
 - **Users & Grants** — create users, roles, list grants; MFA setup flows where offered.
 - **Ops Logs** / **Queue Sending Log** / **Audit Log** — operational and security-relevant history (passwords are not written to audit).
@@ -124,3 +126,5 @@ Operators do not manage those pages in the sidebar; they are public endpoints.
 - After changing encryption keys in `application.yml` / env, use **Migrate secrets** (or `MAILER_SECRETS_MIGRATE_ON_STARTUP=true` once) before removing old key versions.
 - If send stays Queued, check Ops Logs, sending path credentials, and that the list has a valid path.
 - LIST_SENDER only sees lists they are granted — ask an Admin for grants.
+- Form fields show a short help line under the label; Parameter screens also show each setting’s description there.
+- To prefer hosted image links over CID embedding, turn **Embed Images In Message** off on the Draft campaign (or on the MTS inbox before new mail arrives).
