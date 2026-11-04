@@ -14,7 +14,7 @@ refined: true
 
 ## Description
 
-When a campaign transitions to **Queued**, email every enabled Admin a copy of the campaign message.
+When a campaign transitions to **Queued**, email every enabled Admin with Receive Notification Emails on a copy of the campaign message.
 
 **Subject:** `Campaign Queued: {campaign subject}`
 

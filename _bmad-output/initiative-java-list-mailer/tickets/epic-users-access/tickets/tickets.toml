@@ -65,3 +65,15 @@ covers = []
 after = [1, 2, 3, 4, 5]
 hitl = false
 risk = "low"
+
+[[entry]]
+id = 7
+type = "story"
+title = "User receive notification emails preference"
+description = "Per-user flag for Admin notice mail; bootstrap Admin defaults off; My Account and Users UI."
+verify = "Flag off skips AdminNoticeMail; bootstrap Admin seeded off; toggle persists."
+covers = ["R1", "R2"]
+after = [2]
+hitl = false
+risk = "low"
+refined = true

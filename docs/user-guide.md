@@ -8,7 +8,7 @@ Operator help for the web UI at http://127.0.0.1:8080 (or your deployed URL). Fo
 2. Sign in with email and password.
 3. If MFA is enabled for your user, enter the authenticator code when prompted.
 
-**First install (empty database):** the bootstrap Admin is created automatically — default `admin@example.com` / `changeme` unless you set `MAILER_BOOTSTRAP_*`. Change that password after first login.
+**First install (empty database):** the bootstrap Admin is created automatically — default `admin@example.com` / `changeme` unless you set `MAILER_BOOTSTRAP_*`. Change that password after first login. **Receive Notification Emails** is off for that seeded Admin (dummy mailbox); turn it on under **My Account** or **Users & Grants** once you use a real Admin address.
 
 Session is a JWT stored in the browser for this tab. **Sign out** clears it. Leaving a page with unsaved edits prompts to confirm.
 
@@ -106,11 +106,11 @@ Delete is blocked while a catalog row is still referenced (UI shows **Used by**)
 
 ## My Account
 
-Every role: change password (where enabled), MFA enrollment, and **display time zone** for timestamps in the UI.
+Every role: change password (where enabled), MFA enrollment, **display time zone** for timestamps in the UI, and **Receive Notification Emails** (whether this account may get Admin ops notices on the Notice Sending Path).
 
 ## Admin notices (Notice Sending Path)
 
-When **Catalogs → Notice Sending Path** is set, enabled **Admin** users also receive:
+When **Catalogs → Notice Sending Path** is set, enabled **Admin** users with **Receive Notification Emails** on also receive:
 
 | Subject | When |
 | --- | --- |

@@ -14,7 +14,7 @@ refined: true
 
 ## Description
 
-When a send-queue drain run finds pending work, email every **enabled Admin** on the Notice Sending Path.
+When a send-queue drain run finds pending work, email every **enabled Admin** with **Receive Notification Emails** on, via the Notice Sending Path.
 
 **Subject:** `Queue Processed`
 
@@ -24,7 +24,7 @@ When a send-queue drain run finds pending work, email every **enabled Admin** on
 
 1. **Given** pending queue rows at the start of a batch  
    **When** the batch finishes  
-   **Then** each enabled Admin receives the notice (Notice path)  
+   **Then** each enabled Admin with Receive Notification Emails on receives the notice (Notice path)  
    **And** empty ticks (no pending) send nothing
 
 2. **Given** Notice Sending Path is unset  

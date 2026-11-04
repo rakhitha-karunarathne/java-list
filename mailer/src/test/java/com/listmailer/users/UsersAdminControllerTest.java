@@ -33,7 +33,24 @@ class UsersAdminControllerTest {
     ResponseStatusException ex =
         assertThrows(
             ResponseStatusException.class,
-            () -> controller.patch("a1", new UsersAdminController.PatchUserRequest(false, null)));
+            () ->
+                controller.patch(
+                    "a1", new UsersAdminController.PatchUserRequest(false, null, null)));
     assertEquals(409, ex.getStatusCode().value());
+  }
+
+  @Test
+  void patchesReceiveNotificationEmails() {
+    UserEntity admin =
+        new UserEntity("a1", "admin@example.com", "hash", UserRole.ADMIN, true, Instant.now());
+    admin.setReceiveNotificationEmails(false);
+    when(users.findById("a1")).thenReturn(Optional.of(admin));
+    when(users.save(admin)).thenAnswer(inv -> inv.getArgument(0));
+
+    var out =
+        controller.patch(
+            "a1", new UsersAdminController.PatchUserRequest(null, null, true));
+    assertEquals(true, out.receiveNotificationEmails());
+    assertEquals(true, admin.isReceiveNotificationEmails());
   }
 }

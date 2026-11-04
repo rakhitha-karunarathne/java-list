@@ -14,7 +14,7 @@ refined: true
 
 ## Description
 
-When a bounce **process** run disables at least one member, email every enabled Admin.
+When a bounce **process** run disables at least one member, email every enabled Admin with Receive Notification Emails on.
 
 **Subject:** `Bounces Processed`
 

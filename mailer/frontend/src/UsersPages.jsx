@@ -48,10 +48,19 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const [grants, setGrants] = useState([])
   const [savedGrants, setSavedGrants] = useState([])
   const [lists, setLists] = useState([])
-  const [patch, setPatch] = useState({ role: 'LIST_MANAGER', enabled: true })
+  const [patch, setPatch] = useState({
+    role: 'LIST_MANAGER',
+    enabled: true,
+    receiveNotificationEmails: true,
+  })
   const [savedPatch, setSavedPatch] = useState(null)
-  const patchDirty = !!(savedPatch && !valuesEqual(patch.role, savedPatch.role)) ||
-    !!(savedPatch && !valuesEqual(patch.enabled, savedPatch.enabled))
+  const patchDirty =
+    !!(savedPatch && !valuesEqual(patch.role, savedPatch.role)) ||
+    !!(savedPatch && !valuesEqual(patch.enabled, savedPatch.enabled)) ||
+    !!(
+      savedPatch &&
+      !valuesEqual(patch.receiveNotificationEmails, savedPatch.receiveNotificationEmails)
+    )
   const grantsDirty = grantsSig(grants) !== grantsSig(savedGrants)
   const showListGrants =
     patch.role === 'LIST_MANAGER' || patch.role === 'LIST_SENDER'
@@ -85,7 +94,11 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
       .then(([u, g, ls]) => {
         if (!u) throw new Error('user not found')
         setDetail(u)
-        const p = { role: u.role, enabled: u.enabled }
+        const p = {
+          role: u.role,
+          enabled: u.enabled,
+          receiveNotificationEmails: !!u.receiveNotificationEmails,
+        }
         setPatch(p)
         setSavedPatch(p)
         setGrants(g)
@@ -118,7 +131,11 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
         body: JSON.stringify(patch),
       })
       setDetail(updated)
-      const p = { role: updated.role, enabled: updated.enabled }
+      const p = {
+        role: updated.role,
+        enabled: updated.enabled,
+        receiveNotificationEmails: !!updated.receiveNotificationEmails,
+      }
       setPatch(p)
       setSavedPatch(p)
       await load()
@@ -249,6 +266,21 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
                 onChange={(on) => setPatch({ ...patch, enabled: on })}
               />
             </label>
+            <label className="field">
+              {fieldLabel('receiveNotificationEmails')}
+              <FieldDesc>{fieldHelp.receiveNotificationEmails}</FieldDesc>
+              <Toggle
+                checked={!!patch.receiveNotificationEmails}
+                dirty={
+                  !valuesEqual(
+                    patch.receiveNotificationEmails,
+                    savedPatch.receiveNotificationEmails,
+                  )
+                }
+                aria-label={fieldLabel('receiveNotificationEmails')}
+                onChange={(on) => setPatch({ ...patch, receiveNotificationEmails: on })}
+              />
+            </label>
             <button
               type="submit"
               className={btnDirtyClass(patchDirty)}
@@ -355,10 +387,30 @@ export function MyAccountPage({ token, onError }) {
   const zones = useMemo(() => listTimeZones(), [])
   const zoneDirty = !valuesEqual(zoneDraft, timeZone)
   useRegisterUnsaved(zoneDirty, 'account-timezone')
+  const [notifyOn, setNotifyOn] = useState(true)
+  const [notifySaved, setNotifySaved] = useState(true)
+  const [notifyMsg, setNotifyMsg] = useState('')
+  const notifyDirty = !valuesEqual(notifyOn, notifySaved)
+  useRegisterUnsaved(notifyDirty, 'account-notify-emails')
 
   useEffect(() => {
     if (!zoneTouched.current) setZoneDraft(timeZone)
   }, [timeZone])
+
+  useEffect(() => {
+    let cancelled = false
+    apiJson(token, '/api/me')
+      .then((m) => {
+        if (cancelled) return
+        const on = !!m.receiveNotificationEmails
+        setNotifyOn(on)
+        setNotifySaved(on)
+      })
+      .catch((e) => onError(e.message))
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   async function changePassword(e) {
     e.preventDefault()
@@ -402,6 +454,24 @@ export function MyAccountPage({ token, onError }) {
       setZoneMsg('Time zone saved.')
     } catch (err) {
       setZoneMsg('')
+      onError(err.message)
+    }
+  }
+
+  async function saveNotifyEmails(e) {
+    e.preventDefault()
+    try {
+      const out = await apiJson(token, '/api/me/notification-emails', {
+        method: 'PUT',
+        body: JSON.stringify({ receiveNotificationEmails: notifyOn }),
+      })
+      const on = !!out.receiveNotificationEmails
+      setNotifyOn(on)
+      setNotifySaved(on)
+      onError('')
+      setNotifyMsg('Notification preference saved.')
+    } catch (err) {
+      setNotifyMsg('')
       onError(err.message)
     }
   }
@@ -491,6 +561,30 @@ export function MyAccountPage({ token, onError }) {
             disabled={!zoneDirty}
           >
             Save Time Zone
+          </button>
+        </form>
+      </section>
+      <section className="card">
+        <h3>Notification Emails</h3>
+        {notifyMsg ? <p className="hint">{notifyMsg}</p> : null}
+        <form onSubmit={saveNotifyEmails}>
+          <label className="field">
+            {fieldLabel('receiveNotificationEmails')}
+            <FieldDesc>{fieldHelp.receiveNotificationEmails}</FieldDesc>
+            <Toggle
+              checked={!!notifyOn}
+              dirty={notifyDirty}
+              aria-label={fieldLabel('receiveNotificationEmails')}
+              onChange={setNotifyOn}
+            />
+          </label>
+          <button
+            type="submit"
+            className={btnDirtyClass(notifyDirty)}
+            title={notifyDirty ? 'Unsaved changes' : undefined}
+            disabled={!notifyDirty}
+          >
+            Save
           </button>
         </form>
       </section>

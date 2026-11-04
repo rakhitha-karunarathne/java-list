@@ -8,7 +8,7 @@ App code lives in `mailer/` (backend + SPA). Orchestration is root `compose.yaml
 
 Working V1 mailer on Compose: MariaDB + Flyway, JWT admin UI, catalogs (sending paths, bounce mailboxes, footers), lists/members, campaigns (compose → queue → send → opens), unsubscribe/consent, bounce poll/process, Mail-to-Send (MTS), ops/audit attention, and encrypted reversible secrets (SMTP/IMAP passwords, MFA seed) with versioned keys.
 
-Default login after empty DB install: `admin@example.com` / `changeme` (override with `MAILER_BOOTSTRAP_*`).
+Default login after empty DB install: `admin@example.com` / `changeme` (override with `MAILER_BOOTSTRAP_*`). That seeded Admin has **Receive Notification Emails** off until you opt in (dummy address).
 
 Stack pins: **Java 21**, **Spring Boot 4.1.2**, **MariaDB 12.3.3**.
 

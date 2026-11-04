@@ -24,9 +24,12 @@ public class AdminNoticeMail {
 
   /** @return number of Admins for whom SMTP was invoked */
   public int send(String subject, String textBody, String htmlBody) {
-    List<UserEntity> admins = users.findByRoleAndEnabledTrue(UserRole.ADMIN);
+    List<UserEntity> admins =
+        users.findByRoleAndEnabledTrueAndReceiveNotificationEmailsTrue(UserRole.ADMIN);
     if (admins.isEmpty()) {
-      log.warn("Admin notice skipped (no enabled Admin users): subject={}", subject);
+      log.warn(
+          "Admin notice skipped (no enabled Admin with receive notification emails): subject={}",
+          subject);
       return 0;
     }
     int n = 0;

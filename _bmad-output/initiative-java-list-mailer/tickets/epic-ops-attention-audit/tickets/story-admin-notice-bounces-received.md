@@ -14,7 +14,7 @@ refined: true
 
 ## Description
 
-When a bounce **fetch** run ingests at least one message, correlate those events, then email Admins counts grouped by campaign (and an uncorrelated bucket).
+When a bounce **fetch** run ingests at least one message, correlate those events, then email enabled Admins with Receive Notification Emails on — counts grouped by campaign (and an uncorrelated bucket).
 
 **Subject:** `Bounce(s) Received`
 

@@ -36,6 +36,7 @@ public class MeAccountController {
     out.put("email", user.getEmail());
     out.put("role", user.getRole().name());
     out.put("timeZone", normalizeStoredZone(user.getTimeZone()));
+    out.put("receiveNotificationEmails", user.isReceiveNotificationEmails());
     return out;
   }
 
@@ -50,6 +51,18 @@ public class MeAccountController {
     user.setTimeZone(id);
     users.save(user);
     return Map.of("timeZone", id);
+  }
+
+  @PutMapping("/notification-emails")
+  public Map<String, Boolean> setReceiveNotificationEmails(
+      Authentication auth, @RequestBody(required = false) NotificationEmailsRequest body) {
+    UserEntity user = current(auth);
+    if (body == null || body.receiveNotificationEmails() == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "receiveNotificationEmails required");
+    }
+    user.setReceiveNotificationEmails(body.receiveNotificationEmails());
+    users.save(user);
+    return Map.of("receiveNotificationEmails", user.isReceiveNotificationEmails());
   }
 
   /** IANA region ids only (ZoneId.getAvailableZoneIds), not offsets or short aliases. */
@@ -105,4 +118,6 @@ public class MeAccountController {
   public record PasswordChangeRequest(String currentPassword, String newPassword) {}
 
   public record TimeZoneRequest(String timeZone) {}
+
+  public record NotificationEmailsRequest(Boolean receiveNotificationEmails) {}
 }

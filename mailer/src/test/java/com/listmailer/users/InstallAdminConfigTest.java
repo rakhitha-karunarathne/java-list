@@ -1,6 +1,7 @@
 package com.listmailer.users;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,6 +39,7 @@ class InstallAdminConfigTest {
     assertEquals("admin@example.com", saved.getEmail());
     assertEquals(UserRole.ADMIN, saved.getRole());
     assertTrue(saved.isEnabled());
+    assertFalse(saved.isReceiveNotificationEmails());
     assertTrue(encoder.matches("secret", saved.getPasswordHash()));
   }
 

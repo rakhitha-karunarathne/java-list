@@ -85,6 +85,9 @@ public class UsersAdminController {
     }
     user.setEnabled(enabled);
     user.setRole(role);
+    if (body.receiveNotificationEmails() != null) {
+      user.setReceiveNotificationEmails(body.receiveNotificationEmails());
+    }
     return UserResponse.from(users.save(user));
   }
 
@@ -137,7 +140,7 @@ public class UsersAdminController {
 
   public record CreateUserRequest(String email, String password, UserRole role) {}
 
-  public record PatchUserRequest(Boolean enabled, UserRole role) {}
+  public record PatchUserRequest(Boolean enabled, UserRole role, Boolean receiveNotificationEmails) {}
 
   public record GrantRequest(String listId, boolean manage, boolean send) {}
 
@@ -147,9 +150,15 @@ public class UsersAdminController {
     }
   }
 
-  public record UserResponse(String id, String email, UserRole role, boolean enabled) {
+  public record UserResponse(
+      String id, String email, UserRole role, boolean enabled, boolean receiveNotificationEmails) {
     static UserResponse from(UserEntity u) {
-      return new UserResponse(u.getId(), u.getEmail(), u.getRole(), u.isEnabled());
+      return new UserResponse(
+          u.getId(),
+          u.getEmail(),
+          u.getRole(),
+          u.isEnabled(),
+          u.isReceiveNotificationEmails());
     }
   }
 }

@@ -27,18 +27,20 @@ class AdminNoticeMailTest {
 
   @Test
   void skipsWhenNoAdmins() {
-    when(users.findByRoleAndEnabledTrue(UserRole.ADMIN)).thenReturn(List.of());
+    when(users.findByRoleAndEnabledTrueAndReceiveNotificationEmailsTrue(UserRole.ADMIN))
+        .thenReturn(List.of());
     assertEquals(0, service.send("s", "t", "h"));
     verify(notice, never()).send(anyString(), anyString(), anyString(), anyString());
   }
 
   @Test
-  void sendsToEachEnabledAdmin() {
+  void sendsToEachEnabledAdminWithNotificationsOn() {
     UserEntity a =
         new UserEntity("1", "a@ex.com", "x", UserRole.ADMIN, true, Instant.now());
     UserEntity b =
         new UserEntity("2", "b@ex.com", "x", UserRole.ADMIN, true, Instant.now());
-    when(users.findByRoleAndEnabledTrue(UserRole.ADMIN)).thenReturn(List.of(a, b));
+    when(users.findByRoleAndEnabledTrueAndReceiveNotificationEmailsTrue(UserRole.ADMIN))
+        .thenReturn(List.of(a, b));
     when(notice.send(eq("a@ex.com"), eq("s"), eq("t"), eq("h"))).thenReturn(true);
     when(notice.send(eq("b@ex.com"), eq("s"), eq("t"), eq("h"))).thenReturn(true);
     assertEquals(2, service.send("s", "t", "h"));

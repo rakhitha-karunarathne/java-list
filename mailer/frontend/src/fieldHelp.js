@@ -54,6 +54,8 @@ export const fieldHelp = {
   newPassword: 'Choose a strong password you have not used elsewhere.',
   confirmNewPassword: 'Re-enter the new password to confirm.',
   timeZone: 'Used for dates and times shown in the UI for your account.',
+  receiveNotificationEmails:
+    'When on, this account may receive Admin ops notices on the Notice Sending Path (Admins only). Off for the default bootstrap Admin.',
   verificationCode: 'Code from your authenticator app.',
   unenrollCode: 'Authenticator code or a one-time backup code.',
   loginEmail: 'Operator account email.',

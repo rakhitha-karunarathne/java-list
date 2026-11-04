@@ -41,6 +41,10 @@ public class UserEntity {
   @Column(name = "time_zone", nullable = false, length = 64)
   private String timeZone = "UTC";
 
+  /** When false, skip Admin notice mail (Notice Sending Path) for this account. */
+  @Column(name = "receive_notification_emails", nullable = false)
+  private boolean receiveNotificationEmails = true;
+
   protected UserEntity() {}
 
   public UserEntity(
@@ -53,6 +57,7 @@ public class UserEntity {
     this.createdAt = createdAt;
     this.totpEnabled = false;
     this.timeZone = "UTC";
+    this.receiveNotificationEmails = true;
   }
 
   public String getId() {
@@ -113,5 +118,13 @@ public class UserEntity {
 
   public void setTimeZone(String timeZone) {
     this.timeZone = timeZone;
+  }
+
+  public boolean isReceiveNotificationEmails() {
+    return receiveNotificationEmails;
+  }
+
+  public void setReceiveNotificationEmails(boolean receiveNotificationEmails) {
+    this.receiveNotificationEmails = receiveNotificationEmails;
   }
 }

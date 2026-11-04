@@ -98,6 +98,26 @@ class MeAccountControllerTest {
     assertEquals("a@example.com", out.get("email"));
     assertEquals("LIST_SENDER", out.get("role"));
     assertEquals("UTC", out.get("timeZone"));
+    assertEquals(true, out.get("receiveNotificationEmails"));
+  }
+
+  @Test
+  void savesReceiveNotificationEmails() {
+    var out =
+        controller.setReceiveNotificationEmails(
+            auth, new MeAccountController.NotificationEmailsRequest(false));
+    assertEquals(false, out.get("receiveNotificationEmails"));
+    assertEquals(false, user.isReceiveNotificationEmails());
+    verify(users).save(user);
+  }
+
+  @Test
+  void rejectsNullReceiveNotificationEmails() {
+    ResponseStatusException nil =
+        assertThrows(
+            ResponseStatusException.class, () -> controller.setReceiveNotificationEmails(auth, null));
+    assertEquals(400, nil.getStatusCode().value());
+    verify(users, never()).save(user);
   }
 
   @Test

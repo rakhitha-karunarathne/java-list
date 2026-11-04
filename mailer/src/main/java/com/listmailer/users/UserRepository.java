@@ -8,7 +8,7 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
 
   Optional<UserEntity> findByEmailIgnoreCase(String email);
 
-  List<UserEntity> findByRoleAndEnabledTrue(UserRole role);
+  List<UserEntity> findByRoleAndEnabledTrueAndReceiveNotificationEmailsTrue(UserRole role);
 
   long count();
 }

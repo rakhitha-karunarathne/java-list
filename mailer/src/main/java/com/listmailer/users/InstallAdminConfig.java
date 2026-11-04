@@ -37,6 +37,8 @@ public class InstallAdminConfig {
               UserRole.ADMIN,
               true,
               Instant.now());
+      // Bootstrap address is often a dummy — do not send notice mail until an Admin opts in.
+      admin.setReceiveNotificationEmails(false);
       try {
         users.save(admin);
         log.info("Install seeded initial Admin user {}", email);

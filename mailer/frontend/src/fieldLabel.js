@@ -39,6 +39,7 @@ const PHRASES = {
   spamThreshold: 'Spam Threshold',
   sendingPathId: 'Sending Path',
   timeZone: 'Time Zone',
+  receiveNotificationEmails: 'Receive Notification Emails',
   footerId: 'Footer',
   payloadOverride: 'Payload Override',
   imageTtlOverrideHours: 'Image TTL Override Hours',
