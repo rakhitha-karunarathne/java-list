@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { TOKEN_KEY, decodeJwtPayload, roleFromToken } from './auth.js'
 import LoginCard from './LoginCard.jsx'
 import Shell from './Shell.jsx'
 import { MainView } from './FeaturePages.jsx'
+import { DEFAULT_SITE_TITLE, fetchSiteTitle } from './siteTitle.js'
 import { TimeZoneProvider } from './TimeZone.jsx'
 import { UnsavedProvider, useUnsavedGate } from './Unsaved.jsx'
 
@@ -11,10 +12,22 @@ function AppInner() {
   const [error, setError] = useState('')
   const [view, setView] = useState('attention')
   const [detailId, setDetailId] = useState(null)
+  const [siteTitle, setSiteTitle] = useState(DEFAULT_SITE_TITLE)
   const { confirmLeave } = useUnsavedGate()
 
   const role = useMemo(() => roleFromToken(token), [token])
   const email = useMemo(() => decodeJwtPayload(token)?.email || '', [token])
+
+  useEffect(() => {
+    if (!token) return undefined
+    let cancelled = false
+    fetchSiteTitle().then((t) => {
+      if (!cancelled) setSiteTitle(t)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   function acceptToken(t) {
     sessionStorage.setItem(TOKEN_KEY, t)
@@ -71,6 +84,7 @@ function AppInner() {
           role={role}
           view={view}
           email={email}
+          siteTitle={siteTitle}
           onNavigate={onNavigate}
           onLogout={onLogout}
         >

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FieldDesc } from './FieldDesc.jsx'
 import { fieldHelp } from './fieldHelp.js'
+import { DEFAULT_SITE_TITLE, fetchSiteTitle } from './siteTitle.js'
 
 /**
  * Email + password; MFA step-up when API returns mfaRequired.
@@ -14,6 +15,17 @@ export default function LoginCard({ onToken, onError }) {
   const [code, setCode] = useState('')
   const [localError, setLocalError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [siteTitle, setSiteTitle] = useState(DEFAULT_SITE_TITLE)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchSiteTitle().then((t) => {
+      if (!cancelled) setSiteTitle(t)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function submitPassword(e) {
     e.preventDefault()
@@ -86,7 +98,7 @@ export default function LoginCard({ onToken, onError }) {
   return (
     <div className="login-wrap">
       <div className="card login-card">
-        <h2 style={{ marginTop: 0 }}>List Mailer</h2>
+        <h2 style={{ marginTop: 0 }}>{siteTitle}</h2>
         <p className="hint">Sign in with your email</p>
         {step === 'password' ? (
           <form onSubmit={submitPassword}>

@@ -13,6 +13,10 @@ public final class ParameterDefinitions {
 
   static {
     put(
+        ParameterKeys.SITE_TITLE,
+        SiteTitles.DEFAULT,
+        "Website title shown in the sidebar brand, on the sign-in screen, and as the authenticator-app name when enrolling MFA. Use a distinct value per deployment. Default List Mailer.");
+    put(
         ParameterKeys.PUBLIC_BASE_URL,
         "https://lists.example.com",
         "Public HTTPS base URL for member links (pixel, unsubscribe, /dl). Must start with https://. No trailing slash required.");

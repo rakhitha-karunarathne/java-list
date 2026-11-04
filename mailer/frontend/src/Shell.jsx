@@ -28,9 +28,17 @@ const TITLES = {
   home: 'Home',
 }
 
-export default function Shell({ role, view, onNavigate, onLogout, email, children }) {
+export default function Shell({
+  role,
+  view,
+  onNavigate,
+  onLogout,
+  email,
+  siteTitle = 'List Mailer',
+  children,
+}) {
   const sections = visibleSections(role)
-  const title = TITLES[view] || 'List Mailer'
+  const title = TITLES[view] || siteTitle
 
   function openNav() {
     document.body.classList.add('nav-open')
@@ -50,7 +58,7 @@ export default function Shell({ role, view, onNavigate, onLogout, email, childre
       <div className="backdrop" onClick={closeNav} aria-hidden="true" />
       <aside className="sidebar">
         <div className="brand">
-          List Mailer
+          {siteTitle}
           <small>Operator UI · Clearwater</small>
         </div>
         <nav className="nav" aria-label="Primary">

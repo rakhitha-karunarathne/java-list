@@ -1,6 +1,8 @@
 package com.listmailer.users;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.kernel.ports.ParametersPort;
+import com.listmailer.parameters.SiteTitles;
 import com.listmailer.secrets.SecretStore;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -20,16 +22,19 @@ public class MfaService {
   private final UserBackupCodeRepository backupCodes;
   private final PasswordEncoder passwordEncoder;
   private final SecretStore secrets;
+  private final ParametersPort parameters;
 
   public MfaService(
       UserRepository users,
       UserBackupCodeRepository backupCodes,
       PasswordEncoder passwordEncoder,
-      SecretStore secrets) {
+      SecretStore secrets,
+      ParametersPort parameters) {
     this.users = users;
     this.backupCodes = backupCodes;
     this.passwordEncoder = passwordEncoder;
     this.secrets = secrets;
+    this.parameters = parameters;
   }
 
   public Setup startSetup(UserEntity user) {
@@ -41,7 +46,8 @@ public class MfaService {
     user.setTotpSecretId(secretId);
     user.setTotpEnabled(false);
     users.save(user);
-    return new Setup(secret, Totp.otpAuthUrl("List Mailer", user.getEmail(), secret));
+    return new Setup(
+        secret, Totp.otpAuthUrl(SiteTitles.resolve(parameters), user.getEmail(), secret));
   }
 
   @Transactional

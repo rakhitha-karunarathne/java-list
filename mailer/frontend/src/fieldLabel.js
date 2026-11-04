@@ -45,6 +45,7 @@ const PHRASES = {
   payloadOverride: 'Payload Override',
   imageTtlOverrideHours: 'Image TTL Override Hours',
   disableReason: 'Disable Reason',
+  'site.title': 'Site Title',
   'public.base.url': 'Public Base URL',
   'operator.mfa.mandatory': 'Require MFA For All Operators',
   'verp.enabled': 'VERP Enabled',

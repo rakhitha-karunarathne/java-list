@@ -6,9 +6,11 @@ import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.parameters.ParameterDefinitions;
 import com.listmailer.parameters.ParameterEntity;
 import com.listmailer.parameters.ParameterRepository;
+import com.listmailer.parameters.SiteTitles;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -74,6 +76,18 @@ public class ParametersProbeController {
     }
     if (body == null || body.value() == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value required");
+    }
+    if (ParameterKeys.SITE_TITLE.equals(key)) {
+      String title = body.value().trim();
+      if (!StringUtils.hasText(title)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "site title required");
+      }
+      if (title.length() > SiteTitles.MAX_LENGTH) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "site title max " + SiteTitles.MAX_LENGTH + " characters");
+      }
+      parameters.set(key, title);
+      return new ParameterView(key, title, def.description());
     }
     if (ParameterKeys.PUBLIC_BASE_URL.equals(key) && !body.value().startsWith("https://")) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public base URL must be https://");

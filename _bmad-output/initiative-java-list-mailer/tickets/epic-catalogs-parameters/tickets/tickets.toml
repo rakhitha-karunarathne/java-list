@@ -113,3 +113,15 @@ after = [8]
 hitl = false
 risk = "medium"
 refined = true
+
+[[entry]]
+id = 11
+type = "story"
+title = "Site title parameter (nav + MFA issuer)"
+description = "Parameter site.title first in Parameters (default List Mailer); MFA otpauth issuer; sidebar brand and login heading; public GET."
+verify = "site.title first and default List Mailer; MFA issuer and brand follow value; blank PUT rejected; blank/missing reads as List Mailer."
+covers = ["R5"]
+after = [5]
+hitl = false
+risk = "medium"
+refined = true

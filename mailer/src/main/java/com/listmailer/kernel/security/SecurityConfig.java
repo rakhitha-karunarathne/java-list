@@ -35,6 +35,8 @@ public class SecurityConfig {
             auth ->
                 auth.requestMatchers("/api/auth/login", "/api/auth/mfa")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/public/site-title")
+                    .permitAll()
                     .requestMatchers("/actuator/health", "/actuator/info")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.svg")
