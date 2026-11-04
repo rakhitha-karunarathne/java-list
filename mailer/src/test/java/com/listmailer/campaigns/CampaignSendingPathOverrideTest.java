@@ -48,6 +48,7 @@ class CampaignSendingPathOverrideTest {
   @Mock ActivityLogService activity;
   @Mock SendPauseCache pauseCache;
   @Mock SendingPathRepository sendingPaths;
+  @Mock com.listmailer.noticemail.AdminNoticeMail adminNotices;
 
   CampaignSendService service;
 
@@ -71,7 +72,7 @@ class CampaignSendingPathOverrideTest {
             activity,
             null,
             pauseCache,
-            org.mockito.Mockito.mock(com.listmailer.noticemail.AdminNoticeMail.class));
+            adminNotices);
   }
 
   @Test
@@ -103,6 +104,7 @@ class CampaignSendingPathOverrideTest {
     ArgumentCaptor<SendQueueEntity> cap = ArgumentCaptor.forClass(SendQueueEntity.class);
     verify(queue).save(cap.capture());
     assertEquals("path-campaign", cap.getValue().getSendingPathId());
+    verify(adminNotices).send(eq("Campaign Queued: Hi"), any(), any());
   }
 
   @Test

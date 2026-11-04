@@ -336,9 +336,30 @@ public class CampaignSendService {
       campaign.setStatus(CampaignStatus.FINISHED);
     } else {
       campaign.setStatus(CampaignStatus.QUEUED);
-      campaign.setQueuedAt(java.time.Instant.now());
+      campaign.setQueuedAt(Instant.now());
     }
-    return campaigns.save(campaign);
+    CampaignEntity saved = campaigns.save(campaign);
+    if (saved.getStatus() == CampaignStatus.QUEUED) {
+      notifyCampaignQueued(saved);
+    }
+    return saved;
+  }
+
+  private void notifyCampaignQueued(CampaignEntity campaign) {
+    try {
+      String subject = "Campaign Queued: " + (campaign.getSubject() == null ? "" : campaign.getSubject());
+      String text =
+          StringUtils.hasText(campaign.getTextBody())
+              ? campaign.getTextBody()
+              : "(no text body)";
+      String html =
+          StringUtils.hasText(campaign.getHtmlBody())
+              ? campaign.getHtmlBody()
+              : "<p>(no HTML body)</p>";
+      adminNotices.send(subject, text, html);
+    } catch (RuntimeException ignored) {
+      // never fail queue for notice mail
+    }
   }
 
   /** Drain up to {@code maxSends} PENDING rows. Empty queue writes nothing. */
