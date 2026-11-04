@@ -23,7 +23,7 @@ public final class ParameterDefinitions {
     put(
         ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS,
         "24",
-        "Hours browsers may cache public campaign images served from /dl (Cache-Control max-age). Integer >= 1. Default 24.");
+        "Hours browsers, CDNs, and reverse proxies may cache public campaign images from /dl (Cache-Control max-age), reducing download traffic on this server. Integer >= 1. Default 24.");
     put(
         ParameterKeys.MFA_MANDATORY,
         "false",
