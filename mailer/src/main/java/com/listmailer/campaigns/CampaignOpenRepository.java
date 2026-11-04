@@ -10,4 +10,6 @@ public interface CampaignOpenRepository extends JpaRepository<CampaignOpenEntity
   long countByCampaignId(String campaignId);
 
   void deleteByCampaignId(String campaignId);
+
+  void deleteByMemberId(String memberId);
 }

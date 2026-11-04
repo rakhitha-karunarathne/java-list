@@ -65,3 +65,15 @@ covers = []
 after = [1, 2, 3, 4, 5]
 hitl = false
 risk = "low"
+
+[[entry]]
+id = 7
+type = "story"
+title = "Delete list with optional orphan recipients"
+description = "List detail Delete; confirm checkbox for orphan-only recipients; block when Queued/Sending/Paused campaigns use the list."
+verify = "Delete from detail only; orphans removed iff checkbox; ongoing campaign → 409."
+covers = ["R1"]
+after = [1]
+hitl = false
+risk = "medium"
+refined = true

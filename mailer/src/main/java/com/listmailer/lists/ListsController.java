@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -40,6 +42,7 @@ public class ListsController {
   private final ListAccessService access;
   private final UserListGrantRepository grants;
   private final SendPauseCache pauseCache;
+  private final ListDeleteService listDelete;
 
   public ListsController(
       ListRepository lists,
@@ -48,7 +51,8 @@ public class ListsController {
       CatalogReferenceService references,
       ListAccessService access,
       UserListGrantRepository grants,
-      SendPauseCache pauseCache) {
+      SendPauseCache pauseCache,
+      ListDeleteService listDelete) {
     this.lists = lists;
     this.paths = paths;
     this.footers = footers;
@@ -56,6 +60,7 @@ public class ListsController {
     this.access = access;
     this.grants = grants;
     this.pauseCache = pauseCache;
+    this.listDelete = listDelete;
   }
 
   @GetMapping
@@ -127,18 +132,16 @@ public class ListsController {
   }
 
   @DeleteMapping("/{listId}")
-  @Transactional
-  public void delete(@PathVariable String listId) {
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(
+      @PathVariable String listId,
+      @RequestParam(defaultValue = "false") boolean deleteOrphanMembers) {
     if (!access.canManage(listId)) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "manage grant required");
     }
-    ListEntity list = require(listId);
-    references.remove(CatalogTargetType.SENDING_PATH, list.getSendingPathId(), "LIST", listId);
-    if (list.getFooterId() != null) {
-      references.remove(CatalogTargetType.FOOTER, list.getFooterId(), "LIST", listId);
-    }
-    grants.deleteByListId(listId);
-    lists.delete(list);
+    require(listId);
+    listDelete.delete(listId, deleteOrphanMembers);
+    pauseCache.clearList(listId);
   }
 
   @PostMapping("/{listId}/pause")

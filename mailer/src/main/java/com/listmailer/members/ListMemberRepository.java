@@ -13,4 +13,8 @@ public interface ListMemberRepository extends JpaRepository<ListMemberEntity, Li
   List<ListMemberEntity> findByMemberId(String memberId);
 
   List<ListMemberEntity> findByListIdIn(Iterable<String> listIds);
+
+  void deleteByListId(String listId);
+
+  long countByMemberId(String memberId);
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from './api.js'
+import { ConfirmDialog } from './ConfirmDialog.jsx'
 import { CONSENT_REQUEST_HINT } from './consentCopy.js'
 import { emptyHint } from './emptyHint.js'
 import { FieldDesc } from './FieldDesc.jsx'
@@ -33,6 +34,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
   const [listMembers, setListMembers] = useState([])
   const [bulkText, setBulkText] = useState('')
   const [bulkResult, setBulkResult] = useState(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const bulkDirty = !!bulkText.trim()
   useRegisterUnsaved(bulkDirty, `list-bulk-${detailId || 'x'}`)
 
@@ -150,6 +152,19 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
       setBulkResult(result)
       setBulkText('')
       setListMembers(await apiJson(token, `/api/lists/${detailId}/members`))
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
+  async function confirmDeleteList(deleteOrphanMembers) {
+    try {
+      const q = deleteOrphanMembers ? '?deleteOrphanMembers=true' : ''
+      await apiJson(token, `/api/lists/${detailId}${q}`, { method: 'DELETE' })
+      setDeleteOpen(false)
+      onError('')
+      onCloseDetail()
+      load()
     } catch (err) {
       onError(err.message)
     }
@@ -301,11 +316,26 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
                 Save
               </button>
             </form>
+              <p>
+                <button type="button" className="btn danger" onClick={() => setDeleteOpen(true)}>
+                  Delete List
+                </button>
+              </p>
             </>
           ) : (
             <p className="hint">View only (no manage grant).</p>
           )}
         </section>
+
+        <ConfirmDialog
+          open={deleteOpen}
+          title="Delete list"
+          message={`Delete list “${detail.name}”? This cannot be undone — the list and its memberships will be permanently removed. Blocked if a Queued, Sending, or Paused campaign uses this list.`}
+          checkboxLabel="Also delete recipients who are not on any other list (and their send/bounce/open data)"
+          confirmLabel="Delete List"
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={confirmDeleteList}
+        />
 
         <section className="card">
           <h3>Members</h3>

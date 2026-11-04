@@ -7,5 +7,9 @@ public interface CampaignListRepository extends JpaRepository<CampaignListEntity
 
   List<CampaignListEntity> findByCampaignIdOrderByPositionAscListIdAsc(String campaignId);
 
+  List<CampaignListEntity> findByListId(String listId);
+
   void deleteByCampaignId(String campaignId);
+
+  void deleteByListId(String listId);
 }

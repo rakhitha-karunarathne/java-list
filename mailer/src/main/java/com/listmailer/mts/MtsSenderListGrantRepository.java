@@ -14,4 +14,6 @@ public interface MtsSenderListGrantRepository
   List<MtsSenderListGrantEntity> findAllByOrderByInboxIdAscSenderEmailAscPositionAsc();
 
   void deleteByInboxIdAndSenderEmail(String inboxId, String senderEmail);
+
+  void deleteByListId(String listId);
 }

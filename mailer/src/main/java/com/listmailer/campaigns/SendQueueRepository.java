@@ -20,7 +20,11 @@ public interface SendQueueRepository extends JpaRepository<SendQueueEntity, Stri
 
   Optional<SendQueueEntity> findByVerpRcpt(String verpRcpt);
 
+  List<SendQueueEntity> findByMemberId(String memberId);
+
   List<SendQueueEntity> findByMemberIdAndStatus(String memberId, String status);
+
+  void deleteByMemberId(String memberId);
 
   List<SendQueueEntity> findByStatusAndSubjectIgnoreCase(String status, String subject);
 

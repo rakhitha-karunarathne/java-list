@@ -39,7 +39,7 @@ Passwords for mailboxes and paths are stored encrypted (not shown again after sa
 
 ## Lists and members
 
-- **Lists** — create/edit list name and sending path; open a list for members, pause/resume, bulk import.
+- **Lists** — create/edit list name and sending path; open a list for members, pause/resume, bulk import. On **list detail** (manage access), **Delete** removes the list after confirmation. Optionally check **also delete recipients who are not on any other list** — those orphans and their send/bounce/open history are removed; recipients still on another list are kept. Delete is blocked while a Queued, Sending, or Paused campaign includes the list.
 - **Members** — global member directory (email, enabled). Membership and unsubscribe state live on each list.
 
 Subscribers who unsubscribe via the link in campaign mail are marked unsubscribed on the campaign’s lists (other lists unchanged unless they were included).
