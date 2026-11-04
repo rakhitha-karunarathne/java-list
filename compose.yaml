@@ -29,6 +29,8 @@ services:
       MAILER_SECRETS_KEY_1: dev-only-secrets-key-32chars-minimum!
       # Encrypt/migrate target; omit to use the highest MAILER_SECRETS_KEY_n present.
       MAILER_SECRETS_ACTIVE_KEY_VERSION: "1"
+      # Rewrap all secrets onto the active key version on boot (set true when rotating).
+      MAILER_SECRETS_MIGRATE_ON_STARTUP: "false"
     ports:
       - "8080:8080"
     healthcheck:
