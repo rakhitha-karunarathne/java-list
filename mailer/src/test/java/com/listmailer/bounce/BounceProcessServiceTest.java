@@ -40,6 +40,7 @@ class BounceProcessServiceTest {
   @Mock ParametersPort parameters;
   @Mock OpsHooksPort ops;
   @Mock com.listmailer.ops.ActivityLogService activity;
+  @Mock com.listmailer.noticemail.AdminNoticeMail adminNotices;
   @InjectMocks BounceProcessService service;
 
   @BeforeEach
@@ -87,6 +88,7 @@ class BounceProcessServiceTest {
     assertTrue(m.getDisableReason().contains("hard"));
     assertTrue(m.getDisableReason().contains("bounce"));
     assertFalse(m.getDisableReason().toLowerCase().contains("unsubscribe"));
+    verify(adminNotices).send(eq("Bounces Processed"), anyString(), anyString());
   }
 
   @Test
@@ -95,6 +97,7 @@ class BounceProcessServiceTest {
     assertEquals(0, service.processDaily());
     verify(activity, never()).write(anyString(), anyString(), anyString());
     verify(events, never()).findByStatus("CORRELATED");
+    verify(adminNotices, never()).send(anyString(), anyString(), anyString());
   }
 
   @Test
@@ -157,5 +160,6 @@ class BounceProcessServiceTest {
 
     assertEquals(1, service.processDaily());
     assertTrue(m.getDisableReason().contains("soft"));
+    verify(adminNotices).send(eq("Bounces Processed"), anyString(), anyString());
   }
 }

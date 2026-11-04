@@ -7,12 +7,14 @@ import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
+import com.listmailer.noticemail.AdminNoticeMail;
 import com.listmailer.ops.ActivityLogService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +39,7 @@ public class BounceProcessService {
   private final ParametersPort parameters;
   private final OpsHooksPort ops;
   private final ActivityLogService activity;
+  private final AdminNoticeMail adminNotices;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final AtomicReference<String> lastCorrelatedSig = new AtomicReference<>(null);
   private final ExecutorService async = Executors.newCachedThreadPool();
@@ -47,13 +50,15 @@ public class BounceProcessService {
       MemberRepository members,
       ParametersPort parameters,
       OpsHooksPort ops,
-      ActivityLogService activity) {
+      ActivityLogService activity,
+      AdminNoticeMail adminNotices) {
     this.events = events;
     this.queue = queue;
     this.members = members;
     this.parameters = parameters;
     this.ops = ops;
     this.activity = activity;
+    this.adminNotices = adminNotices;
   }
 
   /**
@@ -115,6 +120,7 @@ public class BounceProcessService {
     Set<String> inputSet = new HashSet<>(inputIds);
     activity.write(ActivityLogService.BOUNCE, "START", "bounce process");
     int disabled = 0;
+    List<String> disabledEmails = new ArrayList<>();
     try {
       Set<String> memberIds = new HashSet<>();
       for (BounceEventEntity ev : events.findByStatus("CORRELATED")) {
@@ -123,8 +129,10 @@ public class BounceProcessService {
         }
       }
       for (String memberId : memberIds) {
-        if (processMember(memberId)) {
+        String email = processMember(memberId);
+        if (email != null) {
           disabled++;
+          disabledEmails.add(email);
         }
       }
       // Stamp only leftovers from this input — ids that arrived mid-run stay unseen.
@@ -134,6 +142,24 @@ public class BounceProcessService {
       return disabled;
     } finally {
       activity.write(ActivityLogService.BOUNCE, "END", "bounce process disabled=" + disabled);
+      if (!disabledEmails.isEmpty()) {
+        notifyBouncesProcessed(disabledEmails);
+      }
+    }
+  }
+
+  private void notifyBouncesProcessed(List<String> emails) {
+    try {
+      StringBuilder text = new StringBuilder("Disabled members:\n");
+      StringBuilder html = new StringBuilder("<p>Disabled members:</p><ul>");
+      for (String email : emails) {
+        text.append(email).append('\n');
+        html.append("<li>").append(email).append("</li>");
+      }
+      html.append("</ul>");
+      adminNotices.send("Bounces Processed", text.toString(), html.toString());
+    } catch (RuntimeException ignored) {
+      // never fail bounce process for notice mail
     }
   }
 
@@ -141,8 +167,8 @@ public class BounceProcessService {
     return ids.stream().sorted().collect(Collectors.joining(","));
   }
 
-  /** @return true if member was disabled */
-  boolean processMember(String memberId) {
+  /** @return disabled member email, or null if not disabled */
+  String processMember(String memberId) {
     int hardLimit = intParam(ParameterKeys.BOUNCE_HARD_LIMIT, 3);
     int softLimit = intParam(ParameterKeys.BOUNCE_SOFT_LIMIT, 6);
     int holdbackMult = intParam(ParameterKeys.BOUNCE_HOLDBACK_MULTIPLIER, 2);
@@ -183,19 +209,20 @@ public class BounceProcessService {
         lastErr = "soft bounce";
       }
       if (hard >= hardLimit || soft >= softLimit) {
-        disable(memberId, hard >= hardLimit ? "HARD" : "SOFT", lastErr, hard, soft);
+        String email =
+            disable(memberId, hard >= hardLimit ? "HARD" : "SOFT", lastErr, hard, soft);
         for (BounceEventEntity ev : memberBounces) {
           ev.setStatus("PROCESSED");
           events.save(ev);
         }
-        return true;
+        return email;
       }
     }
 
     // below limit: mark processable respecting holdback per class
     markWithHoldback(sends, bySend, hardLimit, holdbackMult, "HARD");
     markWithHoldback(sends, bySend, softLimit, holdbackMult, "SOFT");
-    return false;
+    return null;
   }
 
   private void markWithHoldback(
@@ -220,15 +247,23 @@ public class BounceProcessService {
     }
   }
 
-  private void disable(String memberId, String clazz, String lastErr, int hard, int soft) {
+  /** @return member email when disabled, else null */
+  private String disable(String memberId, String clazz, String lastErr, int hard, int soft) {
     MemberEntity m = members.findById(memberId).orElse(null);
     if (m == null) {
-      return;
+      return null;
     }
     // C3: do not touch list unsubscribe flags
     m.setEnabled(false);
     m.setDisableReason(
-        "bounce " + clazz.toLowerCase() + " limit (hard=" + hard + " soft=" + soft + "): " + lastErr);
+        "bounce "
+            + clazz.toLowerCase(Locale.ROOT)
+            + " limit (hard="
+            + hard
+            + " soft="
+            + soft
+            + "): "
+            + lastErr);
     members.save(m);
     ops.opsLog("bounce.disable", "member=" + memberId + " class=" + clazz);
     ops.audit("bounce.disable", "member=" + memberId + " class=" + clazz);
@@ -236,6 +271,7 @@ public class BounceProcessService {
         ActivityLogService.BOUNCE,
         "DISABLE",
         "member=" + m.getEmail() + " class=" + clazz + " hard=" + hard + " soft=" + soft);
+    return m.getEmail();
   }
 
   private int intParam(String key, int def) {

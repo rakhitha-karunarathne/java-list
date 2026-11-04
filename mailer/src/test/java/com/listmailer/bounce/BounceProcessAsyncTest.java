@@ -9,6 +9,7 @@ import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.members.MemberRepository;
+import com.listmailer.noticemail.AdminNoticeMail;
 import com.listmailer.ops.ActivityLogService;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -27,6 +28,7 @@ class BounceProcessAsyncTest {
   @Mock ParametersPort parameters;
   @Mock OpsHooksPort ops;
   @Mock ActivityLogService activity;
+  @Mock AdminNoticeMail adminNotices;
 
   @Test
   void secondStartRejectedWhileRunning() throws Exception {
@@ -41,7 +43,7 @@ class BounceProcessAsyncTest {
               return List.of();
             });
     BounceProcessService process =
-        new BounceProcessService(events, queue, members, parameters, ops, activity);
+        new BounceProcessService(events, queue, members, parameters, ops, activity, adminNotices);
 
     assertEquals(BounceProcessService.StartOutcome.STARTED, process.startProcessAsync());
     assertTrue(started.await(5, TimeUnit.SECONDS));
@@ -55,7 +57,7 @@ class BounceProcessAsyncTest {
         .thenReturn(List.of(), List.of("b1"), List.of("b1"), List.of("b1"), List.of("b1"));
     lenient().when(events.findByStatus("CORRELATED")).thenReturn(List.of());
     BounceProcessService process =
-        new BounceProcessService(events, queue, members, parameters, ops, activity);
+        new BounceProcessService(events, queue, members, parameters, ops, activity, adminNotices);
     assertEquals(BounceProcessService.StartOutcome.SKIPPED, process.startProcessAsync());
     assertEquals(BounceProcessService.StartOutcome.STARTED, process.startProcessAsync());
   }

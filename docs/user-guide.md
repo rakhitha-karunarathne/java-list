@@ -115,6 +115,7 @@ When **Catalogs → Notice Sending Path** is set, enabled **Admin** users also r
 | Subject | When |
 | --- | --- |
 | **Queue Processed** | A send-queue run had pending work — start/finish times, sent and errored counts per campaign, messages/hour |
+| **Bounces Processed** | Bounce process disabled one or more members — lists those emails |
 | Confirm re-subscribe / MTS wrong-inbox / From-domain deleted | Existing consent and MTS notices (to member or sender) |
 
 If the Notice path is unset, notices are skipped (logged) and processing continues.
