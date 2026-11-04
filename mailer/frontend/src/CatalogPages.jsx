@@ -40,6 +40,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
     returnPathEmail: '',
     useTls: false,
     useSsl: false,
+    verpEnabled: false,
   })
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
@@ -111,6 +112,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
           returnPathEmail: d.returnPathEmail || '',
           useTls: d.useTls,
           useSsl: !!d.useSsl,
+          verpEnabled: !!d.verpEnabled,
         }
         setForm(next)
         setSaved(next)
@@ -157,6 +159,7 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
         returnPathEmail: d.returnPathEmail || '',
         useTls: d.useTls,
         useSsl: !!d.useSsl,
+        verpEnabled: !!d.verpEnabled,
       }
       setForm(next)
       setSaved(next)
@@ -279,6 +282,16 @@ export function SendingPathsPage({ token, onError, detailId, onOpen, onCloseDeta
             onChange={(ev) => setForm({ ...form, returnPathEmail: ev.target.value })}
             placeholder="Optional; domain must match From"
             {...dirtyControlProps(!valuesEqual(form.returnPathEmail, pathBase('returnPathEmail')))}
+          />
+        </label>
+        <label className="field">
+          {fieldLabel('verpEnabled')}
+          <FieldDesc>{fieldHelp.verpEnabled}</FieldDesc>
+          <Toggle
+            checked={!!form.verpEnabled}
+            dirty={!valuesEqual(form.verpEnabled, pathBase('verpEnabled'))}
+            aria-label={fieldLabel('verpEnabled')}
+            onChange={(on) => setForm({ ...form, verpEnabled: on })}
           />
         </label>
         <label className="field">

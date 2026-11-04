@@ -26,7 +26,7 @@ Sidebar items you cannot use are hidden. Detail screens open from indexes (open 
 
 Do this once before sending mail:
 
-1. **Catalogs → Sending Paths** — SMTP host, port, username/password, From name/email, TLS/SSL. Use **Test connection**. Optional Return-Path must share the From domain.
+1. **Catalogs → Sending Paths** — SMTP host, port, username/password, From name/email, TLS/SSL. Use **Test connection**. Optional Return-Path must share the From domain. **VERP Enabled** (per path) — turn on only if that bounce / Return-Path address accepts `bounce+…` addresses; outbound mail then uses a per-recipient VERP envelope and bounce correlation prefers VERP matches for those sends.
 2. **Catalogs → Footers** — HTML/text footers reused on campaigns (optional).
 3. **Catalogs → Notice Sending Path** — path used for system/notice mail if configured.
 4. **Bounces → Bounce Mailboxes** — IMAP mailbox that receives bounces; test connection; enable polling as needed.
@@ -99,7 +99,7 @@ Delete is blocked while a catalog row is still referenced (UI shows **Used by**)
 
 ## System (Admin)
 
-- **Parameters** — runtime settings (retention, pacing, public URL, feature toggles, campaign image inline max/total KB). Not for JWT or mailbox passwords.
+- **Parameters** — runtime settings (retention, pacing, public URL, feature toggles, campaign image inline max/total KB). Not for JWT, mailbox passwords, or VERP (VERP lives on each Sending Path).
 - **Secrets** (on the Parameters page) — shows current encryption key version and outdated count; **Migrate secrets to latest key** rewraps rows after you add a higher key version in config.
 - **Users & Grants** — create users, roles, list grants; MFA setup flows where offered.
 - **Ops Logs** / **Queue Sending Log** / **Audit Log** — operational and security-relevant history (passwords are not written to audit).

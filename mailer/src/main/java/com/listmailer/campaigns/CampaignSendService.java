@@ -201,13 +201,6 @@ public class CampaignSendService {
     return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
   }
 
-  private boolean verpEnabled() {
-    return parameters
-        .get(ParameterKeys.VERP_ENABLED)
-        .map(v -> "true".equalsIgnoreCase(v.trim()))
-        .orElse(false);
-  }
-
   private static List<String> normalizeAddresses(List<String> raw) {
     LinkedHashSet<String> out = new LinkedHashSet<>();
     if (raw == null) {
@@ -663,21 +656,23 @@ public class CampaignSendService {
     row.setSubject(campaign.getSubject());
     String smtpId = "<" + Guids.newGuid() + "@listmailer>";
     row.setSmtpMessageId(smtpId);
-    if (verpEnabled()) {
-      sendingPaths
-          .findById(row.getSendingPathId())
-          .ifPresent(
-              path -> {
-                String seed =
-                    StringUtils.hasText(path.getReturnPathEmail())
-                        ? path.getReturnPathEmail()
-                        : path.getFromEmail();
-                int at = seed == null ? -1 : seed.lastIndexOf('@');
-                if (at > 0) {
-                  row.setVerpRcpt("bounce+" + corrToken + seed.substring(at));
-                }
-              });
-    }
+    sendingPaths
+        .findById(row.getSendingPathId())
+        .ifPresent(
+            path -> {
+              if (!path.isVerpEnabled()) {
+                return;
+              }
+              String seed =
+                  StringUtils.hasText(path.getReturnPathEmail())
+                      ? path.getReturnPathEmail()
+                      : path.getFromEmail();
+              int at = seed == null ? -1 : seed.lastIndexOf('@');
+              if (at > 0) {
+                row.setVerpRcpt(
+                    ("bounce+" + corrToken + seed.substring(at)).toLowerCase(java.util.Locale.ROOT));
+              }
+            });
     String html = injectTracking(plan.html(), campaign.getId(), pixelToken, unsubToken);
     String unsubUrl = publicBase() + "/unsubscribe/" + unsubToken;
     java.util.Map<String, String> headers = new java.util.LinkedHashMap<>();
@@ -692,7 +687,8 @@ public class CampaignSendService {
             html,
             mergeParts(plan),
             unsubUrl,
-            headers));
+            headers,
+            row.getVerpRcpt()));
     row.setStatus("SENT");
     row.setSentAt(java.time.Instant.now());
     row.setRetryAttempts(0);

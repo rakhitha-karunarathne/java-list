@@ -43,6 +43,7 @@ class SendingPathReturnPathTest {
             "News",
             "bounce@other.example",
             true,
+            false,
             false);
 
     assertThrows(ResponseStatusException.class, () -> controller.create(body));
@@ -64,14 +65,17 @@ class SendingPathReturnPathTest {
             "News",
             "bounce@list.example",
             true,
-            false);
+            false,
+            true);
 
     SendingPathsController.PathDetail d = controller.create(body);
 
     assertEquals("bounce@list.example", d.returnPathEmail());
+    assertEquals(true, d.verpEnabled());
     ArgumentCaptor<SendingPathEntity> cap = ArgumentCaptor.forClass(SendingPathEntity.class);
     verify(paths).save(cap.capture());
     assertEquals("bounce@list.example", cap.getValue().getReturnPathEmail());
+    assertEquals(true, cap.getValue().isVerpEnabled());
   }
 
   @Test
@@ -95,6 +99,7 @@ class SendingPathReturnPathTest {
             "News",
             "  ",
             true,
+            false,
             false);
 
     SendingPathsController.PathDetail d = controller.update("p1", body);

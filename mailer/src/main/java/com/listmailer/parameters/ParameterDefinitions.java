@@ -21,10 +21,6 @@ public final class ParameterDefinitions {
         "false",
         "When true, all operators must enroll TOTP before a full session. Values: true|false. Default false.");
     put(
-        ParameterKeys.VERP_ENABLED,
-        "false",
-        "Enable Variable Envelope Return Path for bounce correlation. Values: true|false. Default false.");
-    put(
         ParameterKeys.OPS_LOG_RETENTION_DAYS,
         "90",
         "Days to retain ops logs (send/bounce/MTS errors). Integer >= 1. Default 90.");

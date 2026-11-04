@@ -417,7 +417,6 @@ class CampaignSendServiceTest {
         new SendQueueEntity("q2", "c1", "m2", "ok@example.com", "path-1", "PENDING");
     when(queue.findByStatus("PENDING")).thenReturn(new ArrayList<>(List.of(fail, ok)));
     when(campaigns.findById("c1")).thenReturn(Optional.of(campaign));
-    when(campaigns.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(attachments.findByCampaignId("c1")).thenReturn(List.of());
     when(campaignLists.findByCampaignIdOrderByPositionAscListIdAsc("c1")).thenReturn(List.of());
     when(queue.findById(anyString()))

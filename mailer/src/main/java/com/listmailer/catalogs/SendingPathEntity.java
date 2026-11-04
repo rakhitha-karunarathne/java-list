@@ -44,6 +44,10 @@ public class SendingPathEntity {
   @Column(name = "use_ssl", nullable = false)
   private boolean useSsl;
 
+  /** When true, per-recipient VERP envelope for bounce correlation (bounce+token@domain). */
+  @Column(name = "verp_enabled", nullable = false)
+  private boolean verpEnabled;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -154,6 +158,14 @@ public class SendingPathEntity {
 
   public void setUseSsl(boolean useSsl) {
     this.useSsl = useSsl;
+  }
+
+  public boolean isVerpEnabled() {
+    return verpEnabled;
+  }
+
+  public void setVerpEnabled(boolean verpEnabled) {
+    this.verpEnabled = verpEnabled;
   }
 
   public Instant getCreatedAt() {

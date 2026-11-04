@@ -40,6 +40,7 @@ const PHRASES = {
   sendingPathId: 'Sending Path',
   timeZone: 'Time Zone',
   receiveNotificationEmails: 'Receive Notification Emails',
+  verpEnabled: 'VERP Enabled',
   footerId: 'Footer',
   payloadOverride: 'Payload Override',
   imageTtlOverrideHours: 'Image TTL Override Hours',

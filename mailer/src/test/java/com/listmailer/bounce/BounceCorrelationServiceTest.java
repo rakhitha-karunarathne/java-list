@@ -13,8 +13,6 @@ import static org.mockito.Mockito.when;
 import com.listmailer.campaigns.SendQueueEntity;
 import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.kernel.ports.OpsHooksPort;
-import com.listmailer.kernel.ports.ParameterKeys;
-import com.listmailer.kernel.ports.ParametersPort;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
@@ -30,14 +28,12 @@ class BounceCorrelationServiceTest {
 
   @Mock BounceEventRepository events;
   @Mock SendQueueRepository queue;
-  @Mock ParametersPort parameters;
   @Mock OpsHooksPort ops;
   @Mock com.listmailer.ops.ActivityLogService activity;
   @InjectMocks BounceCorrelationService service;
 
   @Test
   void tokenMatchCorrelatesWithoutDisable() {
-    when(parameters.get(ParameterKeys.VERP_ENABLED)).thenReturn(Optional.of("false"));
     String tok = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
     SendQueueEntity row = sent("q1", "m1", "a@x.com", tok);
     BounceEventEntity ev =
@@ -56,8 +52,42 @@ class BounceCorrelationServiceTest {
   }
 
   @Test
+  void verpAddressCorrelatesWhenSendStoredVerpRcpt() {
+    String tok = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    String verp = "bounce+" + tok + "@list.example";
+    SendQueueEntity row = sent("q1", "m1", "a@x.com", tok);
+    row.setVerpRcpt(verp);
+    BounceEventEntity ev =
+        event("e1", "Final-Recipient: rfc822; " + verp + "\nStatus: 5.1.1\n");
+    when(events.findByStatus("INGESTED")).thenReturn(List.of(ev));
+    when(queue.findByVerpRcpt(verp)).thenReturn(Optional.of(row));
+    when(events.save(ev)).thenReturn(ev);
+
+    service.correlatePending();
+
+    assertEquals("CORRELATED", ev.getStatus());
+    assertEquals("VERP", ev.getCorrelationSignal());
+    assertEquals("m1", ev.getMemberId());
+  }
+
+  @Test
+  void bouncePlusTokenWithoutVerpRcptUsesTokenSignal() {
+    String tok = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    SendQueueEntity row = sent("q1", "m1", "a@x.com", tok);
+    BounceEventEntity ev = event("e1", "bounce+" + tok + "@list.example\nStatus: 5.1.1\n");
+    when(events.findByStatus("INGESTED")).thenReturn(List.of(ev));
+    when(queue.findByVerpRcpt("bounce+" + tok + "@list.example")).thenReturn(Optional.empty());
+    when(queue.findByCorrelationToken(tok)).thenReturn(Optional.of(row));
+    when(events.save(ev)).thenReturn(ev);
+
+    service.correlatePending();
+
+    assertEquals("CORRELATED", ev.getStatus());
+    assertEquals("TOKEN", ev.getCorrelationSignal());
+  }
+
+  @Test
   void uncorrelatedAttentionNoMemberId() {
-    when(parameters.get(ParameterKeys.VERP_ENABLED)).thenReturn(Optional.of("false"));
     BounceEventEntity ev = event("e2", "random noise without tokens");
     when(events.findByStatus("INGESTED")).thenReturn(List.of(ev));
     lenient()
@@ -75,7 +105,6 @@ class BounceCorrelationServiceTest {
 
   @Test
   void ambiguousSubjectEmailIsUncorrelated() {
-    when(parameters.get(ParameterKeys.VERP_ENABLED)).thenReturn(Optional.of("false"));
     SendQueueEntity a = sent("q1", "m1", "same@x.com", "t1");
     a.setSubject("Hello");
     SendQueueEntity b = sent("q2", "m2", "same@x.com", "t2");

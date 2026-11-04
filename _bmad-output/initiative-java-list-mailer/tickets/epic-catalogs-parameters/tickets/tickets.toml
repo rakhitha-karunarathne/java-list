@@ -89,3 +89,15 @@ after = [1, 2, 7]
 hitl = false
 risk = "high"
 refine = true
+
+[[entry]]
+id = 9
+type = "story"
+title = "Sending path VERP enabled"
+description = "VERP toggle on Sending Path (not Parameters); VERP envelope on send; bounce correlation uses VERP for those sends."
+verify = "Path VERP on → verp_rcpt + MAIL FROM; correlation VERP signal; verp.enabled Parameter removed."
+covers = ["R1"]
+after = [7]
+hitl = false
+risk = "medium"
+refined = true

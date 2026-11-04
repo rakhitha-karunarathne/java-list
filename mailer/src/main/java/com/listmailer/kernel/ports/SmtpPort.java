@@ -23,7 +23,9 @@ public interface SmtpPort {
       String htmlBody,
       List<Attachment> attachments,
       String listUnsubscribeUrl,
-      Map<String, String> extraHeaders) {
+      Map<String, String> extraHeaders,
+      /** Optional MAIL FROM override (VERP); null uses path Return-Path or From. */
+      String envelopeFrom) {
     public SmtpMessage {
       attachments = attachments == null ? List.of() : List.copyOf(attachments);
       extraHeaders = extraHeaders == null ? Map.of() : Map.copyOf(extraHeaders);
@@ -36,7 +38,7 @@ public interface SmtpPort {
         String textBody,
         String htmlBody,
         List<Attachment> attachments) {
-      this(sendingPathId, toEmail, subject, textBody, htmlBody, attachments, null, Map.of());
+      this(sendingPathId, toEmail, subject, textBody, htmlBody, attachments, null, Map.of(), null);
     }
 
     public SmtpMessage(
@@ -55,7 +57,29 @@ public interface SmtpPort {
           htmlBody,
           attachments,
           listUnsubscribeUrl,
-          Map.of());
+          Map.of(),
+          null);
+    }
+
+    public SmtpMessage(
+        String sendingPathId,
+        String toEmail,
+        String subject,
+        String textBody,
+        String htmlBody,
+        List<Attachment> attachments,
+        String listUnsubscribeUrl,
+        Map<String, String> extraHeaders) {
+      this(
+          sendingPathId,
+          toEmail,
+          subject,
+          textBody,
+          htmlBody,
+          attachments,
+          listUnsubscribeUrl,
+          extraHeaders,
+          null);
     }
   }
 }

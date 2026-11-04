@@ -87,6 +87,7 @@ public class SendingPathsController {
                   Instant.now()),
               body.useSsl());
       entity.setReturnPathEmail(normalizeReturnPath(body.returnPathEmail()));
+      entity.setVerpEnabled(body.verpEnabled());
       SendingPathEntity saved = paths.save(entity);
       return PathDetail.from(saved, List.of());
     } catch (DataIntegrityViolationException ex) {
@@ -115,6 +116,7 @@ public class SendingPathsController {
     path.setReturnPathEmail(normalizeReturnPath(body.returnPathEmail()));
     path.setUseTls(body.useTls());
     path.setUseSsl(body.useSsl());
+    path.setVerpEnabled(body.verpEnabled());
     try {
       SendingPathEntity saved = paths.save(path);
       fromDomain.revalidateForSendingPath(id);
@@ -223,7 +225,8 @@ public class SendingPathsController {
       String fromName,
       String returnPathEmail,
       boolean useTls,
-      boolean useSsl) {}
+      boolean useSsl,
+      boolean verpEnabled) {}
 
   public record ConnectionTestRequest(
       String host,
@@ -255,6 +258,7 @@ public class SendingPathsController {
       String returnPathEmail,
       boolean useTls,
       boolean useSsl,
+      boolean verpEnabled,
       List<UsedBy> usedBy) {
     static PathDetail from(SendingPathEntity p, List<UsedBy> usedBy) {
       return new PathDetail(
@@ -268,6 +272,7 @@ public class SendingPathsController {
           p.getReturnPathEmail(),
           p.isUseTls(),
           p.isUseSsl(),
+          p.isVerpEnabled(),
           usedBy);
     }
   }

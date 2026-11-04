@@ -22,7 +22,9 @@ export const fieldHelp = {
   fromEmail: 'Envelope/from address used when sending through this path.',
   fromName: 'Display name shown next to From Email.',
   returnPathEmail:
-    'Optional bounce address. Domain must match From Email when set.',
+    'Optional bounce address. Domain must match From Email when set. Prefer this when using VERP.',
+  verpEnabled:
+    'When on, each send uses a bounce+… envelope for this path. Enable only if the bounce mailbox accepts VERP local-parts.',
   useTls: 'STARTTLS after connect (common on port 587). Mutually exclusive with Use SSL.',
   useSsl: 'Implicit TLS from connect (common on port 465 / IMAPS 993). Mutually exclusive with Use TLS.',
 

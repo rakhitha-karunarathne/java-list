@@ -79,7 +79,6 @@ public class ParametersProbeController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "public base URL must be https://");
     }
     if ((ParameterKeys.MFA_MANDATORY.equals(key)
-            || ParameterKeys.VERP_ENABLED.equals(key)
             || ParameterKeys.BOUNCE_PROCESS_LOG_ENABLED.equals(key)
             || ParameterKeys.SEND_QUEUE_LOG_ENABLED.equals(key)
             || ParameterKeys.MTS_PROCESS_LOG_ENABLED.equals(key)

@@ -3,8 +3,6 @@ package com.listmailer.bounce;
 import com.listmailer.campaigns.SendQueueEntity;
 import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.kernel.ports.OpsHooksPort;
-import com.listmailer.kernel.ports.ParameterKeys;
-import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.ops.ActivityLogService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -20,24 +18,23 @@ public class BounceCorrelationService {
 
   private static final Pattern TOKEN =
       Pattern.compile("(?i)(?:X-JavaList-Token|bounce\\+)[:\\s]*([0-9a-f-]{36})");
+  private static final Pattern VERP_ADDR =
+      Pattern.compile("(?i)bounce\\+([0-9a-f-]{36})@[\\w.-]+");
   private static final Pattern MSG_ID = Pattern.compile("<[^>]+@[^>]+>");
   private static final Pattern STATUS = Pattern.compile("(?i)status:\\s*([245])\\.\\d+\\.\\d+");
 
   private final BounceEventRepository events;
   private final SendQueueRepository queue;
-  private final ParametersPort parameters;
   private final OpsHooksPort ops;
   private final ActivityLogService activity;
 
   public BounceCorrelationService(
       BounceEventRepository events,
       SendQueueRepository queue,
-      ParametersPort parameters,
       OpsHooksPort ops,
       ActivityLogService activity) {
     this.events = events;
     this.queue = queue;
-    this.parameters = parameters;
     this.ops = ops;
     this.activity = activity;
   }
@@ -104,11 +101,9 @@ public class BounceCorrelationService {
   }
 
   private Optional<Match> ladder(BounceEventEntity ev, String blob) {
-    if (verpOn()) {
-      Optional<Match> verp = matchVerp(blob);
-      if (verp.isPresent()) {
-        return verp;
-      }
+    Optional<Match> verp = matchVerp(blob);
+    if (verp.isPresent()) {
+      return verp;
     }
     Optional<Match> token = matchToken(blob);
     if (token.isPresent()) {
@@ -121,12 +116,24 @@ public class BounceCorrelationService {
     return matchSubjectEmail(ev, blob);
   }
 
+  /** Match VERP envelope addresses / bounce+ tokens for sends that stored verp_rcpt. */
   private Optional<Match> matchVerp(String blob) {
+    Matcher addr = VERP_ADDR.matcher(blob);
+    while (addr.find()) {
+      String full = addr.group().toLowerCase(Locale.ROOT);
+      Optional<SendQueueEntity> byRcpt = queue.findByVerpRcpt(full);
+      if (byRcpt.isPresent()) {
+        return Optional.of(new Match(byRcpt.get(), "VERP"));
+      }
+      Optional<SendQueueEntity> byToken = queue.findByCorrelationToken(addr.group(1));
+      if (byToken.isPresent() && StringUtils.hasText(byToken.get().getVerpRcpt())) {
+        return Optional.of(new Match(byToken.get(), "VERP"));
+      }
+    }
     Matcher m = TOKEN.matcher(blob);
     while (m.find()) {
-      String id = m.group(1);
-      Optional<SendQueueEntity> byToken = queue.findByCorrelationToken(id);
-      if (byToken.isPresent()) {
+      Optional<SendQueueEntity> byToken = queue.findByCorrelationToken(m.group(1));
+      if (byToken.isPresent() && StringUtils.hasText(byToken.get().getVerpRcpt())) {
         return Optional.of(new Match(byToken.get(), "VERP"));
       }
     }
@@ -194,13 +201,6 @@ public class BounceCorrelationService {
       return "HARD";
     }
     return "SOFT";
-  }
-
-  private boolean verpOn() {
-    return parameters
-        .get(ParameterKeys.VERP_ENABLED)
-        .map(v -> "true".equalsIgnoreCase(v.trim()))
-        .orElse(false);
   }
 
   private static String textOf(BounceEventEntity ev) {
