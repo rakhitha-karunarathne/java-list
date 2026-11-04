@@ -4,12 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,19 +22,48 @@ class PublicDlControllerTest {
 
   @Mock CampaignRepository campaigns;
   @Mock CampaignAttachmentRepository attachments;
+  @Mock ParametersPort parameters;
   @InjectMocks PublicDlController controller;
 
   @Test
-  void servesImageBlob() {
+  void servesImageBlobWithDefaultCacheMaxAge() {
     when(campaigns.existsById("c1")).thenReturn(true);
     when(attachments.findByCampaignIdAndFilename("c1", "logo.png"))
         .thenReturn(
             Optional.of(
                 new CampaignAttachmentEntity(
                     "a1", "c1", "logo.png", "image/png", new byte[] {1, 2})));
+    when(parameters.get(ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS)).thenReturn(Optional.empty());
+
     ResponseEntity<byte[]> res = controller.download("c1", "logo.png");
     assertEquals(HttpStatus.OK, res.getStatusCode());
     assertEquals(2, res.getBody().length);
+    assertEquals(
+        "public, max-age=86400", res.getHeaders().getFirst(HttpHeaders.CACHE_CONTROL));
+  }
+
+  @Test
+  void usesConfiguredCacheMaxAgeHours() {
+    when(campaigns.existsById("c1")).thenReturn(true);
+    when(attachments.findByCampaignIdAndFilename("c1", "logo.png"))
+        .thenReturn(
+            Optional.of(
+                new CampaignAttachmentEntity(
+                    "a1", "c1", "logo.png", "image/png", new byte[] {1})));
+    when(parameters.get(ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS)).thenReturn(Optional.of("2"));
+
+    ResponseEntity<byte[]> res = controller.download("c1", "logo.png");
+    assertEquals("public, max-age=7200", res.getHeaders().getFirst(HttpHeaders.CACHE_CONTROL));
+  }
+
+  @Test
+  void fallsBackToDefaultWhenParameterInvalid() {
+    when(parameters.get(ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS))
+        .thenReturn(Optional.of("nope"));
+    assertEquals(24, controller.cacheMaxAgeHours());
+
+    when(parameters.get(ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS)).thenReturn(Optional.of("0"));
+    assertEquals(24, controller.cacheMaxAgeHours());
   }
 
   @Test

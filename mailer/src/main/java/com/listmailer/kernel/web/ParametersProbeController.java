@@ -111,7 +111,8 @@ public class ParametersProbeController {
         || ParameterKeys.MTS_PROCESS_LOG_MAX_ROWS.equals(key)
         || ParameterKeys.SEND_BATCH_SIZE.equals(key)
         || ParameterKeys.SEND_BATCH_DURATION_MINUTES.equals(key)
-        || ParameterKeys.SEND_MESSAGES_PER_HOUR.equals(key)) {
+        || ParameterKeys.SEND_MESSAGES_PER_HOUR.equals(key)
+        || ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS.equals(key)) {
       requireInt(body.value(), 1);
     }
     if (ParameterKeys.SEND_DELAY_PER_EMAIL_MS.equals(key)

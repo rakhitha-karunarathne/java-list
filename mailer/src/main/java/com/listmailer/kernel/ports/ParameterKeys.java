@@ -7,6 +7,8 @@ public final class ParameterKeys {
   public static final String SITE_TITLE = "site.title";
 
   public static final String PUBLIC_BASE_URL = "public.base.url";
+  /** Browser Cache-Control max-age for public `/dl` campaign images, in hours. */
+  public static final String PUBLIC_DL_CACHE_MAX_AGE_HOURS = "public.dl.cache.max.age.hours";
   public static final String MFA_MANDATORY = "operator.mfa.mandatory";
   public static final String OPS_LOG_RETENTION_DAYS = "ops.log.retention.days";
   public static final String BOUNCE_PROCESS_LOG_RETENTION_DAYS = "bounce.process.log.retention.days";

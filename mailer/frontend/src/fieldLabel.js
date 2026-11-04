@@ -37,6 +37,7 @@ const PHRASES = {
   deleteAfterAccept: 'Delete After Accept',
   'campaign.image.inline.max.kb': 'Campaign Image Inline Max KB',
   'campaign.image.inline.total.max.kb': 'Campaign Image Inline Total Max KB',
+  'public.dl.cache.max.age.hours': 'Public DL Cache Max Age Hours',
   spamThreshold: 'Spam Threshold',
   sendingPathId: 'Sending Path',
   timeZone: 'Time Zone',

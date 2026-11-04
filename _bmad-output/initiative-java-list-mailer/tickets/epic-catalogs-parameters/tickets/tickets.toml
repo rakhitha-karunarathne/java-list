@@ -125,3 +125,15 @@ after = [5]
 hitl = false
 risk = "medium"
 refined = true
+
+[[entry]]
+id = 12
+type = "story"
+title = "Public /dl cache max-age hours parameter"
+description = "Parameter public.dl.cache.max.age.hours (default 24); /dl Cache-Control max-age = hours×3600."
+verify = "Default 24h → max-age=86400; set N hours → N×3600; invalid falls back to 24; PUT rejects <1."
+covers = ["R1"]
+after = [5]
+hitl = false
+risk = "low"
+refined = true

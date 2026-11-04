@@ -1,5 +1,7 @@
 package com.listmailer.campaigns;
 
+import com.listmailer.kernel.ports.ParameterKeys;
+import com.listmailer.kernel.ports.ParametersPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,13 +14,19 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 public class PublicDlController {
 
+  static final int DEFAULT_CACHE_MAX_AGE_HOURS = 24;
+
   private final CampaignRepository campaigns;
   private final CampaignAttachmentRepository attachments;
+  private final ParametersPort parameters;
 
   public PublicDlController(
-      CampaignRepository campaigns, CampaignAttachmentRepository attachments) {
+      CampaignRepository campaigns,
+      CampaignAttachmentRepository attachments,
+      ParametersPort parameters) {
     this.campaigns = campaigns;
     this.attachments = attachments;
+    this.parameters = parameters;
   }
 
   @GetMapping("/dl/{campaignId}/{filename}")
@@ -41,7 +49,23 @@ public class PublicDlController {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.parseMediaType(blob.getContentType()));
     headers.setContentLength(blob.getContent().length);
-    headers.set(HttpHeaders.CACHE_CONTROL, "public, max-age=3600");
+    headers.set(
+        HttpHeaders.CACHE_CONTROL, "public, max-age=" + (cacheMaxAgeHours() * 3600L));
     return new ResponseEntity<>(blob.getContent(), headers, HttpStatus.OK);
+  }
+
+  int cacheMaxAgeHours() {
+    return parameters
+        .get(ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS)
+        .map(
+            v -> {
+              try {
+                int hours = Integer.parseInt(v.trim());
+                return hours > 0 ? hours : DEFAULT_CACHE_MAX_AGE_HOURS;
+              } catch (NumberFormatException e) {
+                return DEFAULT_CACHE_MAX_AGE_HOURS;
+              }
+            })
+        .orElse(DEFAULT_CACHE_MAX_AGE_HOURS);
   }
 }

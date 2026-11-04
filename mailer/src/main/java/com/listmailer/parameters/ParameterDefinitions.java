@@ -21,6 +21,10 @@ public final class ParameterDefinitions {
         "https://lists.example.com",
         "Public HTTPS base URL for member links (pixel, unsubscribe, /dl). Must start with https://. No trailing slash required.");
     put(
+        ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS,
+        "24",
+        "Hours browsers may cache public campaign images served from /dl (Cache-Control max-age). Integer >= 1. Default 24.");
+    put(
         ParameterKeys.MFA_MANDATORY,
         "false",
         "When true, all operators must enroll TOTP before a full session. Values: true|false. Default false.");
