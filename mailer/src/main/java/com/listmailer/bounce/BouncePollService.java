@@ -1,5 +1,9 @@
 package com.listmailer.bounce;
 
+import com.listmailer.campaigns.CampaignEntity;
+import com.listmailer.campaigns.CampaignRepository;
+import com.listmailer.campaigns.SendQueueEntity;
+import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.catalogs.BounceMailboxEntity;
 import com.listmailer.catalogs.BounceMailboxRepository;
 import com.listmailer.kernel.ids.Guids;
@@ -7,11 +11,13 @@ import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.mailbox.MailboxPollLock;
 import com.listmailer.mailbox.MailboxQueryException;
+import com.listmailer.noticemail.AdminNoticeMail;
 import com.listmailer.ops.ActivityLogService;
 import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +41,10 @@ public class BouncePollService {
   private final ActivityLogService activity;
   private final MailboxPollLock locks;
   private final SecretStore secrets;
+  private final BounceCorrelationService correlation;
+  private final SendQueueRepository queue;
+  private final CampaignRepository campaigns;
+  private final AdminNoticeMail adminNotices;
   private final ExecutorService async = Executors.newCachedThreadPool();
 
   public BouncePollService(
@@ -44,7 +54,11 @@ public class BouncePollService {
       OpsHooksPort ops,
       ActivityLogService activity,
       MailboxPollLock locks,
-      SecretStore secrets) {
+      SecretStore secrets,
+      BounceCorrelationService correlation,
+      SendQueueRepository queue,
+      CampaignRepository campaigns,
+      AdminNoticeMail adminNotices) {
     this.mailboxes = mailboxes;
     this.events = events;
     this.mailbox = mailbox;
@@ -52,6 +66,10 @@ public class BouncePollService {
     this.activity = activity;
     this.locks = locks;
     this.secrets = secrets;
+    this.correlation = correlation;
+    this.queue = queue;
+    this.campaigns = campaigns;
+    this.adminNotices = adminNotices;
   }
 
   /** Sequential poll of due bounce mailboxes. */
@@ -67,17 +85,20 @@ public class BouncePollService {
       return 0;
     }
     activity.write(ActivityLogService.BOUNCE, "START", "bounce poll mailboxes=" + dueBoxes.size());
-    int total = 0;
+    List<String> ingestedIds = new ArrayList<>();
     try {
       for (BounceMailboxEntity box : dueBoxes) {
         if (!tryStart(box.getId())) {
           continue;
         }
-        total += pollOne(box.getId());
+        ingestedIds.addAll(pollOne(box.getId()));
       }
-      return total;
+      return ingestedIds.size();
     } finally {
-      activity.write(ActivityLogService.BOUNCE, "END", "bounce poll ingested=" + total);
+      activity.write(ActivityLogService.BOUNCE, "END", "bounce poll ingested=" + ingestedIds.size());
+      if (!ingestedIds.isEmpty()) {
+        notifyBouncesReceived(ingestedIds);
+      }
     }
   }
 
@@ -86,7 +107,13 @@ public class BouncePollService {
     if (!tryStart(id)) {
       return false;
     }
-    async.execute(() -> pollOne(id));
+    async.execute(
+        () -> {
+          List<String> ids = pollOne(id);
+          if (!ids.isEmpty()) {
+            notifyBouncesReceived(ids);
+          }
+        });
     return true;
   }
 
@@ -136,12 +163,14 @@ public class BouncePollService {
     mailboxes.save(box);
   }
 
-  int pollOne(String id) {
+  /** @return ids of newly ingested bounce events */
+  List<String> pollOne(String id) {
     BounceMailboxEntity box = mailboxes.findById(id).orElse(null);
     if (box == null) {
-      return 0;
+      return List.of();
     }
     Instant now = Instant.now();
+    List<String> ingestedIds = new ArrayList<>();
     AtomicInteger count = new AtomicInteger();
     heartbeat(box);
     activity.write(ActivityLogService.BOUNCE, "CONNECT", mailboxRef(box));
@@ -156,10 +185,11 @@ public class BouncePollService {
               box.isUseTls(),
               "INBOX"),
           raw -> {
+            String eventId = Guids.newGuid();
             String headersJson = headersToText(raw.headers());
             events.save(
                 new BounceEventEntity(
-                    Guids.newGuid(),
+                    eventId,
                     box.getId(),
                     now,
                     raw.messageId(),
@@ -168,6 +198,7 @@ public class BouncePollService {
                     headersJson,
                     raw.bytes(),
                     "INGESTED"));
+            ingestedIds.add(eventId);
             count.incrementAndGet();
             heartbeat(box);
             activity.write(
@@ -202,7 +233,47 @@ public class BouncePollService {
       finish(box, false);
       throw ex;
     }
-    return count.get();
+    return ingestedIds;
+  }
+
+  void notifyBouncesReceived(List<String> eventIds) {
+    try {
+      correlation.correlatePending();
+      Map<String, Integer> byCampaign = new LinkedHashMap<>();
+      for (String id : eventIds) {
+        BounceEventEntity ev = events.findById(id).orElse(null);
+        if (ev == null) {
+          continue;
+        }
+        String label = "Uncorrelated";
+        if (ev.getSendQueueId() != null) {
+          SendQueueEntity row = queue.findById(ev.getSendQueueId()).orElse(null);
+          if (row != null) {
+            label =
+                campaigns
+                    .findById(row.getCampaignId())
+                    .map(CampaignEntity::getSubject)
+                    .map(s -> s + " (" + row.getCampaignId() + ")")
+                    .orElse(row.getCampaignId());
+          }
+        }
+        byCampaign.merge(label, 1, Integer::sum);
+      }
+      StringBuilder text = new StringBuilder("Bounce emails received:\n");
+      StringBuilder html = new StringBuilder("<p>Bounce emails received:</p><ul>");
+      for (Map.Entry<String, Integer> e : byCampaign.entrySet()) {
+        text.append(e.getKey()).append(": ").append(e.getValue()).append('\n');
+        html.append("<li>")
+            .append(e.getKey())
+            .append(": ")
+            .append(e.getValue())
+            .append("</li>");
+      }
+      html.append("</ul>");
+      adminNotices.send("Bounce(s) Received", text.toString(), html.toString());
+    } catch (RuntimeException ignored) {
+      // never fail poll for notice mail
+    }
   }
 
   /** Keep mailboxId= for per-box log filters; name is for operators. */

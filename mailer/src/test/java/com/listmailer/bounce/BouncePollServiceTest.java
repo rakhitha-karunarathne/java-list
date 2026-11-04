@@ -2,6 +2,7 @@ package com.listmailer.bounce;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -10,11 +11,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.listmailer.campaigns.CampaignRepository;
+import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.catalogs.BounceMailboxEntity;
 import com.listmailer.catalogs.BounceMailboxRepository;
 import com.listmailer.kernel.ports.MailboxPort;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.mailbox.MailboxPollLock;
+import com.listmailer.noticemail.AdminNoticeMail;
 import com.listmailer.secrets.SecretStore;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,11 +41,17 @@ class BouncePollServiceTest {
   @Mock OpsHooksPort ops;
   @Mock com.listmailer.ops.ActivityLogService activity;
   @Mock SecretStore secrets;
+  @Mock BounceCorrelationService correlation;
+  @Mock SendQueueRepository queue;
+  @Mock CampaignRepository campaigns;
+  @Mock AdminNoticeMail adminNotices;
   BouncePollService service;
 
   @BeforeEach
   void setUp() {
     lenient().when(secrets.requirePlain(any())).thenReturn("p");
+    lenient().when(correlation.correlatePending()).thenReturn(0);
+    lenient().when(events.findById(anyString())).thenReturn(Optional.empty());
     service =
         new BouncePollService(
             mailboxes,
@@ -50,7 +60,11 @@ class BouncePollServiceTest {
             ops,
             activity,
             new MailboxPollLock(Duration.ofHours(1)),
-            secrets);
+            secrets,
+            correlation,
+            queue,
+            campaigns,
+            adminNotices);
   }
 
   @Test
@@ -87,6 +101,8 @@ class BouncePollServiceTest {
     verify(activity).write(eq("BOUNCE"), eq("CONNECT"), contains("mailbox=A mailboxId=a"));
     verify(activity).write(eq("BOUNCE"), eq("DISCONNECT"), contains("mailbox=A mailboxId=a"));
     verify(mailbox, org.mockito.Mockito.times(1)).poll(any(), any());
+    verify(correlation).correlatePending();
+    verify(adminNotices).send(eq("Bounce(s) Received"), anyString(), anyString());
   }
 
   @Test
@@ -107,5 +123,6 @@ class BouncePollServiceTest {
     when(mailboxes.findAll()).thenReturn(List.of());
     assertEquals(0, service.pollDue());
     verify(events, never()).save(any());
+    verify(adminNotices, never()).send(anyString(), anyString(), anyString());
   }
 }
