@@ -131,3 +131,51 @@ after = [10]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 12
+type = "story"
+title = "Admin notice Queue Processed"
+description = "After each send-queue run that had pending work, email all enabled Admins via Notice path: start/finish, sent and errored per campaign, messages/hour. Subject Queue Processed."
+verify = "Non-empty pending batch emails Admins; empty tick does not; Notice path unset skips without throw."
+covers = []
+after = [8]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 13
+type = "story"
+title = "Admin notice Bounces Processed"
+description = "After bounce process that disables at least one member, email Admins the disabled addresses. Subject Bounces Processed."
+verify = "Disable run emails list; no-disable run does not; Notice path unset skips."
+covers = []
+after = [7]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 14
+type = "story"
+title = "Admin notice Bounce(s) Received"
+description = "After a bounce fetch run that ingested mail, correlate then email Admins counts per campaign (uncorrelated bucket). Subject Bounce(s) Received."
+verify = "Ingest>0 emails counts; ingest 0 does not; campaign via send_queue when correlated."
+covers = []
+after = [7]
+hitl = false
+risk = "medium"
+refine = true
+
+[[entry]]
+id = 15
+type = "story"
+title = "Admin notice Campaign Queued"
+description = "When a campaign becomes Queued, email Admins a copy of the campaign body. Subject Campaign Queued: {subject}."
+verify = "queueAndSend to Queued notifies; Finished no-op requeue does not; covers MTS queue path."
+covers = []
+after = [12]
+hitl = false
+risk = "medium"
+refine = true

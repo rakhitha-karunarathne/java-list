@@ -6,6 +6,7 @@ import com.listmailer.kernel.ports.ParameterKeys;
 import com.listmailer.kernel.ports.ParametersPort;
 import com.listmailer.kernel.ports.SmtpPort;
 import com.listmailer.kernel.token.OpaqueTokenHelper;
+import com.listmailer.noticemail.AdminNoticeMail;
 import com.listmailer.ops.ActivityLogService;
 import com.listmailer.catalogs.SendingPathRepository;
 import com.listmailer.lists.ListEntity;
@@ -15,6 +16,8 @@ import com.listmailer.members.ListMemberRepository;
 import com.listmailer.members.MemberEntity;
 import com.listmailer.members.MemberRepository;
 import com.listmailer.unsubscribe.UnsubTokenCodec;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -52,6 +55,7 @@ public class CampaignSendService {
   private final ActivityLogService activity;
   private final TransactionTemplate transactions;
   private final SendPauseCache pauseCache;
+  private final AdminNoticeMail adminNotices;
 
   public CampaignSendService(
       CampaignRepository campaigns,
@@ -69,7 +73,8 @@ public class CampaignSendService {
       SendingPathRepository sendingPaths,
       ActivityLogService activity,
       TransactionTemplate transactions,
-      SendPauseCache pauseCache) {
+      SendPauseCache pauseCache,
+      AdminNoticeMail adminNotices) {
     this.campaigns = campaigns;
     this.campaignLists = campaignLists;
     this.attachments = attachments;
@@ -86,6 +91,7 @@ public class CampaignSendService {
     this.activity = activity;
     this.transactions = transactions;
     this.pauseCache = pauseCache;
+    this.adminNotices = adminNotices;
   }
 
   /** Test send: pasted addresses, first-list path, no queue rows / no stats. Ignores Member disable. */
@@ -369,16 +375,18 @@ public class CampaignSendService {
     if (pending.isEmpty()) {
       return 0;
     }
+    Instant startedAt = Instant.now();
     activity.write(ActivityLogService.SEND, "START", "queue send pending=" + pending.size());
     int sent = 0;
     int tries = 0;
     String openPath = null;
+    Map<String, int[]> perCampaign = new LinkedHashMap<>(); // id -> [sent, errored]
     try {
       for (SendQueueEntity row : pending) {
         if (tries >= maxSends) {
           break;
         }
-        if (deadline != null && !java.time.Instant.now().isBefore(deadline)) {
+        if (deadline != null && !Instant.now().isBefore(deadline)) {
           break;
         }
         if (pauseCache.globalPaused()
@@ -396,7 +404,7 @@ public class CampaignSendService {
         if (tries > 0 && delayMs > 0) {
           long wait = delayMs;
           if (deadline != null) {
-            long remain = java.time.Duration.between(java.time.Instant.now(), deadline).toMillis();
+            long remain = Duration.between(Instant.now(), deadline).toMillis();
             if (remain <= 0) {
               break;
             }
@@ -408,7 +416,7 @@ public class CampaignSendService {
             Thread.currentThread().interrupt();
             break;
           }
-          if (deadline != null && !java.time.Instant.now().isBefore(deadline)) {
+          if (deadline != null && !Instant.now().isBefore(deadline)) {
             break;
           }
         }
@@ -425,8 +433,10 @@ public class CampaignSendService {
           }
           tries++;
           sent++;
+          bump(perCampaign, row.getCampaignId(), true);
         } catch (RuntimeException ex) {
           tries++;
+          bump(perCampaign, row.getCampaignId(), false);
           try {
             inTx(
                 status -> {
@@ -453,6 +463,66 @@ public class CampaignSendService {
         activity.write(ActivityLogService.SEND, "DISCONNECT", "path=" + pathLabel(openPath));
       }
       activity.write(ActivityLogService.SEND, "END", "queue send sent=" + sent);
+      notifyQueueProcessed(startedAt, Instant.now(), sent, perCampaign);
+    }
+  }
+
+  private static void bump(Map<String, int[]> perCampaign, String campaignId, boolean ok) {
+    int[] n = perCampaign.computeIfAbsent(campaignId, id -> new int[2]);
+    if (ok) {
+      n[0]++;
+    } else {
+      n[1]++;
+    }
+  }
+
+  private void notifyQueueProcessed(
+      Instant startedAt, Instant finishedAt, int sent, Map<String, int[]> perCampaign) {
+    try {
+      long millis = Math.max(1L, Duration.between(startedAt, finishedAt).toMillis());
+      double messagesPerHour = sent * 3_600_000.0 / millis;
+      StringBuilder text = new StringBuilder();
+      text.append("Start: ").append(startedAt).append('\n');
+      text.append("Finish: ").append(finishedAt).append('\n');
+      text.append(String.format(Locale.ROOT, "Messages per hour: %.2f%n", messagesPerHour));
+      text.append('\n');
+      StringBuilder html = new StringBuilder();
+      html.append("<p><strong>Start:</strong> ").append(startedAt).append("</p>");
+      html.append("<p><strong>Finish:</strong> ").append(finishedAt).append("</p>");
+      html.append(
+          String.format(Locale.ROOT, "<p><strong>Messages per hour:</strong> %.2f</p>", messagesPerHour));
+      html.append("<table><tr><th>Campaign</th><th>Sent</th><th>Errored</th></tr>");
+      if (perCampaign.isEmpty()) {
+        text.append("(No sends or errors in this run — pending work was skipped.)\n");
+        html.append("<tr><td colspan=\"3\">No sends or errors (pending skipped)</td></tr>");
+      } else {
+        for (Map.Entry<String, int[]> e : perCampaign.entrySet()) {
+          String label =
+              campaigns
+                  .findById(e.getKey())
+                  .map(c -> c.getSubject() + " (" + e.getKey() + ")")
+                  .orElse(e.getKey());
+          int s = e.getValue()[0];
+          int err = e.getValue()[1];
+          text.append(label)
+              .append(": sent=")
+              .append(s)
+              .append(" errored=")
+              .append(err)
+              .append('\n');
+          html.append("<tr><td>")
+              .append(label)
+              .append("</td><td>")
+              .append(s)
+              .append("</td><td>")
+              .append(err)
+              .append("</td></tr>");
+        }
+      }
+      html.append("</table>");
+      adminNotices.send("Queue Processed", text.toString(), html.toString());
+    } catch (RuntimeException ex) {
+      // never fail the queue drain for notice mail
     }
   }
 

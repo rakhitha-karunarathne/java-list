@@ -70,7 +70,8 @@ class CampaignSendingPathOverrideTest {
             sendingPaths,
             activity,
             null,
-            pauseCache);
+            pauseCache,
+            org.mockito.Mockito.mock(com.listmailer.noticemail.AdminNoticeMail.class));
   }
 
   @Test

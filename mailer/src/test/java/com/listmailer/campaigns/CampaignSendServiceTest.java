@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,6 +62,7 @@ class CampaignSendServiceTest {
   @Mock com.listmailer.ops.ActivityLogService activity;
   @Mock TransactionTemplate transactions;
   @Mock SendPauseCache pauseCache;
+  @Mock com.listmailer.noticemail.AdminNoticeMail adminNotices;
   @InjectMocks CampaignSendService service;
 
   @BeforeEach
@@ -447,6 +451,15 @@ class CampaignSendServiceTest {
     assertEquals("FAILED_RETRY_PENDING", fail.getStatus());
     assertEquals("SENT", ok.getStatus());
     assertEquals(1, sent);
+    verify(adminNotices).send(eq("Queue Processed"), anyString(), anyString());
+  }
+
+  @Test
+  void emptyPendingSkipsQueueProcessedNotice() {
+    when(queue.findByStatus("PENDING")).thenReturn(List.of());
+    when(queue.findByStatus("FAILED_RETRY_PENDING")).thenReturn(List.of());
+    assertEquals(0, service.processPendingBatch(10));
+    verify(adminNotices, never()).send(anyString(), anyString(), anyString());
   }
 
   @Test

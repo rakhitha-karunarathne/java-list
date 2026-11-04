@@ -108,6 +108,17 @@ Delete is blocked while a catalog row is still referenced (UI shows **Used by**)
 
 Every role: change password (where enabled), MFA enrollment, and **display time zone** for timestamps in the UI.
 
+## Admin notices (Notice Sending Path)
+
+When **Catalogs → Notice Sending Path** is set, enabled **Admin** users also receive:
+
+| Subject | When |
+| --- | --- |
+| **Queue Processed** | A send-queue run had pending work — start/finish times, sent and errored counts per campaign, messages/hour |
+| Confirm re-subscribe / MTS wrong-inbox / From-domain deleted | Existing consent and MTS notices (to member or sender) |
+
+If the Notice path is unset, notices are skipped (logged) and processing continues.
+
 ## Attention
 
 **Dashboard → Attention** (not List Sender): open admin/manager attention items from ops failures and similar highlights. Resolve or act from the linked context.
