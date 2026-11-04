@@ -510,52 +510,60 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
 
   if (detailId && detail) {
     return (
-      <div className="card">
-        <button type="button" className="btn secondary" onClick={onCloseDetail}>
-          ← Members
-        </button>
-        <h2>{detail.email}</h2>
-        <p>
-          {detail.enabled ? 'Enabled' : 'Disabled'}
-          {!detail.enabled && detail.disableReason ? ` — ${detail.disableReason}` : ''}
-        </p>
-        <h3>Memberships</h3>
-        {(detail.memberships || []).length === 0 ? (
-          <p className="hint">No list memberships.</p>
-        ) : (
-          <ul>
-            {detail.memberships.map((m) => (
-              <li key={m.listId}>
-                {m.listName} {m.unsubscribed ? '(unsubscribed)' : ''}
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="page-sections">
+        <section className="card">
+          <button type="button" className="btn secondary" onClick={onCloseDetail}>
+            ← Members
+          </button>
+          <h2>{detail.email}</h2>
+          <p>
+            {detail.enabled ? 'Enabled' : 'Disabled'}
+            {!detail.enabled && detail.disableReason ? ` — ${detail.disableReason}` : ''}
+          </p>
+        </section>
 
-        <h3>History</h3>
-        <p className="hint">Campaign send/open/bounce and other events for this member (audit).</p>
-        <RecordTable
-          rows={detail.timeline || []}
-          rowKey={(r) => r.id}
-          empty="No history for this member."
-          columns={[
-            {
-              key: 'createdAt',
-              label: 'When',
-              render: (r) => formatWhen(r.createdAt, timeZone),
-            },
-            {
-              key: 'action',
-              label: 'Action',
-              render: (r) => <code>{r.action}</code>,
-            },
-            { key: 'detail', label: 'Detail' },
-          ]}
-        />
+        <section className="card">
+          <h3>Memberships</h3>
+          {(detail.memberships || []).length === 0 ? (
+            <p className="hint">No list memberships.</p>
+          ) : (
+            <ul>
+              {detail.memberships.map((m) => (
+                <li key={m.listId}>
+                  {m.listName} {m.unsubscribed ? '(unsubscribed)' : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-        <h3>Enable / disable</h3>
-        {detail.enabled ? (
-          <>
+        <section className="card">
+          <h3>History</h3>
+          <p className="hint">Campaign sends and opens for this member, plus other member audit events.</p>
+          <RecordTable
+            rows={detail.timeline || []}
+            rowKey={(r) => r.id}
+            empty="No history for this member."
+            columns={[
+              {
+                key: 'createdAt',
+                label: 'When',
+                render: (r) => formatWhen(r.createdAt, timeZone),
+              },
+              {
+                key: 'action',
+                label: 'Action',
+                render: (r) => <code>{r.action}</code>,
+              },
+              { key: 'detail', label: 'Detail' },
+            ]}
+          />
+        </section>
+
+        <section className="card">
+          <h3>Enable / disable</h3>
+          {detail.enabled ? (
+            <>
               <label className="field">
                 {fieldLabel('disable reason')}
                 <FieldDesc>{fieldHelp.disableReason}</FieldDesc>
@@ -563,44 +571,47 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
                   value={disableReason}
                   onChange={(ev) => setDisableReason(ev.target.value)}
                   required
-              />
-            </label>
-            <button type="button" className="btn secondary" onClick={disable}>
-              Disable
-            </button>
-          </>
-        ) : (
-          <button type="button" className="btn" onClick={enable}>
-            Re-enable
-          </button>
-        )}
-
-        <h3>Consent clear-unsub</h3>
-        <p className="hint">Sends notice mail only when Notice sending path is configured.</p>
-        <form onSubmit={requestConsent}>
-          {(detail.memberships || [])
-            .filter((m) => m.unsubscribed)
-            .map((m) => (
-              <label key={m.listId} className="field">
-                <input
-                  type="checkbox"
-                  checked={consentLists.includes(m.listId)}
-                  onChange={(ev) => {
-                    setConsentLists((prev) =>
-                      ev.target.checked
-                        ? [...prev, m.listId]
-                        : prev.filter((id) => id !== m.listId),
-                    )
-                  }}
-                />{' '}
-                {m.listName}
+                />
               </label>
-            ))}
-          <button type="submit" className="btn secondary" disabled={!consentLists.length}>
-            Request consent
-          </button>
-        </form>
-        {consentMsg ? <p className="hint">{consentMsg}</p> : null}
+              <button type="button" className="btn secondary" onClick={disable}>
+                Disable
+              </button>
+            </>
+          ) : (
+            <button type="button" className="btn" onClick={enable}>
+              Re-enable
+            </button>
+          )}
+        </section>
+
+        <section className="card">
+          <h3>Consent clear-unsub</h3>
+          <p className="hint">Sends notice mail only when Notice sending path is configured.</p>
+          <form onSubmit={requestConsent}>
+            {(detail.memberships || [])
+              .filter((m) => m.unsubscribed)
+              .map((m) => (
+                <label key={m.listId} className="field">
+                  <input
+                    type="checkbox"
+                    checked={consentLists.includes(m.listId)}
+                    onChange={(ev) => {
+                      setConsentLists((prev) =>
+                        ev.target.checked
+                          ? [...prev, m.listId]
+                          : prev.filter((id) => id !== m.listId),
+                      )
+                    }}
+                  />{' '}
+                  {m.listName}
+                </label>
+              ))}
+            <button type="submit" className="btn secondary" disabled={!consentLists.length}>
+              Request consent
+            </button>
+          </form>
+          {consentMsg ? <p className="hint">{consentMsg}</p> : null}
+        </section>
       </div>
     )
   }

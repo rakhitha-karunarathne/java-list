@@ -1,5 +1,9 @@
 package com.listmailer.members;
 
+import com.listmailer.campaigns.CampaignOpenEntity;
+import com.listmailer.campaigns.CampaignOpenRepository;
+import com.listmailer.campaigns.SendQueueEntity;
+import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.consent.ConsentService;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListEntity;
@@ -10,10 +14,13 @@ import com.listmailer.users.ListAccessService;
 import com.listmailer.users.UserListGrantEntity;
 import com.listmailer.users.UserListGrantRepository;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +41,9 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/members")
 public class MembersController {
 
+  private static final Set<String> CAMPAIGN_ACTIONS_FROM_TABLES =
+      Set.of("campaign.sent", "campaign.open");
+
   private final MemberRepository members;
   private final ListMemberRepository listMembers;
   private final ListRepository lists;
@@ -42,6 +52,8 @@ public class MembersController {
   private final ConsentService consent;
   private final AuditLogRepository audit;
   private final OpsHooksPort ops;
+  private final SendQueueRepository sendQueue;
+  private final CampaignOpenRepository opens;
 
   public MembersController(
       MemberRepository members,
@@ -51,7 +63,9 @@ public class MembersController {
       UserListGrantRepository grants,
       ConsentService consent,
       AuditLogRepository audit,
-      OpsHooksPort ops) {
+      OpsHooksPort ops,
+      SendQueueRepository sendQueue,
+      CampaignOpenRepository opens) {
     this.members = members;
     this.listMembers = listMembers;
     this.lists = lists;
@@ -60,6 +74,8 @@ public class MembersController {
     this.consent = consent;
     this.audit = audit;
     this.ops = ops;
+    this.sendQueue = sendQueue;
+    this.opens = opens;
   }
 
   @GetMapping
@@ -90,22 +106,13 @@ public class MembersController {
           lists.findById(lm.getListId()).map(ListEntity::getName).orElse(lm.getListId());
       memberships.add(new Membership(lm.getListId(), listName, lm.isUnsubscribed()));
     }
-    List<TimelineEntry> timeline =
-        audit.findByMemberIdInOrderByCreatedAtDesc(List.of(id)).stream()
-            .filter(
-                e ->
-                    access.isAdmin()
-                        || e.getListId() == null
-                        || access.canAccess(e.getListId()))
-            .map(TimelineEntry::from)
-            .toList();
     return new MemberDetail(
         member.getId(),
         member.getEmail(),
         member.isEnabled(),
         member.getDisableReason() == null ? "" : member.getDisableReason(),
         memberships,
-        timeline);
+        timelineFor(id));
   }
 
   @PutMapping("/{id}")
@@ -176,6 +183,81 @@ public class MembersController {
       members.save(member);
     }
     return get(id);
+  }
+
+  private List<TimelineEntry> timelineFor(String memberId) {
+    List<SendQueueEntity> rows = sendQueue.findByMemberId(memberId);
+    Map<String, SendQueueEntity> byQueueId =
+        rows.stream().collect(Collectors.toMap(SendQueueEntity::getId, Function.identity(), (a, b) -> a));
+
+    List<TimelineEntry> out = new ArrayList<>();
+    for (SendQueueEntity row : rows) {
+      if (!"SENT".equals(row.getStatus()) || row.getSentAt() == null) {
+        continue;
+      }
+      if (!visibleCampaignList(row.getListId())) {
+        continue;
+      }
+      String subject = StringUtils.hasText(row.getSubject()) ? row.getSubject() : "";
+      out.add(
+          new TimelineEntry(
+              "sent-" + row.getId(),
+              "campaign.sent",
+              "campaign=" + row.getCampaignId() + (subject.isEmpty() ? "" : " subject=" + subject),
+              "system",
+              row.getListId(),
+              row.getSentAt().toString()));
+    }
+    for (CampaignOpenEntity open : opens.findByMemberId(memberId)) {
+      SendQueueEntity row = byQueueId.get(open.getSendQueueId());
+      // shortcut: open without queue row has no list scope, hide from non-admins
+      if (row == null) {
+        if (!access.isAdmin()) {
+          continue;
+        }
+        out.add(
+            new TimelineEntry(
+                "open-" + open.getId(),
+                "campaign.open",
+                "campaign=" + open.getCampaignId(),
+                null,
+                null,
+                open.getOpenedAt().toString()));
+        continue;
+      }
+      if (!visibleCampaignList(row.getListId())) {
+        continue;
+      }
+      out.add(
+          new TimelineEntry(
+              "open-" + open.getId(),
+              "campaign.open",
+              "campaign=" + open.getCampaignId(),
+              null,
+              row.getListId(),
+              open.getOpenedAt().toString()));
+    }
+    for (AuditLogEntity e : audit.findByMemberIdInOrderByCreatedAtDesc(List.of(memberId))) {
+      if (CAMPAIGN_ACTIONS_FROM_TABLES.contains(e.getAction())) {
+        continue; // send_queue / campaign_opens are the source of truth
+      }
+      if (!visibleAuditList(e.getListId())) {
+        continue;
+      }
+      out.add(TimelineEntry.from(e));
+    }
+    out.sort(Comparator.comparing(TimelineEntry::createdAt).reversed());
+    return out;
+  }
+
+  /** Campaign rows need a list the caller can access (null listId = admin only). */
+  private boolean visibleCampaignList(String listId) {
+    return access.isAdmin() || (listId != null && access.canAccess(listId));
+  }
+
+  /** Member-global audit (null listId) is visible to anyone who can open the member. */
+  private boolean visibleAuditList(String listId) {
+    return access.isAdmin() || listId == null || access.canAccess(listId);
   }
 
   private MemberEntity requireVisible(String id) {
