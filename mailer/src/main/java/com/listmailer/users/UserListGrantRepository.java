@@ -13,5 +13,7 @@ public interface UserListGrantRepository
 
   void deleteByUserIdAndListId(String userId, String listId);
 
+  void deleteByUserId(String userId);
+
   void deleteByListId(String listId);
 }

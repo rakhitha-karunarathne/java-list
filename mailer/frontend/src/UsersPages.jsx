@@ -173,6 +173,17 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     })
   }
 
+  async function remove() {
+    if (!confirmDelete(`user “${detail.email}” and their grants`)) return
+    try {
+      await apiJson(token, `/api/users/${detailId}`, { method: 'DELETE' })
+      onCloseDetail()
+      await load()
+    } catch (err) {
+      onError(err.message)
+    }
+  }
+
   if (creating) {
     return (
       <div className="card">
@@ -342,6 +353,16 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
           ) : (
             <p className="hint">List grants do not apply to Admin — full access.</p>
           )}
+        </section>
+
+        <section className="card">
+          <h3>Delete</h3>
+          <p className="hint">
+            Removes this account, list grants, and MFA data. The only Admin cannot be deleted.
+          </p>
+          <button type="button" className="btn secondary" onClick={remove}>
+            Delete
+          </button>
         </section>
       </div>
     )

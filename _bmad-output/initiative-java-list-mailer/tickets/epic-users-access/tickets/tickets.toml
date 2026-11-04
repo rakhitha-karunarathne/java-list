@@ -89,3 +89,15 @@ after = [4]
 hitl = false
 risk = "low"
 refined = true
+
+[[entry]]
+id = 9
+type = "story"
+title = "Delete user and grants"
+description = "Users detail Delete with confirm; cascades grants and MFA data; refuses sole Admin."
+verify = "Confirmed delete removes user+grants+MFA; sole Admin DELETE returns 409; index has no Delete."
+covers = ["R1", "R2"]
+after = [2, 3]
+hitl = false
+risk = "medium"
+refined = true

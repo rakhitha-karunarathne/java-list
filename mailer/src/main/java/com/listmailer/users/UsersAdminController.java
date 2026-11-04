@@ -1,6 +1,7 @@
 package com.listmailer.users;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,12 +28,20 @@ public class UsersAdminController {
 
   private final UserRepository users;
   private final UserListGrantRepository grants;
+  private final UserBackupCodeRepository backupCodes;
+  private final SecretStore secrets;
   private final PasswordEncoder passwordEncoder;
 
   public UsersAdminController(
-      UserRepository users, UserListGrantRepository grants, PasswordEncoder passwordEncoder) {
+      UserRepository users,
+      UserListGrantRepository grants,
+      UserBackupCodeRepository backupCodes,
+      SecretStore secrets,
+      PasswordEncoder passwordEncoder) {
     this.users = users;
     this.grants = grants;
+    this.backupCodes = backupCodes;
+    this.secrets = secrets;
     this.passwordEncoder = passwordEncoder;
   }
 
@@ -91,6 +101,25 @@ public class UsersAdminController {
     return UserResponse.from(users.save(user));
   }
 
+  @DeleteMapping("/{id}")
+  @Transactional
+  public void delete(@PathVariable String id) {
+    UserEntity user = requireUser(id);
+    boolean soleAdminAccount =
+        user.getRole() == UserRole.ADMIN && countAdminsExcluding(user.getId()) == 0;
+    boolean lastEnabledAdmin =
+        user.getRole() == UserRole.ADMIN
+            && user.isEnabled()
+            && countActiveAdminsExcluding(user.getId()) == 0;
+    if (soleAdminAccount || lastEnabledAdmin) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot delete the last Admin");
+    }
+    grants.deleteByUserId(id);
+    backupCodes.deleteByUserId(id);
+    secrets.delete(user.getTotpSecretId());
+    users.delete(user);
+  }
+
   @GetMapping("/{id}/grants")
   public List<GrantResponse> listGrants(@PathVariable String id) {
     requireUser(id);
@@ -135,6 +164,12 @@ public class UsersAdminController {
   private long countActiveAdminsExcluding(String excludeId) {
     return users.findAll().stream()
         .filter(u -> u.getRole() == UserRole.ADMIN && u.isEnabled() && !u.getId().equals(excludeId))
+        .count();
+  }
+
+  private long countAdminsExcluding(String excludeId) {
+    return users.findAll().stream()
+        .filter(u -> u.getRole() == UserRole.ADMIN && !u.getId().equals(excludeId))
         .count();
   }
 

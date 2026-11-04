@@ -2,8 +2,11 @@ package com.listmailer.users;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.listmailer.secrets.SecretStore;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +23,8 @@ class UsersAdminControllerTest {
 
   @Mock UserRepository users;
   @Mock UserListGrantRepository grants;
+  @Mock UserBackupCodeRepository backupCodes;
+  @Mock SecretStore secrets;
   @Mock PasswordEncoder passwordEncoder;
   @InjectMocks UsersAdminController controller;
 
@@ -52,5 +57,65 @@ class UsersAdminControllerTest {
             "a1", new UsersAdminController.PatchUserRequest(null, null, true));
     assertEquals(true, out.receiveNotificationEmails());
     assertEquals(true, admin.isReceiveNotificationEmails());
+  }
+
+  @Test
+  void refusesToDeleteLastAdmin() {
+    UserEntity admin =
+        new UserEntity("a1", "admin@example.com", "hash", UserRole.ADMIN, true, Instant.now());
+    when(users.findById("a1")).thenReturn(Optional.of(admin));
+    when(users.findAll()).thenReturn(List.of(admin));
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> controller.delete("a1"));
+    assertEquals(409, ex.getStatusCode().value());
+    verify(grants, never()).deleteByUserId("a1");
+    verify(backupCodes, never()).deleteByUserId("a1");
+    verify(secrets, never()).delete(org.mockito.ArgumentMatchers.any());
+    verify(users, never()).delete(admin);
+  }
+
+  @Test
+  void refusesToDeleteLastEnabledAdminWhenOtherAdminDisabled() {
+    UserEntity enabled =
+        new UserEntity("a1", "a1@example.com", "hash", UserRole.ADMIN, true, Instant.now());
+    UserEntity disabled =
+        new UserEntity("a2", "a2@example.com", "hash", UserRole.ADMIN, false, Instant.now());
+    when(users.findById("a1")).thenReturn(Optional.of(enabled));
+    when(users.findAll()).thenReturn(List.of(enabled, disabled));
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> controller.delete("a1"));
+    assertEquals(409, ex.getStatusCode().value());
+    verify(users, never()).delete(enabled);
+  }
+
+  @Test
+  void deletesUserGrantsAndMfaData() {
+    UserEntity sender =
+        new UserEntity("s1", "sender@example.com", "hash", UserRole.LIST_SENDER, true, Instant.now());
+    sender.setTotpSecretId("sec-1");
+    when(users.findById("s1")).thenReturn(Optional.of(sender));
+
+    controller.delete("s1");
+
+    verify(grants).deleteByUserId("s1");
+    verify(backupCodes).deleteByUserId("s1");
+    verify(secrets).delete("sec-1");
+    verify(users).delete(sender);
+  }
+
+  @Test
+  void deletesAdminWhenAnotherEnabledAdminExists() {
+    UserEntity a1 =
+        new UserEntity("a1", "a1@example.com", "hash", UserRole.ADMIN, true, Instant.now());
+    UserEntity a2 =
+        new UserEntity("a2", "a2@example.com", "hash", UserRole.ADMIN, true, Instant.now());
+    when(users.findById("a1")).thenReturn(Optional.of(a1));
+    when(users.findAll()).thenReturn(List.of(a1, a2));
+
+    controller.delete("a1");
+
+    verify(users).delete(a1);
   }
 }
