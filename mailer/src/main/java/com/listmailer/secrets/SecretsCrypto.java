@@ -22,7 +22,8 @@ public final class SecretsCrypto {
 
   public SecretsCrypto(Map<Integer, String> rawKeys) {
     if (rawKeys == null || rawKeys.isEmpty()) {
-      throw new IllegalStateException("mailer.secrets.keys must define at least one version");
+      throw new IllegalStateException(
+          "At least one secrets master key is required (MAILER_SECRETS_KEY_<n>)");
     }
     TreeMap<Integer, byte[]> map = new TreeMap<>();
     for (Map.Entry<Integer, String> e : rawKeys.entrySet()) {
@@ -32,12 +33,13 @@ public final class SecretsCrypto {
       byte[] raw = e.getValue().getBytes(StandardCharsets.UTF_8);
       if (raw.length < 32) {
         throw new IllegalStateException(
-            "mailer.secrets.keys version " + e.getKey() + " key must be at least 32 bytes");
+            "MAILER_SECRETS_KEY_" + e.getKey() + " must be at least 32 bytes");
       }
       map.put(e.getKey(), Arrays.copyOf(raw, 32));
     }
     if (map.isEmpty()) {
-      throw new IllegalStateException("mailer.secrets.keys must define at least one version");
+      throw new IllegalStateException(
+          "At least one secrets master key is required (MAILER_SECRETS_KEY_<n>)");
     }
     this.keys = map;
   }

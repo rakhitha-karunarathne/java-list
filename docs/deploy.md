@@ -27,6 +27,66 @@ Store in env or a secret file — **never** as Parameters:
 
 Default Compose **does not** include GreenMail.
 
+## Published app image (no database)
+
+`mailer/Dockerfile` builds **only the mailer app**. Bring your own MariaDB (11+ / 12 recommended). Flyway migrates the schema on startup.
+
+```bash
+# From repo root
+docker build -t ghcr.io/<owner>/java-list:latest -f mailer/Dockerfile mailer
+docker push ghcr.io/<owner>/java-list:latest
+```
+
+Required env when running the image:
+
+| Variable | Role |
+| --- | --- |
+| `SPRING_DATASOURCE_URL` | e.g. `jdbc:mariadb://host:3306/mailer` |
+| `SPRING_DATASOURCE_USERNAME` | DB user |
+| `SPRING_DATASOURCE_PASSWORD` | DB password |
+| `MAILER_JWT_SECRET` | ≥32 bytes |
+| `MAILER_OPAQUE_TOKEN_SECRET` | ≥32 bytes |
+| `MAILER_SECRETS_KEY_1` | ≥32 bytes (secrets table version 1) |
+| `MAILER_SECRETS_KEY_2` … | Optional newer key versions (env only; see below) |
+| `MAILER_PUBLIC_BASE_URL` | Public `https://…` base for links |
+
+Optional: `MAILER_BOOTSTRAP_EMAIL` / `MAILER_BOOTSTRAP_PASSWORD`, `SERVER_PORT`, `JAVA_OPTS`, `MAILER_SECRETS_MIGRATE_ON_STARTUP`.
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:mariadb://db.example:3306/mailer \
+  -e SPRING_DATASOURCE_USERNAME=mailer \
+  -e SPRING_DATASOURCE_PASSWORD=secret \
+  -e MAILER_JWT_SECRET='…' \
+  -e MAILER_OPAQUE_TOKEN_SECRET='…' \
+  -e MAILER_SECRETS_KEY_1='…' \
+  -e MAILER_PUBLIC_BASE_URL=https://lists.example.com \
+  ghcr.io/<owner>/java-list:latest
+```
+
+Create an empty MariaDB database (and user with rights on it) before first start. Do not embed MariaDB in the published app image.
+
+### Secret key versions (env / Compose only)
+
+Master keys are **not** listed in `application.yml`. Set numbered env vars:
+
+| Env | Meaning |
+| --- | --- |
+| `MAILER_SECRETS_KEY_1` | Version 1 material (≥32 bytes) |
+| `MAILER_SECRETS_KEY_2` | Version 2 material |
+| `MAILER_SECRETS_KEY_n` | Version *n* (scanned through 32) |
+
+Highest present version encrypts new secrets. Keep every older `MAILER_SECRETS_KEY_*` that rows still reference until after a successful rewrap.
+
+**Rotate in Compose**
+
+1. Add `MAILER_SECRETS_KEY_2: "your-new-key-at-least-32-bytes!!!!"` (keep `_1`).
+2. Set `MAILER_SECRETS_MIGRATE_ON_STARTUP: "true"` (or migrate later in UI: Parameters → Migrate secrets).
+3. `docker compose up -d --force-recreate app`.
+4. After migrate, you may remove retired keys from Compose **only** when no row still uses that `key_version`.
+
+If no `MAILER_SECRETS_KEY_*` is set, the app logs a warning and uses a built-in version-1 **dev** default (not for production).
+
 ## Campaigns end-to-end suite (story 5.10)
 
 Requires Docker (Testcontainers MariaDB) and runs an embedded GreenMail SMTP:

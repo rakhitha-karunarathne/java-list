@@ -123,7 +123,7 @@ Operators do not manage those pages in the sidebar; they are public endpoints.
 ## Tips
 
 - Prefer **Test connection** on SMTP/IMAP before relying on polls or queues.
-- After changing encryption keys in `application.yml` / env, use **Migrate secrets** (or `MAILER_SECRETS_MIGRATE_ON_STARTUP=true` once) before removing old key versions.
+- After adding a new `MAILER_SECRETS_KEY_n` in Compose/env, use **Migrate secrets** (or `MAILER_SECRETS_MIGRATE_ON_STARTUP=true` once) before removing old `MAILER_SECRETS_KEY_*` versions.
 - If send stays Queued, check Ops Logs, sending path credentials, and that the list has a valid path.
 - LIST_SENDER only sees lists they are granted — ask an Admin for grants.
 - Form fields show a short help line under the label; Parameter screens also show each setting’s description there.

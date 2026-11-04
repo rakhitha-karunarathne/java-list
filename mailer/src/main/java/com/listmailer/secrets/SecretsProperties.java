@@ -7,7 +7,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "mailer.secrets")
 public class SecretsProperties {
 
-  /** Master keys; each entry’s {@code version} is stored on secret rows as {@code key_version}. */
+  /**
+   * Optional YAML fallback when no {@code MAILER_SECRETS_KEY_*} env is set (tests / rare). Prefer
+   * env vars {@code MAILER_SECRETS_KEY_1}, {@code MAILER_SECRETS_KEY_2}, …
+   */
   private List<KeyEntry> keys = new ArrayList<>();
 
   /** When true, rewrap every secret to the highest configured key version on startup. */

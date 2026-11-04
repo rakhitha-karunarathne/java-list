@@ -1,5 +1,6 @@
 package db.migration;
 
+import com.listmailer.secrets.SecretsConfig;
 import com.listmailer.secrets.SecretsCrypto;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -14,20 +15,21 @@ import org.flywaydb.core.api.migration.Context;
 
 /**
  * Encrypt legacy plaintext password / totp_secret columns into secrets, then drop them.
- * Key from MAILER_SECRETS_KEY_1 or the same default as application.yml.
+ * Key from MAILER_SECRETS_KEY_1 or SecretsConfig.DEV_DEFAULT_KEY.
  */
 public class V41__MigratePlaintextSecrets extends BaseJavaMigration {
-
-  private static final String DEFAULT_KEY = "dev-only-secrets-key-32chars-minimum!";
 
   @Override
   public void migrate(Context context) throws Exception {
     Connection c = context.getConnection();
     Map<Integer, String> keys = new LinkedHashMap<>();
     String key1 = System.getenv("MAILER_SECRETS_KEY_1");
+    if (key1 != null) {
+      key1 = key1.trim();
+    }
     if (key1 == null || key1.isBlank()) {
-      // Flyway has no Spring YAML binding; same default as application.yml keys[0].key
-      key1 = DEFAULT_KEY;
+      // Flyway has no Spring env scan; same built-in default as SecretsConfig.
+      key1 = SecretsConfig.DEV_DEFAULT_KEY;
     }
     keys.put(1, key1);
     SecretsCrypto crypto = new SecretsCrypto(keys);

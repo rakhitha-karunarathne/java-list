@@ -47,6 +47,16 @@ docker compose --profile test up -d
 
 Default shape is **app + MariaDB** only (no GreenMail).
 
+### App-only image (your own database)
+
+`mailer/Dockerfile` ships the app without MariaDB. Build and run against an external DB:
+
+```bash
+docker build -t ghcr.io/<owner>/java-list:latest -f mailer/Dockerfile mailer
+```
+
+See [docs/deploy.md](docs/deploy.md#published-app-image-no-database) for required `SPRING_DATASOURCE_*` and secret env vars.
+
 ### Secrets / env (Compose)
 
 Set via `compose.yaml` or the environment (never as UI Parameters):
@@ -54,13 +64,14 @@ Set via `compose.yaml` or the environment (never as UI Parameters):
 | Variable | Role |
 | --- | --- |
 | `MAILER_SECRETS_KEY_1` | AES key material (≥32 bytes) for secrets table version 1 |
+| `MAILER_SECRETS_KEY_2` … `_32` | Optional extra key versions (same length rule); highest present encrypts new rows |
 | `MAILER_SECRETS_MIGRATE_ON_STARTUP` | `true` → rewrap all secrets to highest configured key on boot |
 | `MAILER_JWT_SECRET` | JWT signing (≥32 bytes) |
 | `MAILER_OPAQUE_TOKEN_SECRET` | Unsubscribe/approve tokens (≥32 bytes) |
 | `MAILER_BOOTSTRAP_EMAIL` / `MAILER_BOOTSTRAP_PASSWORD` | First Admin seed when `users` is empty |
 | `MAILER_PUBLIC_BASE_URL` | Public HTTPS base for links (`https://…`) |
 
-Key rotation: add another `{version, key}` under `mailer.secrets.keys` in `application.yml`, keep older versions until rewrap finishes (Parameters → Migrate, or `migrate-on-startup`).
+Key rotation (Compose/env only — no `application.yml` edit): add `MAILER_SECRETS_KEY_2` (then `_3`, …), keep every older `MAILER_SECRETS_KEY_*` still referenced in the DB, set `MAILER_SECRETS_MIGRATE_ON_STARTUP=true`, recreate the app. After migrate succeeds you may drop retired env vars. Or use Parameters → **Migrate secrets to latest key**.
 
 ### Tests
 
