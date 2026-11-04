@@ -10,5 +10,6 @@ Do not wait for the user to say "use graphify". For any question about this code
 1. If `graphify-out/graph.json` exists, run `graphify query "<the question>"` (or `path` / `explain`) **before** Grep, Glob, or reading source to explore.
 2. Pass that same instruction into every Task/subagent prompt that explores code.
 3. After you change code, run `graphify update .` (AST-only).
+4. When the user asks you to commit (and push), include the updated tracked `graphify-out/` files with that commit and push — do not leave the graph dirty.
 
 Skip graphify only when the user explicitly says so, or when the task is about fixing a broken/stale graph itself.
