@@ -177,7 +177,7 @@ public class BounceCorrelationService {
     String sub =
         subject.replaceFirst("(?i)^(Undelivered Mail Returned to Sender|Delivery Status Notification).*?:\\s*", "");
     List<SendQueueEntity> hits =
-        queue.findByStatusAndSubjectIgnoreCase("SENT", sub).stream()
+        queue.findByStatusAndSubject("SENT", sub).stream()
             .filter(
                 r ->
                     blob.toLowerCase(Locale.ROOT)

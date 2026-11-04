@@ -91,7 +91,7 @@ class BounceCorrelationServiceTest {
     BounceEventEntity ev = event("e2", "random noise without tokens");
     when(events.findByStatus("INGESTED")).thenReturn(List.of(ev));
     lenient()
-        .when(queue.findByStatusAndSubjectIgnoreCase("SENT", "Hello"))
+        .when(queue.findByStatusAndSubject("SENT", "Hello"))
         .thenReturn(List.of());
     when(events.save(ev)).thenReturn(ev);
 
@@ -111,7 +111,7 @@ class BounceCorrelationServiceTest {
     b.setSubject("Hello");
     BounceEventEntity ev = event("e3", "Hello\nsame@x.com bounced");
     when(events.findByStatus("INGESTED")).thenReturn(List.of(ev));
-    when(queue.findByStatusAndSubjectIgnoreCase("SENT", "Hello")).thenReturn(List.of(a, b));
+    when(queue.findByStatusAndSubject("SENT", "Hello")).thenReturn(List.of(a, b));
     when(events.save(ev)).thenReturn(ev);
 
     service.correlatePending();

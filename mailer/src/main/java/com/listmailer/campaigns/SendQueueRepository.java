@@ -26,7 +26,8 @@ public interface SendQueueRepository extends JpaRepository<SendQueueEntity, Stri
 
   void deleteByMemberId(String memberId);
 
-  List<SendQueueEntity> findByStatusAndSubjectIgnoreCase(String status, String subject);
+  /** Relies on MariaDB CI collation so the (status, subject) index can be used. */
+  List<SendQueueEntity> findByStatusAndSubject(String status, String subject);
 
   long countByStatusAndSentAtAfter(String status, java.time.Instant sentAt);
 }

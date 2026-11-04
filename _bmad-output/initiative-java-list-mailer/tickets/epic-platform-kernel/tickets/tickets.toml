@@ -76,3 +76,15 @@ covers = []
 after = [1, 2, 3, 4, 5, 6]
 hitl = false
 risk = "low"
+
+[[entry]]
+id = 8
+type = "story"
+title = "Hot-path DB indexes for bounce correlation and joins"
+description = "Flyway indexes for bounce correlate/process, send_queue lookups, and reverse FK joins missing secondary indexes."
+verify = "Migration adds indexes for verp_rcpt, smtp_message_id, status+subject, bounce member/send_queue_id, list reverse FKs; docs note the rule."
+covers = ["R2", "R4"]
+after = [1]
+hitl = false
+risk = "medium"
+refined = true

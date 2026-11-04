@@ -88,6 +88,12 @@ Keep every `MAILER_SECRETS_KEY_*` that rows still reference until after a succes
 
 If no `MAILER_SECRETS_KEY_*` is set, the app logs a warning and uses a built-in version-1 **dev** default (not for production).
 
+## Schema indexes
+
+Hot-path indexes (bounce correlation, send queue, reverse FK joins) are owned by Flyway. See [db-indexes.md](db-indexes.md). When adding repository filters/joins on growing tables, add an index in the same change.
+
+Before upgrading a large DB through V45: expect index-build time on `send_queue` / `bounce_events`. If you ever wrote blank strings into `verp_rcpt` or `smtp_message_id`, clear duplicates first (`NULL` out empties; ensure no duplicate non-null values) or Flyway will fail creating the unique indexes.
+
 ## Campaigns end-to-end suite (story 5.10)
 
 Requires Docker (Testcontainers MariaDB) and runs an embedded GreenMail SMTP:

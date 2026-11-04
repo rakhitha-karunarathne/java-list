@@ -133,7 +133,8 @@ public class SendQueueEntity {
   }
 
   public void setSmtpMessageId(String smtpMessageId) {
-    this.smtpMessageId = smtpMessageId;
+    this.smtpMessageId =
+        smtpMessageId != null && !smtpMessageId.isBlank() ? smtpMessageId.trim() : null;
   }
 
   public String getCorrelationToken() {
@@ -149,7 +150,7 @@ public class SendQueueEntity {
   }
 
   public void setVerpRcpt(String verpRcpt) {
-    this.verpRcpt = verpRcpt;
+    this.verpRcpt = verpRcpt != null && !verpRcpt.isBlank() ? verpRcpt.trim() : null;
   }
 
   public String getSubject() {
