@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/graphify-session.ps1",
+        "timeout": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "graphify hook-guard read --strict",
+        "matcher": "Read|Glob",
+        "timeout": 10
+      },
+      {
+        "command": "graphify hook-guard search --strict",
+        "matcher": "Grep|Shell",
+        "timeout": 10
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/graphify-subagent.ps1",
+        "timeout": 10
+      }
+    ]
+  }
+}

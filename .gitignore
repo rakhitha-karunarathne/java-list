@@ -8,3 +8,11 @@ mailer/src/main/resources/static/
 .settings/
 *.log
 .DS_Store
+
+# graphify: keep shared graph; skip caches and machine-local paths
+graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/.graphify_labels.json.sig
+graphify-out/.graphify_labels.pending.json
+mailer/graphify-out/
