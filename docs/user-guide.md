@@ -84,6 +84,7 @@ Turn email-to-list into queued campaigns:
 2. **Bounce Messages** — table of ingested bounce mail (newest first): campaign subject (opens the campaign), correlated member email (opens the member), bounced time, and **Open** for detail. Detail shows bounce subject, body, headers, and linked email/campaign. Rows stay after a campaign is deleted (campaign link uses a stored campaign id). Filters: All / Correlated / Uncorrelated / Hard / Soft. List managers see only members on lists they manage.
 3. Run bounce **process** on that page (or rely on schedule) — hard/soft handling disables members as designed.
 4. **Bounce Processing Log** — poll/process activity (not the message list).
+5. **Retention (Parameters)** — nightly job deletes **PROCESSED** bounce messages older than `bounce.messages.processed.retention.days` and **UNCORRELATED** older than `bounce.messages.uncorrelated.retention.days` (both default **60** days, age = `received_at`). CORRELATED rows awaiting process are not purged by these settings.
 
 Idle process may skip work when nothing new has been correlated since the last run.
 

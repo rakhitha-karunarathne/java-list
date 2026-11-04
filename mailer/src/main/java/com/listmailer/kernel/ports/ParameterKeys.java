@@ -14,6 +14,12 @@ public final class ParameterKeys {
   public static final String BOUNCE_PROCESS_LOG_RETENTION_DAYS = "bounce.process.log.retention.days";
   public static final String BOUNCE_PROCESS_LOG_MAX_ROWS = "bounce.process.log.max.rows";
   public static final String BOUNCE_PROCESS_LOG_ENABLED = "bounce.process.log.enabled";
+  /** Days to keep PROCESSED bounce_events (Bounce Messages). */
+  public static final String BOUNCE_MESSAGES_PROCESSED_RETENTION_DAYS =
+      "bounce.messages.processed.retention.days";
+  /** Days to keep UNCORRELATED bounce_events (Bounce Messages). */
+  public static final String BOUNCE_MESSAGES_UNCORRELATED_RETENTION_DAYS =
+      "bounce.messages.uncorrelated.retention.days";
   public static final String SEND_QUEUE_LOG_RETENTION_DAYS = "send.queue.log.retention.days";
   public static final String SEND_QUEUE_LOG_MAX_ROWS = "send.queue.log.max.rows";
   public static final String SEND_QUEUE_LOG_ENABLED = "send.queue.log.enabled";

@@ -2,11 +2,11 @@ package com.listmailer.ops;
 
 import com.listmailer.kernel.ports.ParametersPort;
 
-final class RetentionDays {
+public final class RetentionDays {
 
   private RetentionDays() {}
 
-  static int read(ParametersPort parameters, String key, int defaultDays) {
+  public static int read(ParametersPort parameters, String key, int defaultDays) {
     return parameters
         .get(key)
         .map(

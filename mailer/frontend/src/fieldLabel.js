@@ -58,6 +58,8 @@ const PHRASES = {
   'send.batch.duration.minutes': 'Send Batch Duration Minutes',
   'send.messages.per.hour': 'Messages Per Hour',
   'bounce.process.log.enabled': 'Bounce Processing Log Enabled',
+  'bounce.messages.processed.retention.days': 'Bounce Messages Processed Retention Days',
+  'bounce.messages.uncorrelated.retention.days': 'Bounce Messages Uncorrelated Retention Days',
   'send.queue.log.enabled': 'Queue Sending Log Enabled',
   'mts.process.log.enabled': 'Mail-To-Send Processing Log Enabled',
   'campaign.image.fetch.mode': 'Campaign Image Fetch Mode',

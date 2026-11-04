@@ -45,6 +45,14 @@ public final class ParameterDefinitions {
         "true",
         "Write the Bounce Processing Log. Values: true|false. Default true.");
     put(
+        ParameterKeys.BOUNCE_MESSAGES_PROCESSED_RETENTION_DAYS,
+        "60",
+        "Days to keep PROCESSED bounce messages (Bounce Messages page). Age is received_at. Integer >= 1. Default 60. Does not delete CORRELATED rows still awaiting process.");
+    put(
+        ParameterKeys.BOUNCE_MESSAGES_UNCORRELATED_RETENTION_DAYS,
+        "60",
+        "Days to keep UNCORRELATED bounce messages (Bounce Messages page). Age is received_at. Integer >= 1. Default 60.");
+    put(
         ParameterKeys.SEND_QUEUE_LOG_RETENTION_DAYS,
         "30",
         "Days to retain the Queue Sending Log. Integer >= 1. Default 30.");
