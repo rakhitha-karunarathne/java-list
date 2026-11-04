@@ -1314,9 +1314,9 @@
     "semantic_hash": ""
   },
   "compose.yaml": {
-    "mtime": 1793186404.760853,
-    "seen": 1793779823.516227,
-    "ast_hash": "a57902512744d0063d98d50c8160febb",
+    "mtime": 1793783620.3731709,
+    "seen": 1793796458.5547304,
+    "ast_hash": "95885e5690c7b9fa1960ba65c8fdd94e",
     "semantic_hash": ""
   },
   "mailer/frontend/.oxlintrc.json": {
@@ -1338,10 +1338,10 @@
     "semantic_hash": "b610f9e21bd69ec4269e774c1187ef6d"
   },
   "mailer/frontend/src/App.jsx": {
-    "mtime": 1793109970.1177034,
-    "seen": 1793780108.0947223,
-    "ast_hash": "b4fe2da901186f64dd6713ce4cc6c1ff",
-    "semantic_hash": "b4fe2da901186f64dd6713ce4cc6c1ff"
+    "mtime": 1793796230.990758,
+    "seen": 1793796458.5547922,
+    "ast_hash": "5534a306d50c4b84467f46380a8b17b0",
+    "semantic_hash": ""
   },
   "mailer/frontend/src/CampaignPages.jsx": {
     "mtime": 1793291760.1571355,
@@ -1350,10 +1350,10 @@
     "semantic_hash": "e5f3905f7486cc7ee01f184758f353da"
   },
   "mailer/frontend/src/CatalogPages.jsx": {
-    "mtime": 1793779555.055697,
-    "seen": 1793780108.0947337,
-    "ast_hash": "1b90b618b6c8a75a47d3dfeca709a317",
-    "semantic_hash": "1b90b618b6c8a75a47d3dfeca709a317"
+    "mtime": 1793782585.950425,
+    "seen": 1793796458.5548959,
+    "ast_hash": "4630ab91db390e84f830bc8e2968daae",
+    "semantic_hash": ""
   },
   "mailer/frontend/src/ConfirmDialog.jsx": {
     "mtime": 1793779045.9228876,
@@ -1386,10 +1386,10 @@
     "semantic_hash": "27c4cee197d6906531af4e5a077961f3"
   },
   "mailer/frontend/src/LoginCard.jsx": {
-    "mtime": 1793291742.0834553,
-    "seen": 1793780108.0947645,
-    "ast_hash": "a1402ba70274a89d560334f72f91f70f",
-    "semantic_hash": "a1402ba70274a89d560334f72f91f70f"
+    "mtime": 1793795766.8235998,
+    "seen": 1793796458.5549889,
+    "ast_hash": "54f62cdb7c09cb54bafafa87aaee0a55",
+    "semantic_hash": ""
   },
   "mailer/frontend/src/MailboxPollPanel.jsx": {
     "mtime": 1793110511.042939,
@@ -1422,10 +1422,10 @@
     "semantic_hash": "f9cd802b70055aed0728946590fcec3d"
   },
   "mailer/frontend/src/Shell.jsx": {
-    "mtime": 1793089801.4822724,
-    "seen": 1793780108.0947928,
-    "ast_hash": "abb404618095da5bcd6db8bdde2f4160",
-    "semantic_hash": "abb404618095da5bcd6db8bdde2f4160"
+    "mtime": 1793796665.1662495,
+    "seen": 1793796781.5333183,
+    "ast_hash": "34c16f406e2c897b9c94f700b05cf62f",
+    "semantic_hash": ""
   },
   "mailer/frontend/src/TimeZone.jsx": {
     "mtime": 1793110508.7495008,
@@ -1554,10 +1554,10 @@
     "semantic_hash": "918de4cc441ee6418cccb67df79dc991"
   },
   "mailer/frontend/src/fieldLabel.js": {
-    "mtime": 1793779555.7879403,
-    "seen": 1793780108.09492,
-    "ast_hash": "b744ea0bcd26048162edbece6481aaf7",
-    "semantic_hash": "b744ea0bcd26048162edbece6481aaf7"
+    "mtime": 1793795756.3550904,
+    "seen": 1793796458.55584,
+    "ast_hash": "319ff45f016dd4a0dd65b90ef6de0f6a",
+    "semantic_hash": ""
   },
   "mailer/frontend/src/fieldLabel.test.mjs": {
     "mtime": 1792996575.3765924,
@@ -1632,16 +1632,16 @@
     "semantic_hash": "9d9bb496b376f9bbdc96b1b7704417b1"
   },
   "mailer/frontend/src/navConfig.js": {
-    "mtime": 1793098591.2798905,
-    "seen": 1793780108.0949788,
-    "ast_hash": "d1ed9b815c9b0cc6287832ef930bd7c1",
-    "semantic_hash": "d1ed9b815c9b0cc6287832ef930bd7c1"
+    "mtime": 1793796407.9546764,
+    "seen": 1793796458.55602,
+    "ast_hash": "3ca34a6f3d1a6e73ef67f7ed7530c69c",
+    "semantic_hash": ""
   },
   "mailer/frontend/src/navConfig.test.mjs": {
-    "mtime": 1793098594.190685,
-    "seen": 1793780108.0949829,
-    "ast_hash": "962775eb1f808521d89d3d057100fec4",
-    "semantic_hash": "962775eb1f808521d89d3d057100fec4"
+    "mtime": 1793796686.62779,
+    "seen": 1793796781.5339007,
+    "ast_hash": "42a5b53947266928f76c14edb2da134c",
+    "semantic_hash": ""
   },
   "mailer/frontend/src/passwordChange.js": {
     "mtime": 1793014851.7185762,
@@ -1686,10 +1686,10 @@
     "semantic_hash": "7a1cb9b1d6a846511a72a7007f4b89ee"
   },
   "mailer/src/main/java/com/listmailer/bounce/BounceCorrelationService.java": {
-    "mtime": 1793779529.4223526,
-    "seen": 1793780108.09502,
-    "ast_hash": "498614e02f4e60daba394c6e2b7a81ac",
-    "semantic_hash": "498614e02f4e60daba394c6e2b7a81ac"
+    "mtime": 1793797393.406344,
+    "seen": 1793797546.157177,
+    "ast_hash": "05279d4b9ff9841e4f847b6ff6dfb760",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/bounce/BounceErrorExtractor.java": {
     "mtime": 1793089593.0752513,
@@ -1860,10 +1860,10 @@
     "semantic_hash": "6e0a526dd3bbbfed8fa15539a054c0a0"
   },
   "mailer/src/main/java/com/listmailer/campaigns/SendQueueEntity.java": {
-    "mtime": 1793081237.5420513,
-    "seen": 1793780108.0951514,
-    "ast_hash": "c95ef86828700890974e61928b44eb9a",
-    "semantic_hash": "c95ef86828700890974e61928b44eb9a"
+    "mtime": 1793797398.458035,
+    "seen": 1793797546.171721,
+    "ast_hash": "04665d02f1a2955b002b6d0cb3bde14f",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/campaigns/SendQueueProcessor.java": {
     "mtime": 1793080946.5704823,
@@ -1872,10 +1872,10 @@
     "semantic_hash": "2924d6654915d35446ad48bdf669635e"
   },
   "mailer/src/main/java/com/listmailer/campaigns/SendQueueRepository.java": {
-    "mtime": 1793779002.2194965,
-    "seen": 1793780108.09516,
-    "ast_hash": "b2efc804a343949dfd1d62a7add8870b",
-    "semantic_hash": "b2efc804a343949dfd1d62a7add8870b"
+    "mtime": 1793797393.4043295,
+    "seen": 1793797546.1721392,
+    "ast_hash": "9b0ab111802be94e99f21ed7f4656046",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/campaigns/SsrfGuard.java": {
     "mtime": 1792981841.9325502,
@@ -2040,10 +2040,10 @@
     "semantic_hash": "43303083c7ad4c4b5bf7b11f1aba1ab8"
   },
   "mailer/src/main/java/com/listmailer/kernel/ports/ParameterKeys.java": {
-    "mtime": 1793779496.974597,
-    "seen": 1793780108.0952876,
-    "ast_hash": "67f00e4011456a3cfcba23bb6a4d8346",
-    "semantic_hash": "67f00e4011456a3cfcba23bb6a4d8346"
+    "mtime": 1793795705.707129,
+    "seen": 1793796458.5584776,
+    "ast_hash": "eecab0a483db180c9481fbcdb0779e88",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/kernel/ports/ParametersPort.java": {
     "mtime": 1792953820.2824457,
@@ -2112,10 +2112,10 @@
     "semantic_hash": "f6e72511bf663339d13bd8c698b33d6b"
   },
   "mailer/src/main/java/com/listmailer/kernel/security/SecurityConfig.java": {
-    "mtime": 1793186405.4180264,
-    "seen": 1793780108.0953422,
-    "ast_hash": "d6dee4424b1b5db65e4b009f6d6010e0",
-    "semantic_hash": "d6dee4424b1b5db65e4b009f6d6010e0"
+    "mtime": 1793795729.1960125,
+    "seen": 1793796458.5588884,
+    "ast_hash": "e9c11219e9228d36aa4fab1ba1acccc9",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/kernel/token/AesGcmOpaqueTokenHelper.java": {
     "mtime": 1792983992.1640012,
@@ -2142,10 +2142,10 @@
     "semantic_hash": "d4c0413be8a20879c76303badb604046"
   },
   "mailer/src/main/java/com/listmailer/kernel/web/ParametersProbeController.java": {
-    "mtime": 1793779499.7213836,
-    "seen": 1793780108.0953646,
-    "ast_hash": "c392464ce95a70d7939a5a495c591dae",
-    "semantic_hash": "c392464ce95a70d7939a5a495c591dae"
+    "mtime": 1793795741.6639051,
+    "seen": 1793796458.559029,
+    "ast_hash": "271561fab3ba82bb9c6fb5b5807533cb",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/kernel/web/PublicHtmlPage.java": {
     "mtime": 1792984597.2865794,
@@ -2538,10 +2538,10 @@
     "semantic_hash": "4d156e9af789c947aa09b962f8f677c2"
   },
   "mailer/src/main/java/com/listmailer/parameters/ParameterDefinitions.java": {
-    "mtime": 1793779496.5139802,
-    "seen": 1793780108.0956588,
-    "ast_hash": "fc0f71b80b53b0ce6e8661529ffb00e5",
-    "semantic_hash": "fc0f71b80b53b0ce6e8661529ffb00e5"
+    "mtime": 1793796229.6121888,
+    "seen": 1793796458.5604215,
+    "ast_hash": "02ea15c8ac0976e0d869f38eac2eedc4",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/parameters/ParameterEntity.java": {
     "mtime": 1792957420.1215997,
@@ -2562,16 +2562,16 @@
     "semantic_hash": "dd37f17724251bc55045f04f931253a8"
   },
   "mailer/src/main/java/com/listmailer/secrets/SecretRepository.java": {
-    "mtime": 1793189137.327847,
-    "seen": 1793780108.0956762,
-    "ast_hash": "17ece5b3074b9a7a4a2c8876d67a60d3",
-    "semantic_hash": "17ece5b3074b9a7a4a2c8876d67a60d3"
+    "mtime": 1793783105.0059395,
+    "seen": 1793796458.560509,
+    "ast_hash": "74b2b2d120011077c54449e13ee6a048",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/secrets/SecretStore.java": {
-    "mtime": 1793189136.169137,
-    "seen": 1793780108.0956805,
-    "ast_hash": "31b652f3d6696ec7aa33f34b9ad5ea57",
-    "semantic_hash": "31b652f3d6696ec7aa33f34b9ad5ea57"
+    "mtime": 1793783107.427804,
+    "seen": 1793796458.560521,
+    "ast_hash": "4e360606c4007c2e4851a64e9cb4bca2",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/secrets/SecretsAdminController.java": {
     "mtime": 1793186383.0011034,
@@ -2580,28 +2580,28 @@
     "semantic_hash": "16c5aaf1e93aafc755a55aa832ccef50"
   },
   "mailer/src/main/java/com/listmailer/secrets/SecretsConfig.java": {
-    "mtime": 1793769951.3066373,
-    "seen": 1793780108.0956895,
-    "ast_hash": "1ab3aeeadd22dfec515e580b50bd0e4b",
-    "semantic_hash": "1ab3aeeadd22dfec515e580b50bd0e4b"
+    "mtime": 1793783125.0884233,
+    "seen": 1793796458.5605478,
+    "ast_hash": "30723c3bc349cb219082e2ebb6cbdc75",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/secrets/SecretsCrypto.java": {
-    "mtime": 1793769907.7399535,
-    "seen": 1793780108.0956938,
-    "ast_hash": "7db179a43b9274f0be57e154f2f1304a",
-    "semantic_hash": "7db179a43b9274f0be57e154f2f1304a"
+    "mtime": 1793783100.2756653,
+    "seen": 1793796458.56056,
+    "ast_hash": "d82603170d33d55891a0366850687b6a",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/secrets/SecretsKeyEnv.java": {
-    "mtime": 1793769898.1961322,
-    "seen": 1793780108.095698,
-    "ast_hash": "c23c5a68e98ec40ae1a232dd5df890e4",
-    "semantic_hash": "c23c5a68e98ec40ae1a232dd5df890e4"
+    "mtime": 1793782328.7197304,
+    "seen": 1793796458.5605712,
+    "ast_hash": "b98a21559bfc58fc8a397764306a004c",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/secrets/SecretsProperties.java": {
-    "mtime": 1793769615.9979582,
-    "seen": 1793780108.0957024,
-    "ast_hash": "320d6d6bf3c3db3e5b3dda67a472be59",
-    "semantic_hash": "320d6d6bf3c3db3e5b3dda67a472be59"
+    "mtime": 1793782350.0278273,
+    "seen": 1793796458.5605822,
+    "ast_hash": "564f6f9ef7509f4505e6a6cf6196ef1c",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/smtp/JavaMailSmtpAdapter.java": {
     "mtime": 1793779506.8704803,
@@ -2652,10 +2652,10 @@
     "semantic_hash": "dd2243c0d2543e5cec396fd8ac07b8be"
   },
   "mailer/src/main/java/com/listmailer/users/MfaService.java": {
-    "mtime": 1793186497.9945512,
-    "seen": 1793780108.0957422,
-    "ast_hash": "8727db285e32a0503c12d52c1433937c",
-    "semantic_hash": "8727db285e32a0503c12d52c1433937c"
+    "mtime": 1793795739.453787,
+    "seen": 1793796458.5607758,
+    "ast_hash": "15c374da9906ea6a77f795ec11dcdccd",
+    "semantic_hash": ""
   },
   "mailer/src/main/java/com/listmailer/users/Totp.java": {
     "mtime": 1792955943.8547354,
@@ -2724,10 +2724,10 @@
     "semantic_hash": "a63fed3201f77f23254aaab9a7a29059"
   },
   "mailer/src/main/resources/application.yml": {
-    "mtime": 1793769614.3662002,
-    "seen": 1793780108.095797,
-    "ast_hash": "33c887780d2bbeeeb0c3c4288e9eee8b",
-    "semantic_hash": "33c887780d2bbeeeb0c3c4288e9eee8b"
+    "mtime": 1793782400.8272269,
+    "seen": 1793796458.5611002,
+    "ast_hash": "24d9a4b9e92f6db8013b5701b0753386",
+    "semantic_hash": ""
   },
   "mailer/src/main/resources/db/migration/V10__campaigns.sql": {
     "mtime": 1792958302.9672792,
@@ -2982,10 +2982,10 @@
     "semantic_hash": "567954a57d56227fb1f486bfa54cd2db"
   },
   "mailer/src/test/java/com/listmailer/bounce/BounceCorrelationServiceTest.java": {
-    "mtime": 1793779579.3098922,
-    "seen": 1793780108.095996,
-    "ast_hash": "ae454cba37d5c77e6fd9fd6e886cfb13",
-    "semantic_hash": "ae454cba37d5c77e6fd9fd6e886cfb13"
+    "mtime": 1793797415.238748,
+    "seen": 1793797546.3097124,
+    "ast_hash": "f4b79171fad94d7a63e24febe99bb289",
+    "semantic_hash": ""
   },
   "mailer/src/test/java/com/listmailer/bounce/BounceErrorExtractorTest.java": {
     "mtime": 1793089625.1042223,
@@ -3312,10 +3312,10 @@
     "semantic_hash": "2770fa3775edfa9d1c77bde551778940"
   },
   "mailer/src/test/java/com/listmailer/ops/NavIaC8Test.java": {
-    "mtime": 1792994059.51534,
-    "seen": 1793780108.096245,
-    "ast_hash": "f47747adc7426e0a9aaa276aa42632c9",
-    "semantic_hash": "f47747adc7426e0a9aaa276aa42632c9"
+    "mtime": 1793796659.3808532,
+    "seen": 1793796781.538156,
+    "ast_hash": "fc2a05b909550857c7a8d34ab115b6f7",
+    "semantic_hash": ""
   },
   "mailer/src/test/java/com/listmailer/ops/ObservabilityE2ETest.java": {
     "mtime": 1792986803.5679994,
@@ -3336,28 +3336,28 @@
     "semantic_hash": "f9014b303d056241051050b0b38c099a"
   },
   "mailer/src/test/java/com/listmailer/secrets/SecretStoreTest.java": {
-    "mtime": 1793189155.6660993,
-    "seen": 1793780108.0962627,
-    "ast_hash": "1f3a25e6cf30107013fe6372eabcdee3",
-    "semantic_hash": "1f3a25e6cf30107013fe6372eabcdee3"
+    "mtime": 1793783143.133944,
+    "seen": 1793796458.5633488,
+    "ast_hash": "f1a6937003b7a5c38a7d8b54e07c6763",
+    "semantic_hash": ""
   },
   "mailer/src/test/java/com/listmailer/secrets/SecretsConfigTest.java": {
-    "mtime": 1793769629.3622046,
-    "seen": 1793780108.096267,
-    "ast_hash": "e0e11b4313aa513b8769e995d59f5ea0",
-    "semantic_hash": "e0e11b4313aa513b8769e995d59f5ea0"
+    "mtime": 1793783131.7262578,
+    "seen": 1793796458.563361,
+    "ast_hash": "a35087d3ebb5374fd94ed8ac5e248115",
+    "semantic_hash": ""
   },
   "mailer/src/test/java/com/listmailer/secrets/SecretsCryptoTest.java": {
-    "mtime": 1793186527.9425378,
-    "seen": 1793780108.0962715,
-    "ast_hash": "bf1c23f0f46661bf3fc1b093dad2205c",
-    "semantic_hash": "bf1c23f0f46661bf3fc1b093dad2205c"
+    "mtime": 1793782440.720463,
+    "seen": 1793796458.563374,
+    "ast_hash": "3cb2c0a97963e691b8f4ff87ae4d32ff",
+    "semantic_hash": ""
   },
   "mailer/src/test/java/com/listmailer/secrets/SecretsKeyEnvTest.java": {
-    "mtime": 1793769911.0039887,
-    "seen": 1793780108.0962763,
-    "ast_hash": "3391ebde48d9cb7c4dc03d503354903c",
-    "semantic_hash": "3391ebde48d9cb7c4dc03d503354903c"
+    "mtime": 1793782454.8293564,
+    "seen": 1793796458.5633862,
+    "ast_hash": "1ce1e238224b764ab2ad2e7ba69c0359",
+    "semantic_hash": ""
   },
   "mailer/src/test/java/com/listmailer/unsubscribe/ListUnsubscribePostTest.java": {
     "mtime": 1792984280.8052392,
@@ -13788,9 +13788,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793776431.1659815,
-    "seen": 1793779823.550636,
-    "ast_hash": "682d88cb96b856253b6eaada61d2b390",
+    "mtime": 1793797136.5172288,
+    "seen": 1793797547.3339124,
+    "ast_hash": "57d25f37c5e085a81d4876583fd2b201",
     "semantic_hash": ""
   },
   "_bmad-output/forge-java-list-mailer/.memlog.md": {
@@ -15438,9 +15438,9 @@
     "semantic_hash": ""
   },
   "docs/deploy.md": {
-    "mtime": 1793769649.9624481,
-    "seen": 1793779823.5540056,
-    "ast_hash": "785171e3bad3e874a40348a4cfb65079",
+    "mtime": 1793797402.074028,
+    "seen": 1793797547.4929748,
+    "ast_hash": "bf58e271e7e7fa87a57f09438c8e201c",
     "semantic_hash": ""
   },
   "docs/ia-c8.md": {
@@ -15468,9 +15468,9 @@
     "semantic_hash": ""
   },
   "docs/user-guide.md": {
-    "mtime": 1793779483.569237,
-    "seen": 1793779823.5540662,
-    "ast_hash": "a73e7529bd7a79c79ff964f3c05b17cc",
+    "mtime": 1793796392.5427718,
+    "seen": 1793796458.6283796,
+    "ast_hash": "ca99bd67de8f3bfa0ef23a0dc273fe7f",
     "semantic_hash": ""
   },
   "mailer/frontend/README.md": {
@@ -15502,5 +15502,113 @@
     "seen": 1793780108.0959635,
     "ast_hash": "a36abf534f80f8c8a2b490aedb941f42",
     "semantic_hash": "a36abf534f80f8c8a2b490aedb941f42"
+  },
+  ".cursor/hooks.json": {
+    "mtime": 1793779930.6744356,
+    "seen": 1793796458.5540674,
+    "ast_hash": "a867a7beecc2386330d1e8f594dc6c6c",
+    "semantic_hash": ""
+  },
+  ".cursor/hooks/graphify-session.ps1": {
+    "mtime": 1793779848.5837517,
+    "seen": 1793796458.5542858,
+    "ast_hash": "b72f2cfa44466c995339e3776d5e12ec",
+    "semantic_hash": ""
+  },
+  ".cursor/hooks/graphify-subagent.ps1": {
+    "mtime": 1793779895.9089453,
+    "seen": 1793796458.554308,
+    "ast_hash": "ac6e27c81849fa1b68ddef5b3e589ff6",
+    "semantic_hash": ""
+  },
+  ".github/workflows/publish-docker.yml": {
+    "mtime": 1793780982.8153658,
+    "seen": 1793796458.554323,
+    "ast_hash": "1810f29e76ac02feeed91d187332d701",
+    "semantic_hash": ""
+  },
+  "mailer/frontend/src/siteTitle.js": {
+    "mtime": 1793795756.7631783,
+    "seen": 1793796458.5560725,
+    "ast_hash": "4ad9eaa424154ab6e186b12f19354bca",
+    "semantic_hash": ""
+  },
+  "mailer/src/main/java/com/listmailer/kernel/web/PublicSiteController.java": {
+    "mtime": 1793795729.1900184,
+    "seen": 1793796458.5590959,
+    "ast_hash": "f7a839bae5b35c5f1926d1a381d3e79b",
+    "semantic_hash": ""
+  },
+  "mailer/src/main/java/com/listmailer/parameters/SiteTitles.java": {
+    "mtime": 1793795724.5149384,
+    "seen": 1793796458.5604763,
+    "ast_hash": "ba5cf4974d31a7423f6bf3e11a2de555",
+    "semantic_hash": ""
+  },
+  "mailer/src/test/java/com/listmailer/kernel/web/ParametersSiteTitlePutTest.java": {
+    "mtime": 1793796232.2526066,
+    "seen": 1793796458.5628023,
+    "ast_hash": "4665d246ca1362e903e0187086582d06",
+    "semantic_hash": ""
+  },
+  "mailer/src/test/java/com/listmailer/parameters/SiteTitlesTest.java": {
+    "mtime": 1793795787.5933428,
+    "seen": 1793796458.563335,
+    "ast_hash": "51443e4f94e54d9fb5d700651af373e3",
+    "semantic_hash": ""
+  },
+  "mailer/src/test/java/com/listmailer/users/MfaServiceSiteTitleTest.java": {
+    "mtime": 1793795827.6180203,
+    "seen": 1793796458.5634844,
+    "ast_hash": "5c9ce2def97162425cdb8bb0c827c40e",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1793779835.386161,
+    "seen": 1793796458.6115136,
+    "ast_hash": "f36539ecc9af68f33ebd72770ce4a19e",
+    "semantic_hash": ""
+  },
+  "_bmad-output/initiative-java-list-mailer/tickets/epic-catalogs-parameters/tickets/story-secrets-active-key-version.md": {
+    "mtime": 1793782320.4347582,
+    "seen": 1793796458.612664,
+    "ast_hash": "4afd9eca27d12bdf8a3a97dd1369e39f",
+    "semantic_hash": ""
+  },
+  "_bmad-output/initiative-java-list-mailer/tickets/epic-catalogs-parameters/tickets/story-site-title-parameter.md": {
+    "mtime": 1793795664.1258006,
+    "seen": 1793796458.6131053,
+    "ast_hash": "a6dc97ea18c43cd594984d8b269b233f",
+    "semantic_hash": ""
+  },
+  "_bmad-output/initiative-java-list-mailer/tickets/epic-frontend-shell/tickets/story-nav-collapse-and-order.md": {
+    "mtime": 1793795669.920239,
+    "seen": 1793796458.616053,
+    "ast_hash": "29496e4e0160692719c68c642dd113a1",
+    "semantic_hash": ""
+  },
+  "mailer/src/test/java/com/listmailer/kernel/HotPathIndexesMigrationTest.java": {
+    "mtime": 1793797406.5064692,
+    "seen": 1793797546.327322,
+    "ast_hash": "355624ef2fb5a2e06e66e5cefea83be3",
+    "semantic_hash": ""
+  },
+  "_bmad-output/initiative-java-list-mailer/tickets/epic-platform-kernel/tickets/story-hot-path-db-indexes.md": {
+    "mtime": 1793797097.547608,
+    "seen": 1793797547.433504,
+    "ast_hash": "1b2ab8201bd6971d0544c940986481d9",
+    "semantic_hash": ""
+  },
+  "docs/db-indexes.md": {
+    "mtime": 1793797398.458035,
+    "seen": 1793797547.4929566,
+    "ast_hash": "ac545df394390d481e9ff27fdae43298",
+    "semantic_hash": ""
+  },
+  "mailer/frontend/package-lock.json": {
+    "mtime": 1793778096.042184,
+    "seen": 1793796458.6284556,
+    "ast_hash": "09cb563db3ca4c36b841d9ce587b564e",
+    "semantic_hash": ""
   }
 }
