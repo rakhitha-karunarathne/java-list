@@ -673,6 +673,8 @@ export function MyAccountPage({ token, onError }) {
         <SecurityMfaPanel
           token={token}
           onError={onError}
+          mfaEnabled={mfaEnabled}
+          meLoaded={meLoaded}
           onMfaEnabledChange={setMfaEnabledAndClear}
         />
       </section>
@@ -680,7 +682,7 @@ export function MyAccountPage({ token, onError }) {
   )
 }
 
-function SecurityMfaPanel({ token, onError, onMfaEnabledChange }) {
+function SecurityMfaPanel({ token, onError, mfaEnabled, meLoaded, onMfaEnabledChange }) {
   const [otpAuthUrl, setOtpAuthUrl] = useState('')
   const [mfaSecret, setMfaSecret] = useState('')
   const [code, setCode] = useState('')
@@ -694,6 +696,7 @@ function SecurityMfaPanel({ token, onError, onMfaEnabledChange }) {
   }
 
   async function setup() {
+    if (mfaEnabled) return
     onError('')
     setBackupCodes(null)
     try {
@@ -742,75 +745,85 @@ function SecurityMfaPanel({ token, onError, onMfaEnabledChange }) {
     <>
       <h3>MFA</h3>
       <p className="hint">Authenticator for this account. Backup codes are shown once.</p>
-      <p>
-        <button type="button" className="btn secondary" onClick={setup}>
-          Enroll MFA
-        </button>
-      </p>
-      {otpAuthUrl ? (
-        <div>
-          <p className="hint">Scan this QR code with your authenticator app:</p>
-          <MfaQr otpAuthUrl={otpAuthUrl} />
-          {mfaSecret ? (
-            <p className="hint">
-              Can&apos;t scan? Enter this key manually:{' '}
-              <code style={{ wordBreak: 'break-all' }}>{mfaSecret}</code>
-            </p>
+      {!meLoaded ? (
+        <p className="hint">Loading…</p>
+      ) : mfaEnabled ? (
+        <>
+          <p className="hint">MFA is enrolled for this account.</p>
+          {backupCodes ? (
+            <div>
+              <p>
+                <strong>Backup codes (shown once)</strong>
+              </p>
+              <ul>
+                {backupCodes.map((c) => (
+                  <li key={c}>
+                    <code>{c}</code>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : null}
-          <form onSubmit={confirm}>
+          <form onSubmit={unenroll}>
             <label className="field">
-              {fieldLabel('verification code')}
-              <FieldDesc>{fieldHelp.verificationCode}</FieldDesc>
+              {fieldLabel('unenroll')} (TOTP Or Backup Code)
+              <FieldDesc>{fieldHelp.unenrollCode}</FieldDesc>
               <input
-                value={code}
-                onChange={(ev) => setCode(ev.target.value)}
+                value={unenrollCode}
+                onChange={(ev) => setUnenrollCode(ev.target.value)}
                 required
-                {...dirtyControlProps(!!code.trim())}
+                {...dirtyControlProps(!!unenrollCode.trim())}
               />
             </label>
             <button
               type="submit"
-              className={btnDirtyClass(!!code.trim())}
-              title={code.trim() ? 'Unsaved changes' : undefined}
+              className={btnDirtyClass(!!unenrollCode.trim(), 'btn secondary')}
+              title={unenrollCode.trim() ? 'Unsaved changes' : undefined}
             >
-              Confirm MFA
+              Unenroll MFA
             </button>
           </form>
-        </div>
-      ) : null}
-      {backupCodes ? (
-        <div>
+        </>
+      ) : (
+        <>
           <p>
-            <strong>Backup codes (shown once)</strong>
+            <button type="button" className="btn secondary" onClick={setup}>
+              Enroll MFA
+            </button>
           </p>
-          <ul>
-            {backupCodes.map((c) => (
-              <li key={c}>
-                <code>{c}</code>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      <form onSubmit={unenroll}>
-        <label className="field">
-          {fieldLabel('unenroll')} (TOTP Or Backup Code)
-          <FieldDesc>{fieldHelp.unenrollCode}</FieldDesc>
-          <input
-            value={unenrollCode}
-            onChange={(ev) => setUnenrollCode(ev.target.value)}
-            required
-            {...dirtyControlProps(!!unenrollCode.trim())}
-          />
-        </label>
-        <button
-          type="submit"
-          className={btnDirtyClass(!!unenrollCode.trim(), 'btn secondary')}
-          title={unenrollCode.trim() ? 'Unsaved changes' : undefined}
-        >
-          Unenroll MFA
-        </button>
-      </form>
+          {otpAuthUrl ? (
+            <div>
+              <p className="hint">Scan this QR code with your authenticator app:</p>
+              <MfaQr otpAuthUrl={otpAuthUrl} />
+              {mfaSecret ? (
+                <p className="hint">
+                  Can&apos;t scan? Enter this key manually:{' '}
+                  <code style={{ wordBreak: 'break-all' }}>{mfaSecret}</code>
+                </p>
+              ) : null}
+              <form onSubmit={confirm}>
+                <label className="field">
+                  {fieldLabel('verification code')}
+                  <FieldDesc>{fieldHelp.verificationCode}</FieldDesc>
+                  <input
+                    value={code}
+                    onChange={(ev) => setCode(ev.target.value)}
+                    required
+                    {...dirtyControlProps(!!code.trim())}
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className={btnDirtyClass(!!code.trim())}
+                  title={code.trim() ? 'Unsaved changes' : undefined}
+                >
+                  Confirm MFA
+                </button>
+              </form>
+            </div>
+          ) : null}
+        </>
+      )}
     </>
   )
 }

@@ -110,7 +110,7 @@ Every role: change password (where enabled), MFA enrollment, **display time zone
 
 **Change password:** if MFA is enrolled, you must enter a current authenticator code or a backup code along with your current password.
 
-**Enroll MFA:** tap **Enroll MFA**, scan the **QR code** with an authenticator app (Google Authenticator, Microsoft Authenticator, etc.), then enter the 6-digit code to confirm. If you cannot scan, enter the shown secret key manually. Backup codes appear once after confirm — store them safely (they also unlock password changes and MFA unenroll if the device is lost).
+**Enroll MFA:** when MFA is not yet enrolled, tap **Enroll MFA**, scan the **QR code** with an authenticator app (Google Authenticator, Microsoft Authenticator, etc.), then enter the 6-digit code to confirm. If you cannot scan, enter the shown secret key manually. Backup codes appear once after confirm — store them safely (they also unlock password changes and MFA unenroll if the device is lost). Once enrolled, **Enroll MFA** is hidden; use **Unenroll MFA** (with a code) to remove it when allowed.
 
 ## Admin notices (Notice Sending Path)
 
