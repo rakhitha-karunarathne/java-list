@@ -43,17 +43,15 @@ class CampaignDeleteTest {
   @InjectMocks CampaignsController controller;
 
   @Test
-  void deleteFinishedClearsBouncesOpensQueueListsAttachmentsThenCampaign() {
+  void deleteFinishedKeepsBounceMessagesClearsOpensQueueListsAttachmentsThenCampaign() {
     CampaignEntity c =
         new CampaignEntity("c1", "Hi", "<p>x</p>", "x", CampaignStatus.FINISHED, Instant.now());
-    SendQueueEntity row = new SendQueueEntity("q1", "c1", "m1", "a@x.com", "path", "SENT");
     when(campaigns.findById("c1")).thenReturn(Optional.of(c));
-    when(queue.findByCampaignId("c1")).thenReturn(List.of(row));
     when(access.currentUser()).thenReturn(Optional.empty());
 
     controller.delete("c1");
 
-    verify(bounces).deleteBySendQueueIdIn(List.of("q1"));
+    verify(bounces, never()).deleteBySendQueueIdIn(any());
     verify(opens).deleteByCampaignId("c1");
     verify(attachments).deleteByCampaignId("c1");
     verify(queue).deleteByCampaignId("c1");
@@ -64,11 +62,10 @@ class CampaignDeleteTest {
   }
 
   @Test
-  void deleteDraftWithNoQueueSkipsBounceDelete() {
+  void deleteDraftClearsOpensWithoutTouchingBounces() {
     CampaignEntity c =
         new CampaignEntity("c2", "Hi", "<p>x</p>", "x", CampaignStatus.DRAFT, Instant.now());
     when(campaigns.findById("c2")).thenReturn(Optional.of(c));
-    when(queue.findByCampaignId("c2")).thenReturn(List.of());
     when(access.currentUser()).thenReturn(Optional.empty());
 
     controller.delete("c2");

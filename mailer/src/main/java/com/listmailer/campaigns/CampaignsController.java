@@ -225,11 +225,7 @@ public class CampaignsController {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "can only delete Draft, Finished, or Stopped campaigns");
     }
-    List<String> queueIds =
-        queue.findByCampaignId(id).stream().map(SendQueueEntity::getId).toList();
-    if (!queueIds.isEmpty()) {
-      bounces.deleteBySendQueueIdIn(queueIds);
-    }
+    // Keep bounce_events for Bounce Messages history (campaign_id set at correlate).
     if (StringUtils.hasText(c.getSendingPathId())) {
       references.remove(
           CatalogTargetType.SENDING_PATH, c.getSendingPathId(), "CAMPAIGN", id);

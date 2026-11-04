@@ -171,6 +171,62 @@ class BounceEventsControllerTest {
   }
 
   @Test
+  void indexUsesStoredCampaignIdWhenQueueRowGone() {
+    when(access.isListSenderOnly()).thenReturn(false);
+    when(access.isAdmin()).thenReturn(true);
+    BounceEventEntity processed =
+        new BounceEventEntity(
+            "b3",
+            "mb",
+            Instant.parse("2026-06-01T00:00:00Z"),
+            null,
+            "Delivery Status Notification",
+            "mailer-daemon@x",
+            "",
+            "Status: 5.1.1".getBytes(StandardCharsets.UTF_8),
+            "PROCESSED");
+    processed.setMemberId("m1");
+    processed.setSendQueueId("q-gone");
+    processed.setCampaignId("c9");
+    processed.setClassification("HARD");
+    processed.setErrorText("5.1.1");
+    when(events.findAllByOrderByReceivedAtDesc()).thenReturn(List.of(processed));
+    when(members.findById("m1"))
+        .thenReturn(Optional.of(new MemberEntity("m1", "blake@example.com", false, Instant.now())));
+    when(queue.findById("q-gone")).thenReturn(Optional.empty());
+    when(campaigns.findById("c9"))
+        .thenReturn(
+            Optional.of(
+                new CampaignEntity(
+                    "c9", "Kept subject", "<p>x</p>", "x", CampaignStatus.FINISHED, Instant.now())));
+
+    List<BounceEventsController.BounceMessageView> rows = controller.index(null);
+
+    assertEquals(1, rows.size());
+    assertEquals("blake@example.com", rows.get(0).email());
+    assertEquals("c9", rows.get(0).campaignId());
+    assertEquals("Kept subject", rows.get(0).campaignSubject());
+    assertTrue(rows.get(0).correlated());
+  }
+
+  @Test
+  void filterCorrelatedIncludesProcessedWithoutQueue() {
+    when(access.isListSenderOnly()).thenReturn(false);
+    when(access.isAdmin()).thenReturn(true);
+    BounceEventEntity processed =
+        event("p1", "PROCESSED", "m1", Instant.parse("2026-07-01T00:00:00Z"));
+    processed.setSendQueueId(null);
+    BounceEventEntity uncorrelated =
+        event("u1", "UNCORRELATED", null, Instant.parse("2026-07-02T00:00:00Z"));
+    when(events.findAllByOrderByReceivedAtDesc()).thenReturn(List.of(uncorrelated, processed));
+
+    List<BounceEventsController.BounceMessageView> rows = controller.index("correlated");
+
+    assertEquals(1, rows.size());
+    assertEquals("p1", rows.get(0).id());
+  }
+
+  @Test
   void getNotFoundWhenHiddenFromManager() {
     when(access.isListSenderOnly()).thenReturn(false);
     when(access.isAdmin()).thenReturn(false);

@@ -48,6 +48,10 @@ public class BounceEventEntity {
   @Column(name = "send_queue_id", length = 36)
   private String sendQueueId;
 
+  /** Set at correlate; kept when send_queue rows are removed with a campaign. */
+  @Column(name = "campaign_id", length = 36)
+  private String campaignId;
+
   @Column(length = 16)
   private String classification;
 
@@ -134,6 +138,14 @@ public class BounceEventEntity {
 
   public void setSendQueueId(String sendQueueId) {
     this.sendQueueId = sendQueueId;
+  }
+
+  public String getCampaignId() {
+    return campaignId;
+  }
+
+  public void setCampaignId(String campaignId) {
+    this.campaignId = campaignId;
   }
 
   public String getClassification() {

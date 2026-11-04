@@ -22,6 +22,7 @@ Flyway owns schema indexes. When you add a repository method that filters or joi
 | Bounce by queue row / member cleanup | `bounce_events (send_queue_id)`, `(member_id, status)` |
 | Mailbox status counts | `bounce_events (mailbox_id, status)` |
 | Bounce messages UI order | `bounce_events (received_at)` |
+| Bounce messages by campaign (V46) | `bounce_events (campaign_id)` |
 | Campaigns by status; list reverse FKs | `campaigns (status)`; `campaign_lists` / `list_members` / `user_list_grants` / `mts_sender_list_grants` by `list_id` or `member_id` |
 | MTS `existsByEmail` | `mts_authorized_senders (email)` |
 | Attention by list | `attention_items (open_flag, list_id, created_at)` |

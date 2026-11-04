@@ -46,6 +46,7 @@ class BounceCorrelationServiceTest {
 
     assertEquals("CORRELATED", ev.getStatus());
     assertEquals("m1", ev.getMemberId());
+    assertEquals("c1", ev.getCampaignId());
     assertEquals("HARD", ev.getClassification());
     assertEquals("TOKEN", ev.getCorrelationSignal());
     verify(ops, never()).attentionAdmin(anyString(), anyString());

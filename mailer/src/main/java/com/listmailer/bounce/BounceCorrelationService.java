@@ -82,6 +82,7 @@ public class BounceCorrelationService {
       ev.setStatus("CORRELATED");
       ev.setMemberId(m.row().getMemberId());
       ev.setSendQueueId(m.row().getId());
+      ev.setCampaignId(m.row().getCampaignId());
       ev.setCorrelationSignal(m.signal());
       ev.setClassification(clazz);
       ev.setErrorText(error);

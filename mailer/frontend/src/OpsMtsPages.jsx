@@ -1205,10 +1205,14 @@ export function BounceMessagesPage({
             </a>
           </p>
           <h2>Bounce message</h2>
-          <p className="hint">{when(s.receivedAt)}</p>
+          <p className="hint">Received {when(s.receivedAt)}</p>
           <dl className="stats">
             <div>
-              <dt>Email</dt>
+              <dt>Subject</dt>
+              <dd>{s.subject || '—'}</dd>
+            </div>
+            <div>
+              <dt>Correlated email</dt>
               <dd>
                 {s.memberId && onOpenMember ? (
                   <a
@@ -1252,14 +1256,6 @@ export function BounceMessagesPage({
               <dd>{s.error || '—'}</dd>
             </div>
             <div>
-              <dt>Correlated?</dt>
-              <dd>{s.correlated ? 'Yes' : 'No'}</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>{s.status || '—'}</dd>
-            </div>
-            <div>
               <dt>From</dt>
               <dd>{detail.fromAddr || '—'}</dd>
             </div>
@@ -1267,23 +1263,18 @@ export function BounceMessagesPage({
               <dt>Message-ID</dt>
               <dd>{detail.messageId || '—'}</dd>
             </div>
-            <div>
-              <dt>Subject</dt>
-              <dd>{s.subject || '—'}</dd>
-            </div>
           </dl>
+        </section>
+        <section className="card">
+          <h3>Body</h3>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--mono)' }}>
+            {detail.payload || '(empty)'}
+          </pre>
         </section>
         <section className="card">
           <h3>Headers</h3>
           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--mono)' }}>
             {detail.headers || '(none)'}
-          </pre>
-        </section>
-        <section className="card">
-          <h3>Payload</h3>
-          <p className="hint">Raw message bytes from bounce_events (UTF-8).</p>
-          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--mono)' }}>
-            {detail.payload || '(empty)'}
           </pre>
         </section>
       </div>
@@ -1295,7 +1286,8 @@ export function BounceMessagesPage({
       <section className="card">
         <h2>Bounce Messages</h2>
         <p className="hint">
-          Ingested bounce mail from Bounce Mailboxes. Poll/process activity is on Bounce Processing Log.
+          Ingested bounce mail from Bounce Mailboxes (kept after campaign delete). Poll/process
+          activity is on Bounce Processing Log.
         </p>
         {msg ? <p>{msg}</p> : null}
         <label className="field">
@@ -1318,32 +1310,8 @@ export function BounceMessagesPage({
           rows={rows}
           rowKey={(r) => r.id}
           onOpen={(r) => onOpen?.(r.id)}
-          empty="No bounce messages."
+          empty="No bounce messages yet. Poll Bounce Mailboxes, then run bounce processing."
           columns={[
-            {
-              key: 'receivedAt',
-              label: 'When',
-              render: (r) => when(r.receivedAt),
-            },
-            {
-              key: 'email',
-              label: 'Email',
-              stopRowClick: true,
-              render: (r) =>
-                r.memberId && onOpenMember ? (
-                  <a
-                    href={`#members/${r.memberId}`}
-                    onClick={(ev) => {
-                      ev.preventDefault()
-                      onOpenMember(r.memberId)
-                    }}
-                  >
-                    {r.email || r.memberId}
-                  </a>
-                ) : (
-                  r.email || '—'
-                ),
-            },
             {
               key: 'campaignSubject',
               label: 'Campaign',
@@ -1364,19 +1332,44 @@ export function BounceMessagesPage({
                 ),
             },
             {
-              key: 'classification',
-              label: 'Class',
-              render: (r) => r.classification || '—',
+              key: 'email',
+              label: 'Correlated email',
+              stopRowClick: true,
+              render: (r) =>
+                r.memberId && onOpenMember ? (
+                  <a
+                    href={`#members/${r.memberId}`}
+                    onClick={(ev) => {
+                      ev.preventDefault()
+                      onOpenMember(r.memberId)
+                    }}
+                  >
+                    {r.email || r.memberId}
+                  </a>
+                ) : (
+                  r.email || '—'
+                ),
             },
             {
-              key: 'error',
-              label: 'Error',
-              render: (r) => r.error || '—',
+              key: 'receivedAt',
+              label: 'Bounced',
+              render: (r) => when(r.receivedAt),
             },
             {
-              key: 'correlated',
-              label: 'Correlated?',
-              render: (r) => (r.correlated ? 'Yes' : 'No'),
+              key: 'details',
+              label: 'Details',
+              stopRowClick: true,
+              render: (r) => (
+                <a
+                  href={`#bounces/${r.id}`}
+                  onClick={(ev) => {
+                    ev.preventDefault()
+                    onOpen?.(r.id)
+                  }}
+                >
+                  Open
+                </a>
+              ),
             },
           ]}
         />

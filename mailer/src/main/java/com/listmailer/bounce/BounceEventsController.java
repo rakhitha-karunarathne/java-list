@@ -120,7 +120,8 @@ public class BounceEventsController {
           stream.filter(
               e ->
                   "CORRELATED".equals(e.getStatus())
-                      || ("PROCESSED".equals(e.getStatus()) && e.getSendQueueId() != null));
+                      || "PROCESSED".equals(e.getStatus())
+                      || e.getSendQueueId() != null);
       case "uncorrelated" -> stream.filter(e -> "UNCORRELATED".equals(e.getStatus()));
       case "hard" -> stream.filter(e -> "HARD".equalsIgnoreCase(e.getClassification()));
       case "soft" -> stream.filter(e -> "SOFT".equalsIgnoreCase(e.getClassification()));
@@ -131,7 +132,7 @@ public class BounceEventsController {
   private BounceMessageView toView(BounceEventEntity ev) {
     ensureErrorText(ev);
     String email = null;
-    String campaignId = null;
+    String campaignId = ev.getCampaignId();
     String campaignSubject = null;
     if (StringUtils.hasText(ev.getMemberId())) {
       email = members.findById(ev.getMemberId()).map(m -> m.getEmail()).orElse(null);
@@ -142,16 +143,18 @@ public class BounceEventsController {
         if (!StringUtils.hasText(email)) {
           email = row.getEmail();
         }
-        campaignId = row.getCampaignId();
-        if (StringUtils.hasText(campaignId)) {
-          campaignSubject =
-              campaigns.findById(campaignId).map(c -> c.getSubject()).orElse(null);
+        if (!StringUtils.hasText(campaignId)) {
+          campaignId = row.getCampaignId();
         }
       }
     }
+    if (StringUtils.hasText(campaignId)) {
+      campaignSubject = campaigns.findById(campaignId).map(c -> c.getSubject()).orElse(null);
+    }
     boolean correlated =
         "CORRELATED".equals(ev.getStatus())
-            || ("PROCESSED".equals(ev.getStatus()) && ev.getSendQueueId() != null);
+            || "PROCESSED".equals(ev.getStatus())
+            || StringUtils.hasText(ev.getSendQueueId());
     return new BounceMessageView(
         ev.getId(),
         ev.getReceivedAt(),

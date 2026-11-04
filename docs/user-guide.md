@@ -81,9 +81,9 @@ Turn email-to-list into queued campaigns:
 ## Bounces
 
 1. **Bounce Mailboxes** — configure IMAP; poll ingest bounce messages.
-2. **Bounce Messages** — inspect correlated events.
-3. Run bounce **process** when available (or rely on schedule) — hard/soft handling disables or soft-marks members as designed.
-4. **Bounce Processing Log** — what the process step did.
+2. **Bounce Messages** — table of ingested bounce mail (newest first): campaign subject (opens the campaign), correlated member email (opens the member), bounced time, and **Open** for detail. Detail shows bounce subject, body, headers, and linked email/campaign. Rows stay after a campaign is deleted (campaign link uses a stored campaign id). Filters: All / Correlated / Uncorrelated / Hard / Soft. List managers see only members on lists they manage.
+3. Run bounce **process** on that page (or rely on schedule) — hard/soft handling disables members as designed.
+4. **Bounce Processing Log** — poll/process activity (not the message list).
 
 Idle process may skip work when nothing new has been correlated since the last run.
 
