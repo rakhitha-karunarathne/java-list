@@ -574,6 +574,13 @@ table.data-table tr.row-link:focus-visible {
   max-width: 420px;
 }
 
+.mfa-qr {
+  display: block;
+  margin: 8px 0 12px;
+  background: #fff;
+  border-radius: 4px;
+}
+
 @media (max-width: 800px) {
   .menu-btn {
     display: inline-flex;

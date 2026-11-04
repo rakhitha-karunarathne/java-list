@@ -77,3 +77,15 @@ after = [2]
 hitl = false
 risk = "low"
 refined = true
+
+[[entry]]
+id = 8
+type = "story"
+title = "MFA enroll TOTP QR code"
+description = "My Account MFA setup shows a client-side QR for otpauth URI plus manual secret fallback."
+verify = "Enroll MFA shows scannable QR; no third-party QR fetch; confirm clears QR."
+covers = ["R1", "R3"]
+after = [4]
+hitl = false
+risk = "low"
+refined = true

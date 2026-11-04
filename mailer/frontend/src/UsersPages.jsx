@@ -12,6 +12,7 @@ import { RecordTable } from './RecordTable.jsx'
 import { useTimeZone } from './TimeZone.jsx'
 import { Toggle } from './Toggle.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
+import { MfaQr } from './MfaQr.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
 
 const ROLES = ['ADMIN', 'LIST_MANAGER', 'LIST_SENDER']
@@ -597,10 +598,16 @@ export function MyAccountPage({ token, onError }) {
 
 function SecurityMfaPanel({ token, onError }) {
   const [otpAuthUrl, setOtpAuthUrl] = useState('')
+  const [mfaSecret, setMfaSecret] = useState('')
   const [code, setCode] = useState('')
   const [backupCodes, setBackupCodes] = useState(null)
   const [unenrollCode, setUnenrollCode] = useState('')
   useRegisterUnsaved(!!code.trim() || !!unenrollCode.trim(), 'account-mfa')
+
+  function clearSetup() {
+    setOtpAuthUrl('')
+    setMfaSecret('')
+  }
 
   async function setup() {
     onError('')
@@ -608,6 +615,7 @@ function SecurityMfaPanel({ token, onError }) {
     try {
       const out = await apiJson(token, '/api/me/mfa/setup', { method: 'POST' })
       setOtpAuthUrl(out.otpAuthUrl || '')
+      setMfaSecret(out.secret || '')
     } catch (e) {
       onError(e.message)
     }
@@ -621,7 +629,7 @@ function SecurityMfaPanel({ token, onError }) {
         body: JSON.stringify({ code }),
       })
       setBackupCodes(out.backupCodes || [])
-      setOtpAuthUrl('')
+      clearSetup()
       setCode('')
     } catch (err) {
       onError(err.message)
@@ -638,7 +646,7 @@ function SecurityMfaPanel({ token, onError }) {
       })
       setUnenrollCode('')
       setBackupCodes(null)
-      setOtpAuthUrl('')
+      clearSetup()
     } catch (err) {
       onError(err.message)
     }
@@ -655,8 +663,14 @@ function SecurityMfaPanel({ token, onError }) {
       </p>
       {otpAuthUrl ? (
         <div>
-          <p className="hint">Scan otpauth URL (QR apps accept the URI):</p>
-          <code style={{ wordBreak: 'break-all' }}>{otpAuthUrl}</code>
+          <p className="hint">Scan this QR code with your authenticator app:</p>
+          <MfaQr otpAuthUrl={otpAuthUrl} />
+          {mfaSecret ? (
+            <p className="hint">
+              Can&apos;t scan? Enter this key manually:{' '}
+              <code style={{ wordBreak: 'break-all' }}>{mfaSecret}</code>
+            </p>
+          ) : null}
           <form onSubmit={confirm}>
             <label className="field">
               {fieldLabel('verification code')}

@@ -108,6 +108,8 @@ Delete is blocked while a catalog row is still referenced (UI shows **Used by**)
 
 Every role: change password (where enabled), MFA enrollment, **display time zone** for timestamps in the UI, and **Receive Notification Emails** (whether this account may get Admin ops notices on the Notice Sending Path).
 
+**Enroll MFA:** tap **Enroll MFA**, scan the **QR code** with an authenticator app (Google Authenticator, Microsoft Authenticator, etc.), then enter the 6-digit code to confirm. If you cannot scan, enter the shown secret key manually. Backup codes appear once after confirm — store them safely.
+
 ## Admin notices (Notice Sending Path)
 
 When **Catalogs → Notice Sending Path** is set, enabled **Admin** users with **Receive Notification Emails** on also receive:
