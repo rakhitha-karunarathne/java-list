@@ -266,7 +266,7 @@ public class BounceProcessService {
             + lastErr);
     members.save(m);
     ops.opsLog("bounce.disable", "member=" + memberId + " class=" + clazz);
-    ops.audit("bounce.disable", "member=" + memberId + " class=" + clazz);
+    ops.audit("bounce.disable", "member=" + memberId + " class=" + clazz, "system", null, memberId);
     activity.write(
         ActivityLogService.BOUNCE,
         "DISABLE",

@@ -79,7 +79,10 @@ public class UnsubscribeService {
               + " campaign="
               + payload.campaignId()
               + " lists="
-              + changed);
+              + changed,
+          null,
+          null,
+          payload.memberId());
       return Outcome.UNSUBSCRIBED;
     }
     return Outcome.ALREADY;

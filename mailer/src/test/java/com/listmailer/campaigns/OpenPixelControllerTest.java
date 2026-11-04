@@ -2,10 +2,13 @@ package com.listmailer.campaigns;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.listmailer.kernel.ports.OpsHooksPort;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +23,7 @@ class OpenPixelControllerTest {
 
   @Mock SendQueueRepository queue;
   @Mock CampaignOpenRepository opens;
+  @Mock OpsHooksPort ops;
   @InjectMocks OpenPixelController controller;
 
   @Test
@@ -34,5 +38,7 @@ class OpenPixelControllerTest {
     assertEquals(HttpStatus.OK, res.getStatusCode());
     assertEquals("image/gif", res.getHeaders().getContentType().toString());
     verify(opens, timeout(2000)).save(any());
+    verify(ops, timeout(2000))
+        .audit(eq("campaign.open"), eq("campaign=c1"), isNull(), isNull(), eq("m1"));
   }
 }

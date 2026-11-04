@@ -106,7 +106,10 @@ public class ConsentService {
     noticeMail.send(member.getEmail(), subject, text, html);
     ops.audit(
         "consent.request",
-        "member=" + memberId + " lists=" + listIds.size() + " enabled=" + member.isEnabled());
+        "member=" + memberId + " lists=" + listIds.size() + " enabled=" + member.isEnabled(),
+        null,
+        null,
+        memberId);
   }
 
   @Transactional
@@ -145,7 +148,10 @@ public class ConsentService {
     if (cleared > 0) {
       ops.audit(
           "consent.approve",
-          "member=" + payload.memberId() + " listsCleared=" + cleared);
+          "member=" + payload.memberId() + " listsCleared=" + cleared,
+          null,
+          null,
+          payload.memberId());
       return ApproveOutcome.CLEARED;
     }
     if (already > 0) {

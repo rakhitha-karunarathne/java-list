@@ -698,6 +698,12 @@ public class CampaignSendService {
         ActivityLogService.SEND,
         "SEND",
         "to=" + row.getEmail() + " campaign=" + campaign.getId() + " subject=" + campaign.getSubject());
+    ops.audit(
+        "campaign.sent",
+        "campaign=" + campaign.getId() + " subject=" + campaign.getSubject(),
+        "system",
+        row.getListId(),
+        row.getMemberId());
     boolean moreOpen =
         queue.findByCampaignId(campaign.getId()).stream()
             .anyMatch(

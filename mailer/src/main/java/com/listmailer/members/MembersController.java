@@ -1,8 +1,11 @@
 package com.listmailer.members;
 
 import com.listmailer.consent.ConsentService;
+import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
+import com.listmailer.ops.AuditLogEntity;
+import com.listmailer.ops.AuditLogRepository;
 import com.listmailer.users.ListAccessService;
 import com.listmailer.users.UserListGrantEntity;
 import com.listmailer.users.UserListGrantRepository;
@@ -37,6 +40,8 @@ public class MembersController {
   private final ListAccessService access;
   private final UserListGrantRepository grants;
   private final ConsentService consent;
+  private final AuditLogRepository audit;
+  private final OpsHooksPort ops;
 
   public MembersController(
       MemberRepository members,
@@ -44,13 +49,17 @@ public class MembersController {
       ListRepository lists,
       ListAccessService access,
       UserListGrantRepository grants,
-      ConsentService consent) {
+      ConsentService consent,
+      AuditLogRepository audit,
+      OpsHooksPort ops) {
     this.members = members;
     this.listMembers = listMembers;
     this.lists = lists;
     this.access = access;
     this.grants = grants;
     this.consent = consent;
+    this.audit = audit;
+    this.ops = ops;
   }
 
   @GetMapping
@@ -81,13 +90,22 @@ public class MembersController {
           lists.findById(lm.getListId()).map(ListEntity::getName).orElse(lm.getListId());
       memberships.add(new Membership(lm.getListId(), listName, lm.isUnsubscribed()));
     }
+    List<TimelineEntry> timeline =
+        audit.findByMemberIdInOrderByCreatedAtDesc(List.of(id)).stream()
+            .filter(
+                e ->
+                    access.isAdmin()
+                        || e.getListId() == null
+                        || access.canAccess(e.getListId()))
+            .map(TimelineEntry::from)
+            .toList();
     return new MemberDetail(
         member.getId(),
         member.getEmail(),
         member.isEnabled(),
         member.getDisableReason() == null ? "" : member.getDisableReason(),
         memberships,
-        List.of()); // timeline = audit filter; wired in ops epic
+        timeline);
   }
 
   @PutMapping("/{id}")
@@ -102,6 +120,13 @@ public class MembersController {
         }
         member.setEnabled(false);
         member.setDisableReason(body.disableReason().trim());
+        members.save(member);
+        ops.audit(
+            "member.disable",
+            "reason=" + member.getDisableReason(),
+            currentUserId(),
+            null,
+            id);
       } else {
         // re-enable requires confirm flag (story 4.5)
         if (!Boolean.TRUE.equals(body.confirm())) {
@@ -109,8 +134,9 @@ public class MembersController {
         }
         member.setEnabled(true);
         member.setDisableReason(null);
+        members.save(member);
+        ops.audit("member.enable", "member=" + id, currentUserId(), null, id);
       }
-      members.save(member);
     }
     return get(id);
   }
@@ -204,13 +230,26 @@ public class MembersController {
 
   public record Membership(String listId, String listName, boolean unsubscribed) {}
 
+  public record TimelineEntry(
+      String id, String action, String detail, String actor, String listId, String createdAt) {
+    static TimelineEntry from(AuditLogEntity e) {
+      return new TimelineEntry(
+          e.getId(),
+          e.getAction(),
+          e.getDetail(),
+          e.getActor(),
+          e.getListId(),
+          e.getCreatedAt().toString());
+    }
+  }
+
   public record MemberDetail(
       String id,
       String email,
       boolean enabled,
       String disableReason,
-      List<Membership> lists,
-      List<Object> timeline) {}
+      List<Membership> memberships,
+      List<TimelineEntry> timeline) {}
 
   public record PatchBody(Boolean enabled, String disableReason, Boolean confirm) {}
 

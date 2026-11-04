@@ -1,6 +1,7 @@
 package com.listmailer.campaigns;
 
 import com.listmailer.kernel.ids.Guids;
+import com.listmailer.kernel.ports.OpsHooksPort;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.http.HttpHeaders;
@@ -25,10 +26,13 @@ public class OpenPixelController {
 
   private final SendQueueRepository queue;
   private final CampaignOpenRepository opens;
+  private final OpsHooksPort ops;
 
-  public OpenPixelController(SendQueueRepository queue, CampaignOpenRepository opens) {
+  public OpenPixelController(
+      SendQueueRepository queue, CampaignOpenRepository opens, OpsHooksPort ops) {
     this.queue = queue;
     this.opens = opens;
+    this.ops = ops;
   }
 
   @GetMapping("/t/{token}")
@@ -45,13 +49,20 @@ public class OpenPixelController {
     queue
         .findByPixelToken(token)
         .ifPresent(
-            row ->
-                opens.save(
-                    new CampaignOpenEntity(
-                        Guids.newGuid(),
-                        row.getCampaignId(),
-                        row.getMemberId(),
-                        row.getId(),
-                        Instant.now())));
+            row -> {
+              opens.save(
+                  new CampaignOpenEntity(
+                      Guids.newGuid(),
+                      row.getCampaignId(),
+                      row.getMemberId(),
+                      row.getId(),
+                      Instant.now()));
+              ops.audit(
+                  "campaign.open",
+                  "campaign=" + row.getCampaignId(),
+                  null,
+                  row.getListId(),
+                  row.getMemberId());
+            });
   }
 }

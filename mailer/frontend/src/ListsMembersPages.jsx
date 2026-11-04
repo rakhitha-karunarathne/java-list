@@ -7,9 +7,11 @@ import { FieldDesc } from './FieldDesc.jsx'
 import { fieldHelp } from './fieldHelp.js'
 import { btnDirtyClass, dirtyControlProps, valuesEqual } from './formDirty.js'
 import { fieldLabel } from './fieldLabel.js'
+import { formatWhen } from './formatWhen.js'
 import { membersSearchPath } from './membersSearch.js'
 import { CREATE_ID, isCreatePage } from './createPage.js'
 import { RecordTable } from './RecordTable.jsx'
+import { useTimeZone } from './TimeZone.jsx'
 import { useRegisterUnsaved } from './Unsaved.jsx'
 import { useDirtyForm } from './useDirtyForm.js'
 
@@ -425,6 +427,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
 }
 
 export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+  const { timeZone } = useTimeZone()
   const [q, setQ] = useState('')
   const [rows, setRows] = useState([])
   const [detail, setDetail] = useState(null)
@@ -517,13 +520,38 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
           {!detail.enabled && detail.disableReason ? ` — ${detail.disableReason}` : ''}
         </p>
         <h3>Memberships</h3>
-        <ul>
-          {detail.memberships?.map((m) => (
-            <li key={m.listId}>
-              {m.listName} {m.unsubscribed ? '(unsubscribed)' : ''}
-            </li>
-          ))}
-        </ul>
+        {(detail.memberships || []).length === 0 ? (
+          <p className="hint">No list memberships.</p>
+        ) : (
+          <ul>
+            {detail.memberships.map((m) => (
+              <li key={m.listId}>
+                {m.listName} {m.unsubscribed ? '(unsubscribed)' : ''}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h3>History</h3>
+        <p className="hint">Campaign send/open/bounce and other events for this member (audit).</p>
+        <RecordTable
+          rows={detail.timeline || []}
+          rowKey={(r) => r.id}
+          empty="No history for this member."
+          columns={[
+            {
+              key: 'createdAt',
+              label: 'When',
+              render: (r) => formatWhen(r.createdAt, timeZone),
+            },
+            {
+              key: 'action',
+              label: 'Action',
+              render: (r) => <code>{r.action}</code>,
+            },
+            { key: 'detail', label: 'Detail' },
+          ]}
+        />
 
         <h3>Enable / disable</h3>
         {detail.enabled ? (
