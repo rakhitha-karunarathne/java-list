@@ -10,5 +10,5 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
-- When committing code changes, also commit the updated tracked `graphify-out/` files (graph.json, GRAPH_REPORT.md, manifest, labels, build state, graph.html) and push them with the same change. Do not leave graphify-out dirty after a commit the user asked for.
+- When committing code changes, also commit the updated tracked `graphify-out/` files (graph.json, GRAPH_REPORT.md, labels, build state, graph.html) and push them with the same change. Do not leave graphify-out dirty after a commit the user asked for. manifest.json, cost.json, and cache/ are gitignored.
 - A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
