@@ -887,6 +887,7 @@ export function MainView({
           detailId={detailId}
           onOpen={onOpenDetail}
           onCloseDetail={onCloseDetail}
+          onOpenCampaign={(id) => openInView?.('campaigns', id)}
         />
       )
     case 'sending-paths':

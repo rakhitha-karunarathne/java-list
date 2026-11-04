@@ -1,24 +1,27 @@
 package com.listmailer.members;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.listmailer.bounce.BounceEventEntity;
+import com.listmailer.bounce.BounceEventRepository;
+import com.listmailer.campaigns.CampaignEntity;
 import com.listmailer.campaigns.CampaignOpenEntity;
 import com.listmailer.campaigns.CampaignOpenRepository;
+import com.listmailer.campaigns.CampaignRepository;
+import com.listmailer.campaigns.CampaignStatus;
 import com.listmailer.campaigns.SendQueueEntity;
 import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.consent.ConsentService;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
-import com.listmailer.ops.AuditLogEntity;
-import com.listmailer.ops.AuditLogRepository;
 import com.listmailer.users.ListAccessService;
 import com.listmailer.users.UserListGrantEntity;
 import com.listmailer.users.UserListGrantRepository;
@@ -26,6 +29,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,10 +51,11 @@ class MembersControllerTest {
   @Mock ListAccessService access;
   @Mock UserListGrantRepository grants;
   @Mock ConsentService consent;
-  @Mock AuditLogRepository audit;
   @Mock OpsHooksPort ops;
   @Mock SendQueueRepository sendQueue;
   @Mock CampaignOpenRepository opens;
+  @Mock BounceEventRepository bounces;
+  @Mock CampaignRepository campaigns;
   @InjectMocks MembersController controller;
 
   @AfterEach
@@ -106,7 +111,7 @@ class MembersControllerTest {
   }
 
   @Test
-  void detailIncludesMembershipsSendOpenAndAudit() {
+  void detailSendHistoryOrderedWithOpenAndBounce() {
     when(members.findById("m1"))
         .thenReturn(
             Optional.of(new MemberEntity("m1", "a@example.com", true, Instant.now())));
@@ -117,49 +122,83 @@ class MembersControllerTest {
         .thenReturn(
             Optional.of(new ListEntity("L1", "News", "sp", null, null, null, null, Instant.now())));
 
-    SendQueueEntity sent = new SendQueueEntity("q1", "c1", "m1", "a@example.com", "sp", "SENT");
-    sent.setListId("L1");
-    sent.setSubject("Hello");
-    sent.setSentAt(Instant.parse("2026-02-01T10:00:00Z"));
-    when(sendQueue.findByMemberId("m1")).thenReturn(List.of(sent));
+    SendQueueEntity later = new SendQueueEntity("q2", "c2", "m1", "a@example.com", "sp", "SENT");
+    later.setListId("L1");
+    later.setSubject("Second");
+    later.setSentAt(Instant.parse("2026-02-02T10:00:00Z"));
+    SendQueueEntity earlier = new SendQueueEntity("q1", "c1", "m1", "a@example.com", "sp", "SENT");
+    earlier.setListId("L1");
+    earlier.setSubject("First");
+    earlier.setSentAt(Instant.parse("2026-02-01T10:00:00Z"));
+    when(sendQueue.findByMemberId("m1")).thenReturn(List.of(later, earlier));
     when(opens.findByMemberId("m1"))
         .thenReturn(
             List.of(
                 new CampaignOpenEntity(
+                    "o2", "c1", "m1", "q1", Instant.parse("2026-02-01T12:00:00Z")),
+                new CampaignOpenEntity(
                     "o1", "c1", "m1", "q1", Instant.parse("2026-02-01T11:00:00Z"))));
-    when(audit.findByMemberIdInOrderByCreatedAtDesc(List.of("m1")))
-        .thenReturn(
-            List.of(
-                new AuditLogEntity(
-                    "a-dup",
-                    "campaign.sent",
-                    "ignored duplicate",
-                    "system",
-                    "L1",
-                    "m1",
-                    Instant.parse("2026-02-01T10:00:00Z")),
-                new AuditLogEntity(
-                    "a1",
-                    "member.enable",
-                    "ok",
-                    "admin",
-                    null,
-                    "m1",
-                    Instant.parse("2026-01-15T09:00:00Z"))));
+    BounceEventEntity bounce =
+        new BounceEventEntity(
+            "b1",
+            "mb",
+            Instant.parse("2026-02-01T10:30:00Z"),
+            null,
+            "bounce",
+            null,
+            "{}",
+            new byte[0],
+            "CORRELATED");
+    bounce.setSendQueueId("q1");
+    when(bounces.findBySendQueueIdIn(Set.of("q2", "q1"))).thenReturn(List.of(bounce));
+    when(campaigns.findAllById(Set.of("c2", "c1"))).thenReturn(List.of());
 
     MembersController.MemberDetail detail = controller.get("m1");
 
     assertEquals(1, detail.memberships().size());
-    assertEquals("News", detail.memberships().get(0).listName());
-    assertEquals(3, detail.timeline().size());
-    assertEquals("campaign.open", detail.timeline().get(0).action());
-    assertEquals("campaign.sent", detail.timeline().get(1).action());
-    assertTrue(detail.timeline().get(1).detail().contains("subject=Hello"));
-    assertEquals("member.enable", detail.timeline().get(2).action());
+    assertEquals(2, detail.sends().size());
+    assertEquals("First", detail.sends().get(0).subject());
+    assertEquals("c1", detail.sends().get(0).campaignId());
+    assertEquals("2026-02-01T10:00:00Z", detail.sends().get(0).sentAt());
+    assertEquals("2026-02-01T10:30:00Z", detail.sends().get(0).bouncedAt());
+    assertEquals("2026-02-01T11:00:00Z", detail.sends().get(0).openedAt());
+    assertNull(detail.sends().get(0).error());
+    assertEquals("Second", detail.sends().get(1).subject());
+    assertNull(detail.sends().get(1).bouncedAt());
+    assertNull(detail.sends().get(1).openedAt());
   }
 
   @Test
-  void listManagerDetailHidesOtherListHistory() {
+  void detailFailedSendShowsErrorNotTimestamps() {
+    when(members.findById("m1"))
+        .thenReturn(
+            Optional.of(new MemberEntity("m1", "a@example.com", true, Instant.now())));
+    when(access.isAdmin()).thenReturn(true);
+    when(listMembers.findByMemberId("m1")).thenReturn(List.of());
+    SendQueueEntity failed =
+        new SendQueueEntity("q1", "c1", "m1", "a@example.com", "sp", "SEND_FAILED");
+    failed.setListId("L1");
+    when(sendQueue.findByMemberId("m1")).thenReturn(List.of(failed));
+    when(opens.findByMemberId("m1")).thenReturn(List.of());
+    when(bounces.findBySendQueueIdIn(Set.of("q1"))).thenReturn(List.of());
+    when(campaigns.findAllById(Set.of("c1")))
+        .thenReturn(
+            List.of(
+                new CampaignEntity(
+                    "c1", "Broken", "", "", CampaignStatus.FINISHED, Instant.now())));
+
+    MembersController.MemberDetail detail = controller.get("m1");
+
+    assertEquals(1, detail.sends().size());
+    assertEquals("Broken", detail.sends().get(0).subject());
+    assertEquals("Send failed", detail.sends().get(0).error());
+    assertNull(detail.sends().get(0).sentAt());
+    assertNull(detail.sends().get(0).openedAt());
+    assertNull(detail.sends().get(0).bouncedAt());
+  }
+
+  @Test
+  void listManagerDetailHidesOtherListSends() {
     asUser("u1");
     when(members.findById("m1"))
         .thenReturn(
@@ -182,27 +221,22 @@ class MembersControllerTest {
 
     SendQueueEntity q1 = new SendQueueEntity("q1", "c1", "m1", "a@example.com", "sp", "SENT");
     q1.setListId("L1");
+    q1.setSubject("Mine");
     q1.setSentAt(Instant.parse("2026-02-01T10:00:00Z"));
     SendQueueEntity q2 = new SendQueueEntity("q2", "c2", "m1", "a@example.com", "sp", "SENT");
     q2.setListId("L2");
+    q2.setSubject("Other");
     q2.setSentAt(Instant.parse("2026-02-01T12:00:00Z"));
     when(sendQueue.findByMemberId("m1")).thenReturn(List.of(q1, q2));
-    when(opens.findByMemberId("m1"))
-        .thenReturn(
-            List.of(
-                new CampaignOpenEntity("o1", "c1", "m1", "q1", Instant.parse("2026-02-01T11:00:00Z")),
-                new CampaignOpenEntity(
-                    "o2", "c2", "m1", "q2", Instant.parse("2026-02-01T13:00:00Z"))));
-    when(audit.findByMemberIdInOrderByCreatedAtDesc(List.of("m1"))).thenReturn(List.of());
+    when(opens.findByMemberId("m1")).thenReturn(List.of());
+    when(bounces.findBySendQueueIdIn(Set.of("q1"))).thenReturn(List.of());
+    when(campaigns.findAllById(Set.of("c1"))).thenReturn(List.of());
 
     MembersController.MemberDetail detail = controller.get("m1");
 
     assertEquals(1, detail.memberships().size());
-    assertEquals(2, detail.timeline().size());
-    assertEquals("campaign.open", detail.timeline().get(0).action());
-    assertEquals("L1", detail.timeline().get(0).listId());
-    assertEquals("campaign.sent", detail.timeline().get(1).action());
-    assertEquals("L1", detail.timeline().get(1).listId());
+    assertEquals(1, detail.sends().size());
+    assertEquals("Mine", detail.sends().get(0).subject());
   }
 
   @Test
@@ -213,8 +247,6 @@ class MembersControllerTest {
     when(access.isAdmin()).thenReturn(true);
     when(listMembers.findByMemberId("m1")).thenReturn(List.of());
     when(sendQueue.findByMemberId("m1")).thenReturn(List.of());
-    when(opens.findByMemberId("m1")).thenReturn(List.of());
-    when(audit.findByMemberIdInOrderByCreatedAtDesc(List.of("m1"))).thenReturn(List.of());
     when(members.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     ResponseStatusException missing =
@@ -247,8 +279,6 @@ class MembersControllerTest {
 
     when(listMembers.findByMemberId("m1")).thenReturn(List.of());
     when(sendQueue.findByMemberId("m1")).thenReturn(List.of());
-    when(opens.findByMemberId("m1")).thenReturn(List.of());
-    when(audit.findByMemberIdInOrderByCreatedAtDesc(List.of("m1"))).thenReturn(List.of());
     when(members.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     MembersController.MemberDetail detail =
@@ -296,8 +326,6 @@ class MembersControllerTest {
     when(listMembers.findByListIdAndMemberId("L1", "m1")).thenReturn(Optional.empty());
     when(listMembers.findByMemberId("m1")).thenReturn(List.of());
     when(sendQueue.findByMemberId("m1")).thenReturn(List.of());
-    when(opens.findByMemberId("m1")).thenReturn(List.of());
-    when(audit.findByMemberIdInOrderByCreatedAtDesc(List.of("m1"))).thenReturn(List.of());
     when(listMembers.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     MembersController.MemberDetail detail =

@@ -1,26 +1,29 @@
 package com.listmailer.members;
 
+import com.listmailer.bounce.BounceEventEntity;
+import com.listmailer.bounce.BounceEventRepository;
+import com.listmailer.campaigns.CampaignEntity;
 import com.listmailer.campaigns.CampaignOpenEntity;
 import com.listmailer.campaigns.CampaignOpenRepository;
+import com.listmailer.campaigns.CampaignRepository;
 import com.listmailer.campaigns.SendQueueEntity;
 import com.listmailer.campaigns.SendQueueRepository;
 import com.listmailer.consent.ConsentService;
 import com.listmailer.kernel.ports.OpsHooksPort;
 import com.listmailer.lists.ListEntity;
 import com.listmailer.lists.ListRepository;
-import com.listmailer.ops.AuditLogEntity;
-import com.listmailer.ops.AuditLogRepository;
 import com.listmailer.users.ListAccessService;
 import com.listmailer.users.UserListGrantEntity;
 import com.listmailer.users.UserListGrantRepository;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,19 +44,17 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/members")
 public class MembersController {
 
-  private static final Set<String> CAMPAIGN_ACTIONS_FROM_TABLES =
-      Set.of("campaign.sent", "campaign.open");
-
   private final MemberRepository members;
   private final ListMemberRepository listMembers;
   private final ListRepository lists;
   private final ListAccessService access;
   private final UserListGrantRepository grants;
   private final ConsentService consent;
-  private final AuditLogRepository audit;
   private final OpsHooksPort ops;
   private final SendQueueRepository sendQueue;
   private final CampaignOpenRepository opens;
+  private final BounceEventRepository bounces;
+  private final CampaignRepository campaigns;
 
   public MembersController(
       MemberRepository members,
@@ -62,20 +63,22 @@ public class MembersController {
       ListAccessService access,
       UserListGrantRepository grants,
       ConsentService consent,
-      AuditLogRepository audit,
       OpsHooksPort ops,
       SendQueueRepository sendQueue,
-      CampaignOpenRepository opens) {
+      CampaignOpenRepository opens,
+      BounceEventRepository bounces,
+      CampaignRepository campaigns) {
     this.members = members;
     this.listMembers = listMembers;
     this.lists = lists;
     this.access = access;
     this.grants = grants;
     this.consent = consent;
-    this.audit = audit;
     this.ops = ops;
     this.sendQueue = sendQueue;
     this.opens = opens;
+    this.bounces = bounces;
+    this.campaigns = campaigns;
   }
 
   @GetMapping
@@ -112,7 +115,7 @@ public class MembersController {
         member.isEnabled(),
         member.getDisableReason() == null ? "" : member.getDisableReason(),
         memberships,
-        timelineFor(id));
+        sendHistory(id));
   }
 
   @PutMapping("/{id}")
@@ -185,79 +188,91 @@ public class MembersController {
     return get(id);
   }
 
-  private List<TimelineEntry> timelineFor(String memberId) {
-    List<SendQueueEntity> rows = sendQueue.findByMemberId(memberId);
-    Map<String, SendQueueEntity> byQueueId =
-        rows.stream().collect(Collectors.toMap(SendQueueEntity::getId, Function.identity(), (a, b) -> a));
+  /**
+   * One row per send_queue delivery attempt that left Pending: Sent (with open/bounce times) or
+   * failed (error spans the timestamp columns in the UI). Ordered by sent time ascending.
+   */
+  private List<SendRecord> sendHistory(String memberId) {
+    List<SendQueueEntity> rows =
+        sendQueue.findByMemberId(memberId).stream()
+            .filter(r -> visibleCampaignList(r.getListId()))
+            .filter(
+                r ->
+                    "SENT".equals(r.getStatus())
+                        || "SEND_FAILED".equals(r.getStatus())
+                        || "FAILED_RETRY_PENDING".equals(r.getStatus()))
+            .toList();
+    if (rows.isEmpty()) {
+      return List.of();
+    }
 
-    List<TimelineEntry> out = new ArrayList<>();
-    for (SendQueueEntity row : rows) {
-      if (!"SENT".equals(row.getStatus()) || row.getSentAt() == null) {
-        continue;
-      }
-      if (!visibleCampaignList(row.getListId())) {
-        continue;
-      }
-      String subject = StringUtils.hasText(row.getSubject()) ? row.getSubject() : "";
-      out.add(
-          new TimelineEntry(
-              "sent-" + row.getId(),
-              "campaign.sent",
-              "campaign=" + row.getCampaignId() + (subject.isEmpty() ? "" : " subject=" + subject),
-              "system",
-              row.getListId(),
-              row.getSentAt().toString()));
+    Set<String> queueIds = new HashSet<>();
+    Set<String> campaignIds = new HashSet<>();
+    for (SendQueueEntity r : rows) {
+      queueIds.add(r.getId());
+      campaignIds.add(r.getCampaignId());
     }
+
+    Map<String, Instant> firstOpen = new HashMap<>();
     for (CampaignOpenEntity open : opens.findByMemberId(memberId)) {
-      SendQueueEntity row = byQueueId.get(open.getSendQueueId());
-      // shortcut: open without queue row has no list scope, hide from non-admins
-      if (row == null) {
-        if (!access.isAdmin()) {
-          continue;
-        }
-        out.add(
-            new TimelineEntry(
-                "open-" + open.getId(),
-                "campaign.open",
-                "campaign=" + open.getCampaignId(),
-                null,
-                null,
-                open.getOpenedAt().toString()));
+      if (!queueIds.contains(open.getSendQueueId())) {
         continue;
       }
-      if (!visibleCampaignList(row.getListId())) {
+      firstOpen.merge(open.getSendQueueId(), open.getOpenedAt(), (a, b) -> a.isBefore(b) ? a : b);
+    }
+
+    Map<String, Instant> firstBounce = new HashMap<>();
+    for (BounceEventEntity b : bounces.findBySendQueueIdIn(queueIds)) {
+      if (b.getSendQueueId() == null || b.getReceivedAt() == null) {
         continue;
       }
+      firstBounce.merge(b.getSendQueueId(), b.getReceivedAt(), (a, c) -> a.isBefore(c) ? a : c);
+    }
+
+    Map<String, String> campaignSubjects = new HashMap<>();
+    for (CampaignEntity c : campaigns.findAllById(campaignIds)) {
+      campaignSubjects.put(c.getId(), c.getSubject() == null ? "" : c.getSubject());
+    }
+
+    List<SendRecord> out = new ArrayList<>();
+    for (SendQueueEntity row : rows) {
+      boolean failed =
+          "SEND_FAILED".equals(row.getStatus()) || "FAILED_RETRY_PENDING".equals(row.getStatus());
+      String subject =
+          StringUtils.hasText(row.getSubject())
+              ? row.getSubject()
+              : campaignSubjects.getOrDefault(row.getCampaignId(), "");
+      if (!StringUtils.hasText(subject)) {
+        subject = "(no subject)";
+      }
+      String error = null;
+      if (failed) {
+        error =
+            "SEND_FAILED".equals(row.getStatus()) ? "Send failed" : "Failed — retry pending";
+      }
+      Instant opened = failed ? null : firstOpen.get(row.getId());
+      Instant bounced = failed ? null : firstBounce.get(row.getId());
       out.add(
-          new TimelineEntry(
-              "open-" + open.getId(),
-              "campaign.open",
-              "campaign=" + open.getCampaignId(),
-              null,
-              row.getListId(),
-              open.getOpenedAt().toString()));
+          new SendRecord(
+              row.getId(),
+              row.getCampaignId(),
+              subject,
+              row.getStatus(),
+              row.getSentAt() == null ? null : row.getSentAt().toString(),
+              bounced == null ? null : bounced.toString(),
+              opened == null ? null : opened.toString(),
+              error));
     }
-    for (AuditLogEntity e : audit.findByMemberIdInOrderByCreatedAtDesc(List.of(memberId))) {
-      if (CAMPAIGN_ACTIONS_FROM_TABLES.contains(e.getAction())) {
-        continue; // send_queue / campaign_opens are the source of truth
-      }
-      if (!visibleAuditList(e.getListId())) {
-        continue;
-      }
-      out.add(TimelineEntry.from(e));
-    }
-    out.sort(Comparator.comparing(TimelineEntry::createdAt).reversed());
+    out.sort(
+        Comparator.comparing(
+                SendRecord::sentAt, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(SendRecord::id));
     return out;
   }
 
   /** Campaign rows need a list the caller can access (null listId = admin only). */
   private boolean visibleCampaignList(String listId) {
     return access.isAdmin() || (listId != null && access.canAccess(listId));
-  }
-
-  /** Member-global audit (null listId) is visible to anyone who can open the member. */
-  private boolean visibleAuditList(String listId) {
-    return access.isAdmin() || listId == null || access.canAccess(listId);
   }
 
   private MemberEntity requireVisible(String id) {
@@ -312,18 +327,16 @@ public class MembersController {
 
   public record Membership(String listId, String listName, boolean unsubscribed) {}
 
-  public record TimelineEntry(
-      String id, String action, String detail, String actor, String listId, String createdAt) {
-    static TimelineEntry from(AuditLogEntity e) {
-      return new TimelineEntry(
-          e.getId(),
-          e.getAction(),
-          e.getDetail(),
-          e.getActor(),
-          e.getListId(),
-          e.getCreatedAt().toString());
-    }
-  }
+  /** One send_queue row for the member History table. */
+  public record SendRecord(
+      String id,
+      String campaignId,
+      String subject,
+      String status,
+      String sentAt,
+      String bouncedAt,
+      String openedAt,
+      String error) {}
 
   public record MemberDetail(
       String id,
@@ -331,7 +344,7 @@ public class MembersController {
       boolean enabled,
       String disableReason,
       List<Membership> memberships,
-      List<TimelineEntry> timeline) {}
+      List<SendRecord> sends) {}
 
   public record PatchBody(Boolean enabled, String disableReason, Boolean confirm) {}
 

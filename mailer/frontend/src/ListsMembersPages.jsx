@@ -426,7 +426,7 @@ export function ListsPage({ token, onError, detailId, onOpen, onCloseDetail, onO
   )
 }
 
-export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
+export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail, onOpenCampaign }) {
   const { timeZone } = useTimeZone()
   const [q, setQ] = useState('')
   const [rows, setRows] = useState([])
@@ -539,25 +539,58 @@ export function MembersPage({ token, onError, detailId, onOpen, onCloseDetail })
 
         <section className="card">
           <h3>History</h3>
-          <p className="hint">Campaign sends and opens for this member, plus other member audit events.</p>
-          <RecordTable
-            rows={detail.timeline || []}
-            rowKey={(r) => r.id}
-            empty="No history for this member."
-            columns={[
-              {
-                key: 'createdAt',
-                label: 'When',
-                render: (r) => formatWhen(r.createdAt, timeZone),
-              },
-              {
-                key: 'action',
-                label: 'Action',
-                render: (r) => <code>{r.action}</code>,
-              },
-              { key: 'detail', label: 'Detail' },
-            ]}
-          />
+          <p className="hint">
+            Send records for this member, oldest first. Failed rows show an error across the time
+            columns.
+          </p>
+          {(detail.sends || []).length === 0 ? (
+            <p className="hint">No campaign sends for this member.</p>
+          ) : (
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Campaign</th>
+                    <th>Sent</th>
+                    <th>Bounced</th>
+                    <th>Opened</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detail.sends.map((r) => (
+                    <tr key={r.id}>
+                      <td>
+                        {onOpenCampaign ? (
+                          <a
+                            href={`#campaigns/${r.campaignId}`}
+                            onClick={(ev) => {
+                              ev.preventDefault()
+                              onOpenCampaign(r.campaignId)
+                            }}
+                          >
+                            {r.subject || '(no subject)'}
+                          </a>
+                        ) : (
+                          r.subject || '(no subject)'
+                        )}
+                      </td>
+                      {r.error ? (
+                        <td colSpan={3} className="error">
+                          {r.error}
+                        </td>
+                      ) : (
+                        <>
+                          <td>{formatWhen(r.sentAt, timeZone)}</td>
+                          <td>{r.bouncedAt ? formatWhen(r.bouncedAt, timeZone) : ''}</td>
+                          <td>{r.openedAt ? formatWhen(r.openedAt, timeZone) : ''}</td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         <section className="card">
