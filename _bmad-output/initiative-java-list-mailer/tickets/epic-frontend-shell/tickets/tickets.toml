@@ -35,3 +35,15 @@ after = [1, 2]
 hitl = false
 risk = "low"
 refine = true
+
+[[entry]]
+id = 4
+type = "story"
+title = "Collapsible nav categories; Campaigns before Lists"
+description = "Sidebar categories toggle open/closed; Campaigns before Lists; default open Dashboard/Campaigns/Lists only."
+verify = "Order Dashboard→Campaigns→Lists→…; only those three open by default; cat click toggles; NavIaC8 still passes."
+covers = ["R1", "R2"]
+after = [1]
+hitl = false
+risk = "low"
+refined = true

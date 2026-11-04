@@ -1,5 +1,8 @@
 /** Sidebar IA — indexes/tools only (C8). Mirrors approved Clearwater mock. */
 
+/** Section ids that start expanded (Attention / Campaigns / Lists). */
+export const NAV_DEFAULT_OPEN = ['dashboard', 'campaigns', 'lists-members']
+
 export const NAV_SECTIONS = [
   {
     id: 'dashboard',
@@ -7,19 +10,19 @@ export const NAV_SECTIONS = [
     items: [{ id: 'attention', label: 'Attention', hideForSender: true }],
   },
   {
-    id: 'lists-members',
-    label: 'LISTS & MEMBERS',
-    items: [
-      { id: 'lists', label: 'Lists', hideForSender: true },
-      { id: 'members', label: 'Members', hideForSender: true },
-    ],
-  },
-  {
     id: 'campaigns',
     label: 'CAMPAIGNS',
     items: [
       { id: 'campaigns', label: 'Campaigns' },
       { id: 'compose', label: 'Compose' },
+    ],
+  },
+  {
+    id: 'lists-members',
+    label: 'LISTS & MEMBERS',
+    items: [
+      { id: 'lists', label: 'Lists', hideForSender: true },
+      { id: 'members', label: 'Members', hideForSender: true },
     ],
   },
   {

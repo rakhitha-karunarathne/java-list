@@ -39,5 +39,12 @@ class NavIaC8Test {
     assertTrue(src.contains("Ops Logs"));
     assertTrue(src.contains("Attention"));
     assertTrue(src.contains("Inboxes"));
+
+    int campaigns = src.indexOf("label: 'CAMPAIGNS'");
+    int lists = src.indexOf("label: 'LISTS & MEMBERS'");
+    assertTrue(campaigns >= 0 && lists >= 0 && campaigns < lists, "Campaigns before Lists");
+    assertTrue(
+        src.contains("NAV_DEFAULT_OPEN = ['dashboard', 'campaigns', 'lists-members']"),
+        "default-open sections");
   }
 }

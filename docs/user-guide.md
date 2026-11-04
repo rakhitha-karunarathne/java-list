@@ -20,7 +20,7 @@ Session is a JWT stored in the browser for this tab. **Sign out** clears it. Lea
 | **LIST_MANAGER** | Lists, members, campaigns, bounce messages, issues, audit (no catalog/MTS admin tools) |
 | **LIST_SENDER** | Compose and campaigns for granted lists; starts on Compose |
 
-Sidebar items you cannot use are hidden. Detail screens open from indexes (open a row) — they are not separate top-level nav destinations.
+Sidebar items you cannot use are hidden. Category headings are collapsible; **Dashboard**, **Campaigns**, and **Lists & Members** start expanded (other categories start collapsed). **Campaigns** appears above **Lists & Members**. Detail screens open from indexes (open a row) — they are not separate top-level nav destinations.
 
 ## Recommended first-time setup (Admin)
 

@@ -1,4 +1,5 @@
-import { visibleSections } from './navConfig.js'
+import { useEffect, useState } from 'react'
+import { NAV_DEFAULT_OPEN, visibleSections } from './navConfig.js'
 
 export { default as Placeholder } from './Placeholder.jsx'
 
@@ -28,6 +29,13 @@ const TITLES = {
   home: 'Home',
 }
 
+function sectionIdForView(sections, viewId) {
+  for (const section of sections) {
+    if (section.items.some((item) => item.id === viewId)) return section.id
+  }
+  return null
+}
+
 export default function Shell({
   role,
   view,
@@ -39,6 +47,23 @@ export default function Shell({
 }) {
   const sections = visibleSections(role)
   const title = TITLES[view] || siteTitle
+  const activeSectionId = sectionIdForView(sections, view)
+  const [openIds, setOpenIds] = useState(() => {
+    const initial = new Set(NAV_DEFAULT_OPEN)
+    const active = sectionIdForView(visibleSections(role), view)
+    if (active) initial.add(active)
+    return initial
+  })
+
+  useEffect(() => {
+    if (!activeSectionId) return
+    setOpenIds((prev) => {
+      if (prev.has(activeSectionId)) return prev
+      const next = new Set(prev)
+      next.add(activeSectionId)
+      return next
+    })
+  }, [activeSectionId])
 
   function openNav() {
     document.body.classList.add('nav-open')
@@ -53,6 +78,15 @@ export default function Shell({
     closeNav()
   }
 
+  function toggleSection(sectionId) {
+    setOpenIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(sectionId)) next.delete(sectionId)
+      else next.add(sectionId)
+      return next
+    })
+  }
+
   return (
     <div className="app">
       <div className="backdrop" onClick={closeNav} aria-hidden="true" />
@@ -62,23 +96,33 @@ export default function Shell({
           <small>Operator UI · Clearwater</small>
         </div>
         <nav className="nav" aria-label="Primary">
-          {sections.map((section) => (
-            <div className="nav-section" key={section.id}>
-              <button type="button" className="cat">
-                {section.label}
-              </button>
-              {section.items.map((item) => (
+          {sections.map((section) => {
+            const open = openIds.has(section.id)
+            return (
+              <div className={`nav-section${open ? '' : ' collapsed'}`} key={section.id}>
                 <button
                   type="button"
-                  key={item.id}
-                  className={`nav-item${view === item.id ? ' active' : ''}`}
-                  onClick={() => go(item.id)}
+                  className="cat"
+                  aria-expanded={open}
+                  onClick={() => toggleSection(section.id)}
                 >
-                  {item.label}
+                  {section.label}
                 </button>
-              ))}
-            </div>
-          ))}
+                {open
+                  ? section.items.map((item) => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        className={`nav-item${view === item.id ? ' active' : ''}`}
+                        onClick={() => go(item.id)}
+                      >
+                        {item.label}
+                      </button>
+                    ))
+                  : null}
+              </div>
+            )
+          })}
           <div className="nav-section">
             <button
               type="button"

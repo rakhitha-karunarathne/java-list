@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { visibleSections } from './navConfig.js'
+import { NAV_DEFAULT_OPEN, NAV_SECTIONS, visibleSections } from './navConfig.js'
 
 const FORBIDDEN_SIDEBAR_LABELS = [
   'Campaign detail',
@@ -64,4 +64,13 @@ test('C8 forbidden detail labels not used in nav config', () => {
   for (const bad of FORBIDDEN_SIDEBAR_LABELS) {
     assert.ok(!labels.includes(bad), bad)
   }
+})
+
+test('Campaigns section comes before Lists & Members', () => {
+  const ids = NAV_SECTIONS.map((s) => s.id)
+  assert.ok(ids.indexOf('campaigns') < ids.indexOf('lists-members'))
+})
+
+test('default-open sections are Dashboard, Campaigns, Lists', () => {
+  assert.deepEqual(NAV_DEFAULT_OPEN, ['dashboard', 'campaigns', 'lists-members'])
 })
