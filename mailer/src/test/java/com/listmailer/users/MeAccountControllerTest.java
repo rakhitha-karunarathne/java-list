@@ -23,6 +23,7 @@ class MeAccountControllerTest {
 
   @Mock UserRepository users;
   @Mock PasswordEncoder passwordEncoder;
+  @Mock MfaService mfa;
   @Mock Authentication auth;
 
   MeAccountController controller;
@@ -30,7 +31,7 @@ class MeAccountControllerTest {
 
   @BeforeEach
   void setUp() {
-    controller = new MeAccountController(users, passwordEncoder);
+    controller = new MeAccountController(users, passwordEncoder, mfa);
     user = new UserEntity("u1", "a@example.com", "hash", UserRole.LIST_SENDER, true, Instant.now());
     Jwt jwt =
         Jwt.withTokenValue("t")
@@ -50,11 +51,66 @@ class MeAccountControllerTest {
 
     var out =
         controller.changePassword(
-            auth, new MeAccountController.PasswordChangeRequest("old", "new-secret"));
+            auth, new MeAccountController.PasswordChangeRequest("old", "new-secret", null));
 
     assertEquals(true, out.get("changed"));
     assertEquals("newhash", user.getPasswordHash());
     verify(users).save(user);
+  }
+
+  @Test
+  void requiresMfaCodeWhenMfaEnabled() {
+    user.setTotpEnabled(true);
+    when(passwordEncoder.matches("old", "hash")).thenReturn(true);
+
+    ResponseStatusException ex =
+        assertThrows(
+            ResponseStatusException.class,
+            () ->
+                controller.changePassword(
+                    auth, new MeAccountController.PasswordChangeRequest("old", "new-secret", null)));
+    assertEquals(401, ex.getStatusCode().value());
+    assertEquals("MFA code required", ex.getReason());
+    verify(users, never()).save(user);
+  }
+
+  @Test
+  void rejectsInvalidMfaCodeWhenMfaEnabled() {
+    user.setTotpEnabled(true);
+    when(passwordEncoder.matches("old", "hash")).thenReturn(true);
+    when(mfa.verifyCode(user, "000000")).thenReturn(false);
+
+    ResponseStatusException ex =
+        assertThrows(
+            ResponseStatusException.class,
+            () ->
+                controller.changePassword(
+                    auth,
+                    new MeAccountController.PasswordChangeRequest("old", "new-secret", "000000")));
+    assertEquals(401, ex.getStatusCode().value());
+    assertEquals("Invalid MFA code", ex.getReason());
+    verify(users, never()).save(user);
+  }
+
+  @Test
+  void changesPasswordWithValidMfaWhenEnabled() {
+    user.setTotpEnabled(true);
+    when(passwordEncoder.matches("old", "hash")).thenReturn(true);
+    when(mfa.verifyCode(user, "123456")).thenReturn(true);
+    when(passwordEncoder.encode("new-secret")).thenReturn("newhash");
+
+    var out =
+        controller.changePassword(
+            auth, new MeAccountController.PasswordChangeRequest("old", "new-secret", "123456"));
+
+    assertEquals(true, out.get("changed"));
+    verify(users).save(user);
+  }
+
+  @Test
+  void meIncludesMfaEnabled() {
+    user.setTotpEnabled(true);
+    assertEquals(true, controller.me(auth).get("mfaEnabled"));
   }
 
   @Test
@@ -66,7 +122,7 @@ class MeAccountControllerTest {
             ResponseStatusException.class,
             () ->
                 controller.changePassword(
-                    auth, new MeAccountController.PasswordChangeRequest("nope", "new-secret")));
+                    auth, new MeAccountController.PasswordChangeRequest("nope", "new-secret", null)));
     assertEquals(401, ex.getStatusCode().value());
     verify(users, never()).save(user);
   }
@@ -79,7 +135,7 @@ class MeAccountControllerTest {
             ResponseStatusException.class,
             () ->
                 controller.changePassword(
-                    auth, new MeAccountController.PasswordChangeRequest("same", "same")));
+                    auth, new MeAccountController.PasswordChangeRequest("same", "same", null)));
     assertEquals(400, same.getStatusCode().value());
 
     ResponseStatusException blank =
@@ -87,7 +143,7 @@ class MeAccountControllerTest {
             ResponseStatusException.class,
             () ->
                 controller.changePassword(
-                    auth, new MeAccountController.PasswordChangeRequest("same", "  ")));
+                    auth, new MeAccountController.PasswordChangeRequest("same", "  ", null)));
     assertEquals(400, blank.getStatusCode().value());
     verify(users, never()).save(user);
   }
@@ -99,6 +155,7 @@ class MeAccountControllerTest {
     assertEquals("LIST_SENDER", out.get("role"));
     assertEquals("UTC", out.get("timeZone"));
     assertEquals(true, out.get("receiveNotificationEmails"));
+    assertEquals(false, out.get("mfaEnabled"));
   }
 
   @Test

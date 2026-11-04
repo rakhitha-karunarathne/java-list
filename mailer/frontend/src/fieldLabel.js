@@ -30,6 +30,7 @@ const PHRASES = {
   fromName: 'From Name',
   returnPathEmail: 'Return-Path Email',
   substituteFrom: 'Substitute From',
+  mfaCode: 'MFA Code',
   pollIntervalMinutes: 'Poll Interval Minutes',
   autoQueue: 'Auto Queue',
   embedImages: 'Embed Images In Message',

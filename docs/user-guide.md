@@ -108,7 +108,9 @@ Delete is blocked while a catalog row is still referenced (UI shows **Used by**)
 
 Every role: change password (where enabled), MFA enrollment, **display time zone** for timestamps in the UI, and **Receive Notification Emails** (whether this account may get Admin ops notices on the Notice Sending Path).
 
-**Enroll MFA:** tap **Enroll MFA**, scan the **QR code** with an authenticator app (Google Authenticator, Microsoft Authenticator, etc.), then enter the 6-digit code to confirm. If you cannot scan, enter the shown secret key manually. Backup codes appear once after confirm — store them safely.
+**Change password:** if MFA is enrolled, you must enter a current authenticator code or a backup code along with your current password.
+
+**Enroll MFA:** tap **Enroll MFA**, scan the **QR code** with an authenticator app (Google Authenticator, Microsoft Authenticator, etc.), then enter the 6-digit code to confirm. If you cannot scan, enter the shown secret key manually. Backup codes appear once after confirm — store them safely (they also unlock password changes and MFA unenroll if the device is lost).
 
 ## Admin notices (Notice Sending Path)
 

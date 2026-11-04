@@ -101,3 +101,15 @@ after = [2, 3]
 hitl = false
 risk = "medium"
 refined = true
+
+[[entry]]
+id = 10
+type = "story"
+title = "Password change requires MFA when enrolled"
+description = "My Account password change requires TOTP/backup code when MFA is enabled."
+verify = "MFA on: password change needs valid MFA code; MFA off: unchanged; form shows MFA field when enrolled."
+covers = ["R1", "R3"]
+after = [4]
+hitl = false
+risk = "medium"
+refined = true

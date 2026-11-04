@@ -55,6 +55,8 @@ export const fieldHelp = {
   currentPassword: 'Your current password, required to set a new one.',
   newPassword: 'Choose a strong password you have not used elsewhere.',
   confirmNewPassword: 'Re-enter the new password to confirm.',
+  mfaCode:
+    'Authenticator code or a one-time backup code — required to change password when MFA is on.',
   timeZone: 'Used for dates and times shown in the UI for your account.',
   receiveNotificationEmails:
     'When on, this account may receive Admin ops notices on the Notice Sending Path (Admins only). Off for the default bootstrap Admin.',

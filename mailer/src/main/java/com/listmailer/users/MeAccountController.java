@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,10 +24,13 @@ public class MeAccountController {
 
   private final UserRepository users;
   private final PasswordEncoder passwordEncoder;
+  private final MfaService mfa;
 
-  public MeAccountController(UserRepository users, PasswordEncoder passwordEncoder) {
+  public MeAccountController(
+      UserRepository users, PasswordEncoder passwordEncoder, MfaService mfa) {
     this.users = users;
     this.passwordEncoder = passwordEncoder;
+    this.mfa = mfa;
   }
 
   @GetMapping
@@ -37,6 +41,7 @@ public class MeAccountController {
     out.put("role", user.getRole().name());
     out.put("timeZone", normalizeStoredZone(user.getTimeZone()));
     out.put("receiveNotificationEmails", user.isReceiveNotificationEmails());
+    out.put("mfaEnabled", user.isTotpEnabled());
     return out;
   }
 
@@ -87,6 +92,7 @@ public class MeAccountController {
   }
 
   @PostMapping("/password")
+  @Transactional
   public Map<String, Boolean> changePassword(
       Authentication auth, @RequestBody(required = false) PasswordChangeRequest body) {
     UserEntity user = current(auth);
@@ -100,6 +106,14 @@ public class MeAccountController {
     }
     if (body.currentPassword().equals(body.newPassword())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "new password must differ");
+    }
+    if (user.isTotpEnabled()) {
+      if (!StringUtils.hasText(body.mfaCode())) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "MFA code required");
+      }
+      if (!mfa.verifyCode(user, body.mfaCode().trim())) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid MFA code");
+      }
     }
     user.setPasswordHash(passwordEncoder.encode(body.newPassword()));
     users.save(user);
@@ -115,7 +129,7 @@ public class MeAccountController {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   }
 
-  public record PasswordChangeRequest(String currentPassword, String newPassword) {}
+  public record PasswordChangeRequest(String currentPassword, String newPassword, String mfaCode) {}
 
   public record TimeZoneRequest(String timeZone) {}
 

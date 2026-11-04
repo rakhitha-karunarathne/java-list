@@ -423,11 +423,13 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
 
 export function MyAccountPage({ token, onError }) {
   const { form, setForm, dirty, blank, resetToBlank } = useDirtyForm(
-    { currentPassword: '', newPassword: '', confirmPassword: '' },
+    { currentPassword: '', newPassword: '', confirmPassword: '', mfaCode: '' },
     'account-password',
     true,
   )
   const [msg, setMsg] = useState('')
+  const [mfaEnabled, setMfaEnabled] = useState(false)
+  const [meLoaded, setMeLoaded] = useState(false)
   const { timeZone, setTimeZone } = useTimeZone()
   const [zoneDraft, setZoneDraft] = useState(timeZone)
   const [zoneMsg, setZoneMsg] = useState('')
@@ -447,18 +449,28 @@ export function MyAccountPage({ token, onError }) {
 
   useEffect(() => {
     let cancelled = false
+    setMeLoaded(false)
     apiJson(token, '/api/me')
       .then((m) => {
         if (cancelled) return
         const on = !!m.receiveNotificationEmails
         setNotifyOn(on)
         setNotifySaved(on)
+        setMfaEnabled(!!m.mfaEnabled)
+        setMeLoaded(true)
       })
-      .catch((e) => onError(e.message))
+      .catch((e) => {
+        if (!cancelled) onError(e.message)
+      })
     return () => {
       cancelled = true
     }
   }, [token])
+
+  function setMfaEnabledAndClear(on) {
+    setMfaEnabled(!!on)
+    if (!on) setForm((prev) => ({ ...prev, mfaCode: '' }))
+  }
 
   async function changePassword(e) {
     e.preventDefault()
@@ -472,12 +484,18 @@ export function MyAccountPage({ token, onError }) {
       onError(problem)
       return
     }
+    if (mfaEnabled && !(form.mfaCode || '').trim()) {
+      setMsg('')
+      onError('MFA code required')
+      return
+    }
     try {
       await apiJson(token, '/api/me/password', {
         method: 'POST',
         body: JSON.stringify({
           currentPassword: form.currentPassword,
           newPassword: form.newPassword,
+          mfaCode: mfaEnabled ? form.mfaCode : null,
         }),
       })
       resetToBlank()
@@ -566,10 +584,25 @@ export function MyAccountPage({ token, onError }) {
               {...dirtyControlProps(!valuesEqual(form.confirmPassword, blank.confirmPassword))}
             />
           </label>
+          {mfaEnabled ? (
+            <label className="field">
+              {fieldLabel('mfaCode')}
+              <FieldDesc>{fieldHelp.mfaCode}</FieldDesc>
+              <input
+                value={form.mfaCode}
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                onChange={(ev) => setForm({ ...form, mfaCode: ev.target.value })}
+                required
+                {...dirtyControlProps(!valuesEqual(form.mfaCode, blank.mfaCode))}
+              />
+            </label>
+          ) : null}
           <button
             type="submit"
             className={btnDirtyClass(dirty)}
             title={dirty ? 'Unsaved changes' : undefined}
+            disabled={!meLoaded}
           >
             Change Password
           </button>
@@ -637,13 +670,17 @@ export function MyAccountPage({ token, onError }) {
         </form>
       </section>
       <section className="card">
-        <SecurityMfaPanel token={token} onError={onError} />
+        <SecurityMfaPanel
+          token={token}
+          onError={onError}
+          onMfaEnabledChange={setMfaEnabledAndClear}
+        />
       </section>
     </div>
   )
 }
 
-function SecurityMfaPanel({ token, onError }) {
+function SecurityMfaPanel({ token, onError, onMfaEnabledChange }) {
   const [otpAuthUrl, setOtpAuthUrl] = useState('')
   const [mfaSecret, setMfaSecret] = useState('')
   const [code, setCode] = useState('')
@@ -678,6 +715,7 @@ function SecurityMfaPanel({ token, onError }) {
       setBackupCodes(out.backupCodes || [])
       clearSetup()
       setCode('')
+      onMfaEnabledChange?.(true)
     } catch (err) {
       onError(err.message)
     }
@@ -694,6 +732,7 @@ function SecurityMfaPanel({ token, onError }) {
       setUnenrollCode('')
       setBackupCodes(null)
       clearSetup()
+      onMfaEnabledChange?.(false)
     } catch (err) {
       onError(err.message)
     }
