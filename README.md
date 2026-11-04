@@ -55,6 +55,8 @@ Default shape is **app + MariaDB** only (no GreenMail).
 docker build -t ghcr.io/<owner>/java-list:latest -f mailer/Dockerfile mailer
 ```
 
+Publishing a **GitHub Release** runs [`.github/workflows/publish-docker.yml`](.github/workflows/publish-docker.yml), which builds that Dockerfile and pushes `ghcr.io/<owner>/java-list` tagged with the release tag (and `latest`). First use may need the package set to public under **Packages**.
+
 See [docs/deploy.md](docs/deploy.md#published-app-image-no-database) for required `SPRING_DATASOURCE_*` and secret env vars.
 
 ### Secrets / env (Compose)
