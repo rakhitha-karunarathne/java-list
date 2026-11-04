@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -103,7 +105,10 @@ public class UsersAdminController {
 
   @DeleteMapping("/{id}")
   @Transactional
-  public void delete(@PathVariable String id) {
+  public void delete(@PathVariable String id, Authentication auth) {
+    if (isSelf(id, auth)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "cannot delete your own account");
+    }
     UserEntity user = requireUser(id);
     boolean soleAdminAccount =
         user.getRole() == UserRole.ADMIN && countAdminsExcluding(user.getId()) == 0;
@@ -171,6 +176,12 @@ public class UsersAdminController {
     return users.findAll().stream()
         .filter(u -> u.getRole() == UserRole.ADMIN && !u.getId().equals(excludeId))
         .count();
+  }
+
+  private static boolean isSelf(String id, Authentication auth) {
+    return auth != null
+        && auth.getPrincipal() instanceof Jwt jwt
+        && id.equals(jwt.getSubject());
   }
 
   public record CreateUserRequest(String email, String password, UserRole role) {}

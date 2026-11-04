@@ -14,7 +14,7 @@ refined: true
 
 ## Description
 
-Admin **Users & Grants** detail can **Delete** an operator account. Confirmation is required. Delete removes the user row, list grants, MFA backup codes, and TOTP secret. Delete is refused when this is the only Admin account, or when deleting would leave no enabled Admin (same idea as refusing to disable the last Admin).
+Admin **Users & Grants** detail can **Delete** an operator account. Confirmation is required. Delete removes the user row, list grants, MFA backup codes, and TOTP secret. Delete is refused for your own account, when this is the only Admin account, or when deleting would leave no enabled Admin (same idea as refusing to disable the last Admin).
 
 ## Requirements
 
@@ -32,6 +32,10 @@ Admin **Users & Grants** detail can **Delete** an operator account. Confirmation
 
 4. **Given** Users index  
    **Then** there is no Delete control (detail only)
+
+5. **Given** User detail for the signed-in Admin  
+   **When** Delete is attempted  
+   **Then** the API rejects (forbidden) and the UI does not offer Delete
 
 ## Boundaries
 

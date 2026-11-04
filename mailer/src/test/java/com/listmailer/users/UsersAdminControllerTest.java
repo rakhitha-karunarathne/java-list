@@ -2,6 +2,7 @@ package com.listmailer.users;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,7 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,6 +63,17 @@ class UsersAdminControllerTest {
   }
 
   @Test
+  void refusesToDeleteOwnAccount() {
+    Authentication auth = authAs("a1");
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> controller.delete("a1", auth));
+    assertEquals(403, ex.getStatusCode().value());
+    verify(users, never()).findById("a1");
+    verify(grants, never()).deleteByUserId("a1");
+  }
+
+  @Test
   void refusesToDeleteLastAdmin() {
     UserEntity admin =
         new UserEntity("a1", "admin@example.com", "hash", UserRole.ADMIN, true, Instant.now());
@@ -67,7 +81,7 @@ class UsersAdminControllerTest {
     when(users.findAll()).thenReturn(List.of(admin));
 
     ResponseStatusException ex =
-        assertThrows(ResponseStatusException.class, () -> controller.delete("a1"));
+        assertThrows(ResponseStatusException.class, () -> controller.delete("a1", authAs("other")));
     assertEquals(409, ex.getStatusCode().value());
     verify(grants, never()).deleteByUserId("a1");
     verify(backupCodes, never()).deleteByUserId("a1");
@@ -85,7 +99,8 @@ class UsersAdminControllerTest {
     when(users.findAll()).thenReturn(List.of(enabled, disabled));
 
     ResponseStatusException ex =
-        assertThrows(ResponseStatusException.class, () -> controller.delete("a1"));
+        assertThrows(
+            ResponseStatusException.class, () -> controller.delete("a1", authAs("other")));
     assertEquals(409, ex.getStatusCode().value());
     verify(users, never()).delete(enabled);
   }
@@ -97,7 +112,7 @@ class UsersAdminControllerTest {
     sender.setTotpSecretId("sec-1");
     when(users.findById("s1")).thenReturn(Optional.of(sender));
 
-    controller.delete("s1");
+    controller.delete("s1", authAs("admin"));
 
     verify(grants).deleteByUserId("s1");
     verify(backupCodes).deleteByUserId("s1");
@@ -114,8 +129,16 @@ class UsersAdminControllerTest {
     when(users.findById("a1")).thenReturn(Optional.of(a1));
     when(users.findAll()).thenReturn(List.of(a1, a2));
 
-    controller.delete("a1");
+    controller.delete("a1", authAs("a2"));
 
     verify(users).delete(a1);
+  }
+
+  private static Authentication authAs(String userId) {
+    Jwt jwt = mock(Jwt.class);
+    when(jwt.getSubject()).thenReturn(userId);
+    Authentication auth = mock(Authentication.class);
+    when(auth.getPrincipal()).thenReturn(jwt);
+    return auth;
   }
 }

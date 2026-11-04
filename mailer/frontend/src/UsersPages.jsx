@@ -37,6 +37,20 @@ function grantsSig(gs) {
   )
 }
 
+/** JWT `sub` is the user id (same as /api/users/{id}). */
+function tokenSubject(token) {
+  try {
+    const payload = String(token || '').split('.')[1]
+    if (!payload) return null
+    const b64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
+    const json = JSON.parse(atob(padded))
+    return json.sub || null
+  } catch {
+    return null
+  }
+}
+
 export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
   const creating = isCreatePage(detailId)
   const { form, setForm, dirty: createDirty, blank, resetToBlank } = useDirtyForm(
@@ -173,7 +187,13 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
     })
   }
 
+  const viewingSelf = detailId && detailId === tokenSubject(token)
+
   async function remove() {
+    if (viewingSelf) {
+      onError('cannot delete your own account')
+      return
+    }
     if (!confirmDelete(`user “${detail.email}” and their grants`)) return
     try {
       await apiJson(token, `/api/users/${detailId}`, { method: 'DELETE' })
@@ -357,12 +377,18 @@ export function UsersPage({ token, onError, detailId, onOpen, onCloseDetail }) {
 
         <section className="card">
           <h3>Delete</h3>
-          <p className="hint">
-            Removes this account, list grants, and MFA data. The only Admin cannot be deleted.
-          </p>
-          <button type="button" className="btn secondary" onClick={remove}>
-            Delete
-          </button>
+          {viewingSelf ? (
+            <p className="hint">You cannot delete your own account.</p>
+          ) : (
+            <>
+              <p className="hint">
+                Removes this account, list grants, and MFA data. The only Admin cannot be deleted.
+              </p>
+              <button type="button" className="btn secondary" onClick={remove}>
+                Delete
+              </button>
+            </>
+          )}
         </section>
       </div>
     )
