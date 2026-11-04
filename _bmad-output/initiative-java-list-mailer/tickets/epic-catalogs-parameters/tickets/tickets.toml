@@ -101,3 +101,15 @@ after = [7]
 hitl = false
 risk = "medium"
 refined = true
+
+[[entry]]
+id = 10
+type = "story"
+title = "Secrets active key version and 1024 key slots"
+description = "Scan KEY_1..1024; MAILER_SECRETS_ACTIVE_KEY_VERSION for encrypt/migrate target; default max present; rewrap all non-active."
+verify = "Active set → encrypt to that version; unset → max; migrate moves off-active rows; missing active key fails startup."
+covers = ["R1"]
+after = [8]
+hitl = false
+risk = "medium"
+refined = true

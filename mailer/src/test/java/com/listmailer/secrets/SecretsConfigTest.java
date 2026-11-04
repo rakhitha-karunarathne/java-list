@@ -42,13 +42,37 @@ class SecretsConfigTest {
             .withProperty("MAILER_SECRETS_KEY_1", "dev-only-secrets-key-32chars-minimum!")
             .withProperty("MAILER_SECRETS_KEY_2", "second-secrets-key-32chars-minimum!!!");
     SecretsProperties props = new SecretsProperties();
-    props.setKeys(
-        List.of()); // YAML ignored when env present
+    props.setKeys(List.of());
 
     SecretsCrypto crypto = new SecretsConfig().secretsCrypto(props, env);
     assertEquals(2, crypto.currentVersion());
     assertEquals("legacy", crypto.decryptUtf8(1, crypto.encrypt(1, "legacy".getBytes())));
     assertEquals("new", crypto.decryptUtf8(2, crypto.encryptCurrent("new")));
+  }
+
+  @Test
+  void activeKeyVersionOverridesHighest() {
+    MockEnvironment env =
+        new MockEnvironment()
+            .withProperty("MAILER_SECRETS_KEY_1", "dev-only-secrets-key-32chars-minimum!")
+            .withProperty("MAILER_SECRETS_KEY_2", "second-secrets-key-32chars-minimum!!!")
+            .withProperty("MAILER_SECRETS_KEY_3", "third-secrets-key-32chars-minimum!!!!")
+            .withProperty("MAILER_SECRETS_ACTIVE_KEY_VERSION", "2");
+    SecretsCrypto crypto = new SecretsConfig().secretsCrypto(new SecretsProperties(), env);
+    assertEquals(2, crypto.currentVersion());
+    assertEquals(3, crypto.maxConfiguredVersion());
+    assertEquals("on-v2", crypto.decryptUtf8(2, crypto.encryptCurrent("on-v2")));
+  }
+
+  @Test
+  void activeKeyVersionMissingKeyFails() {
+    MockEnvironment env =
+        new MockEnvironment()
+            .withProperty("MAILER_SECRETS_KEY_1", "dev-only-secrets-key-32chars-minimum!")
+            .withProperty("MAILER_SECRETS_ACTIVE_KEY_VERSION", "9");
+    assertThrows(
+        IllegalStateException.class,
+        () -> new SecretsConfig().secretsCrypto(new SecretsProperties(), env));
   }
 
   @Test
@@ -64,7 +88,6 @@ class SecretsConfigTest {
 
     SecretsCrypto crypto = new SecretsConfig().secretsCrypto(props, env);
     assertEquals(1, crypto.currentVersion());
-    // Encrypted under env key; decrypt with same crypto succeeds
     assertEquals("x", crypto.decryptUtf8(1, crypto.encryptCurrent("x")));
   }
 
@@ -103,7 +126,6 @@ class SecretsConfigTest {
     SecretsProperties props = new SecretsProperties();
     props.setMigrateOnStartup(true);
     SecretStore store = mock(SecretStore.class);
-    when(store.countWithKeyVersionAboveCurrent()).thenReturn(0L);
     when(store.rewrapAllToLatest())
         .thenReturn(new SecretStore.RewrapResult(2, 1, 0, 3));
     new SecretsConfig().migrateSecretsOnStartup(props, store).run(null);
@@ -117,15 +139,23 @@ class SecretsConfigTest {
   }
 
   @Test
-  void migrateOnStartupRejectsRowsAboveConfiguredKeys() {
+  void activeKeyVersionFromPropertiesWhenEnvUnset() {
     SecretsProperties props = new SecretsProperties();
-    props.setMigrateOnStartup(true);
-    SecretStore store = mock(SecretStore.class);
-    when(store.countWithKeyVersionAboveCurrent()).thenReturn(2L);
-    assertThrows(
-        IllegalStateException.class,
-        () -> new SecretsConfig().migrateSecretsOnStartup(props, store).run(null));
-    verify(store, never()).rewrapAllToLatest();
+    SecretsProperties.KeyEntry v1 = new SecretsProperties.KeyEntry();
+    v1.setVersion(1);
+    v1.setKey("dev-only-secrets-key-32chars-minimum!");
+    SecretsProperties.KeyEntry v2 = new SecretsProperties.KeyEntry();
+    v2.setVersion(2);
+    v2.setKey("second-secrets-key-32chars-minimum!!!");
+    SecretsProperties.KeyEntry v3 = new SecretsProperties.KeyEntry();
+    v3.setVersion(3);
+    v3.setKey("third-secrets-key-32chars-minimum!!!!");
+    props.setKeys(List.of(v1, v2, v3));
+    props.setActiveKeyVersion(2);
+
+    SecretsCrypto crypto = new SecretsConfig().secretsCrypto(props, emptyEnv());
+    assertEquals(2, crypto.currentVersion());
+    assertEquals(3, crypto.maxConfiguredVersion());
   }
 
   @Test

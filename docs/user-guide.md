@@ -100,7 +100,7 @@ Delete is blocked while a catalog row is still referenced (UI shows **Used by**)
 ## System (Admin)
 
 - **Parameters** — runtime settings (retention, pacing, public URL, feature toggles, campaign image inline max/total KB). Not for JWT, mailbox passwords, or VERP (VERP lives on each Sending Path).
-- **Secrets** (on the Parameters page) — shows current encryption key version and outdated count; **Migrate secrets to latest key** rewraps rows after you add a higher key version in config.
+- **Secrets** (on the Parameters page) — shows the **active** encryption key version and how many secrets are not on it; **Migrate secrets** rewraps those rows onto the active version (`MAILER_SECRETS_ACTIVE_KEY_VERSION`, or the highest `MAILER_SECRETS_KEY_n` if unset).
 - **Users & Grants** — create users, roles, list grants; MFA setup flows where offered.
 - **Ops Logs** / **Queue Sending Log** / **Audit Log** — operational and security-relevant history (passwords are not written to audit).
 
@@ -139,7 +139,7 @@ Operators do not manage those pages in the sidebar; they are public endpoints.
 ## Tips
 
 - Prefer **Test connection** on SMTP/IMAP before relying on polls or queues.
-- After adding a new `MAILER_SECRETS_KEY_n` in Compose/env, use **Migrate secrets** (or `MAILER_SECRETS_MIGRATE_ON_STARTUP=true` once) before removing old `MAILER_SECRETS_KEY_*` versions.
+- After adding a new `MAILER_SECRETS_KEY_n`, set `MAILER_SECRETS_ACTIVE_KEY_VERSION` to that *n* (optional if it is already the highest), then use **Migrate secrets** (or `MAILER_SECRETS_MIGRATE_ON_STARTUP=true` once) before removing old `MAILER_SECRETS_KEY_*` versions.
 - If send stays Queued, check Ops Logs, sending path credentials, and that the list has a valid path.
 - LIST_SENDER only sees lists they are granted — ask an Admin for grants.
 - Form fields show a short help line under the label; Parameter screens also show each setting’s description there.

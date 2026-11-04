@@ -7,13 +7,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 /**
- * Loads secret master keys from {@code MAILER_SECRETS_KEY_<version>} (version ≥ 1).
- * Highest present version encrypts new rows; keep older env vars until after rewrap.
+ * Loads secret master keys from {@code MAILER_SECRETS_KEY_<version>} (version 1…{@link #MAX_VERSION}).
+ * Keep every env var still referenced by rows until after a successful rewrap to the active version.
  */
 public final class SecretsKeyEnv {
 
-  /** Highest version number scanned (compose can still use any in this range). */
-  static final int MAX_VERSION = 32;
+  /** Highest version number scanned (long-lived installs; gaps allowed). */
+  static final int MAX_VERSION = 1024;
 
   private SecretsKeyEnv() {}
 

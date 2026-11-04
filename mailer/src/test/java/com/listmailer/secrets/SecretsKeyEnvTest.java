@@ -27,4 +27,16 @@ class SecretsKeyEnvTest {
   void emptyWhenNoneSet() {
     assertTrue(SecretsKeyEnv.read(new MockEnvironment()).isEmpty());
   }
+
+  @Test
+  void scansUpToMaxVersion() {
+    assertEquals(1024, SecretsKeyEnv.MAX_VERSION);
+    MockEnvironment env =
+        new MockEnvironment()
+            .withProperty(
+                "MAILER_SECRETS_KEY_1024", "key-at-max-version-at-least-thirty-two!!");
+    Map<Integer, String> keys = SecretsKeyEnv.read(env);
+    assertEquals(1, keys.size());
+    assertEquals("key-at-max-version-at-least-thirty-two!!", keys.get(1024));
+  }
 }

@@ -38,11 +38,12 @@ mailer:
     # AES-GCM key material (≥32 bytes). Env only — never Parameters (AD-18 / C6).
     secret: ${MAILER_OPAQUE_TOKEN_SECRET:dev-only-opaque-token-32chars-min!!}
   secrets:
-    # Master keys: set MAILER_SECRETS_KEY_1, MAILER_SECRETS_KEY_2, … (≥32 bytes each).
-    # Highest version encrypts new secrets; keep older env vars until after a successful rewrap.
+    # Master keys: MAILER_SECRETS_KEY_1 … MAILER_SECRETS_KEY_1024 (≥32 bytes each; gaps OK).
+    # Optional MAILER_SECRETS_ACTIVE_KEY_VERSION = encrypt/migrate target (default = highest KEY_n).
+    # Keep every KEY_n still referenced by rows until after a successful rewrap to the active version.
     # Optional YAML list below is only a fallback when no MAILER_SECRETS_KEY_* is set (tests).
     keys: []
-    # When true, rewrap all secrets to the latest key version during startup.
+    # When true, rewrap all secrets onto the active key version during startup.
     migrate-on-startup: ${MAILER_SECRETS_MIGRATE_ON_STARTUP:false}
   # Fixed delay after each run finishes. Tests override these to stay quiet.
   send-queue:

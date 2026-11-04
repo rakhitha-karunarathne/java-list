@@ -11,16 +11,27 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-/** AES-GCM for secrets table. Highest key version is current. */
+/**
+ * AES-GCM for secrets table. {@link #currentVersion()} is the active encrypt/migrate target
+ * (explicit or highest configured).
+ */
 public final class SecretsCrypto {
 
   private static final int IV_LEN = 12;
   private static final int TAG_BITS = 128;
 
   private final TreeMap<Integer, byte[]> keys;
+  private final int activeVersion;
   private final SecureRandom random = new SecureRandom();
 
   public SecretsCrypto(Map<Integer, String> rawKeys) {
+    this(rawKeys, null);
+  }
+
+  /**
+   * @param activeVersionOrNull when null, active = highest configured version
+   */
+  public SecretsCrypto(Map<Integer, String> rawKeys, Integer activeVersionOrNull) {
     if (rawKeys == null || rawKeys.isEmpty()) {
       throw new IllegalStateException(
           "At least one secrets master key is required (MAILER_SECRETS_KEY_<n>)");
@@ -30,21 +41,49 @@ public final class SecretsCrypto {
       if (e.getKey() == null || e.getValue() == null) {
         continue;
       }
+      int version = e.getKey();
+      if (version < 1 || version > SecretsKeyEnv.MAX_VERSION) {
+        throw new IllegalStateException(
+            "MAILER_SECRETS_KEY version must be 1.."
+                + SecretsKeyEnv.MAX_VERSION
+                + " (got "
+                + version
+                + ")");
+      }
       byte[] raw = e.getValue().getBytes(StandardCharsets.UTF_8);
       if (raw.length < 32) {
         throw new IllegalStateException(
-            "MAILER_SECRETS_KEY_" + e.getKey() + " must be at least 32 bytes");
+            "MAILER_SECRETS_KEY_" + version + " must be at least 32 bytes");
       }
-      map.put(e.getKey(), Arrays.copyOf(raw, 32));
+      map.put(version, Arrays.copyOf(raw, 32));
     }
     if (map.isEmpty()) {
       throw new IllegalStateException(
           "At least one secrets master key is required (MAILER_SECRETS_KEY_<n>)");
     }
     this.keys = map;
+    if (activeVersionOrNull == null) {
+      this.activeVersion = map.lastKey();
+    } else {
+      if (!map.containsKey(activeVersionOrNull)) {
+        throw new IllegalStateException(
+            "MAILER_SECRETS_ACTIVE_KEY_VERSION="
+                + activeVersionOrNull
+                + " requires MAILER_SECRETS_KEY_"
+                + activeVersionOrNull
+                + " to be set");
+      }
+      this.activeVersion = activeVersionOrNull;
+    }
   }
 
+  /** Version used for new encryption and rewrap target. */
   public int currentVersion() {
+    return activeVersion;
+  }
+
+  /** Highest configured key index (for detecting rows that need a restored key). */
+  public int maxConfiguredVersion() {
     return keys.lastKey();
   }
 

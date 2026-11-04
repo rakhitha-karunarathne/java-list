@@ -65,15 +65,15 @@ Set via `compose.yaml` or the environment (never as UI Parameters):
 
 | Variable | Role |
 | --- | --- |
-| `MAILER_SECRETS_KEY_1` | AES key material (≥32 bytes) for secrets table version 1 |
-| `MAILER_SECRETS_KEY_2` … `_32` | Optional extra key versions (same length rule); highest present encrypts new rows |
-| `MAILER_SECRETS_MIGRATE_ON_STARTUP` | `true` → rewrap all secrets to highest configured key on boot |
+| `MAILER_SECRETS_KEY_1` … `_1024` | AES key material (≥32 bytes) per version; gaps OK; keep any version still referenced by rows |
+| `MAILER_SECRETS_ACTIVE_KEY_VERSION` | Optional version used to encrypt new secrets and for migrate/rewrap; default = highest `KEY_n` present |
+| `MAILER_SECRETS_MIGRATE_ON_STARTUP` | `true` → rewrap all secrets onto the active key version on boot |
 | `MAILER_JWT_SECRET` | JWT signing (≥32 bytes) |
 | `MAILER_OPAQUE_TOKEN_SECRET` | Unsubscribe/approve tokens (≥32 bytes) |
 | `MAILER_BOOTSTRAP_EMAIL` / `MAILER_BOOTSTRAP_PASSWORD` | First Admin seed when `users` is empty |
 | `MAILER_PUBLIC_BASE_URL` | Public HTTPS base for links (`https://…`) |
 
-Key rotation (Compose/env only — no `application.yml` edit): add `MAILER_SECRETS_KEY_2` (then `_3`, …), keep every older `MAILER_SECRETS_KEY_*` still referenced in the DB, set `MAILER_SECRETS_MIGRATE_ON_STARTUP=true`, recreate the app. After migrate succeeds you may drop retired env vars. Or use Parameters → **Migrate secrets to latest key**.
+Key rotation (Compose/env only — no `application.yml` edit): add `MAILER_SECRETS_KEY_n` for a new version, set `MAILER_SECRETS_ACTIVE_KEY_VERSION` to that *n* (or omit to use the highest `KEY_*`), keep every older `MAILER_SECRETS_KEY_*` still referenced in the DB, set `MAILER_SECRETS_MIGRATE_ON_STARTUP=true`, recreate the app. After migrate succeeds you may drop retired env vars. Or use Parameters → **Migrate secrets**.
 
 ### Tests
 

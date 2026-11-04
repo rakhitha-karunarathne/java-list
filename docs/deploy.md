@@ -47,10 +47,10 @@ Required env when running the image:
 | `MAILER_JWT_SECRET` | ≥32 bytes |
 | `MAILER_OPAQUE_TOKEN_SECRET` | ≥32 bytes |
 | `MAILER_SECRETS_KEY_1` | ≥32 bytes (secrets table version 1) |
-| `MAILER_SECRETS_KEY_2` … | Optional newer key versions (env only; see below) |
+| `MAILER_SECRETS_KEY_2` … `_1024` | Optional key versions (env only; see below) |
 | `MAILER_PUBLIC_BASE_URL` | Public `https://…` base for links |
 
-Optional: `MAILER_BOOTSTRAP_EMAIL` / `MAILER_BOOTSTRAP_PASSWORD`, `SERVER_PORT`, `JAVA_OPTS`, `MAILER_SECRETS_MIGRATE_ON_STARTUP`.
+Optional: `MAILER_BOOTSTRAP_EMAIL` / `MAILER_BOOTSTRAP_PASSWORD`, `SERVER_PORT`, `JAVA_OPTS`, `MAILER_SECRETS_ACTIVE_KEY_VERSION`, `MAILER_SECRETS_MIGRATE_ON_STARTUP`.
 
 ```bash
 docker run --rm -p 8080:8080 \
@@ -73,17 +73,18 @@ Master keys are **not** listed in `application.yml`. Set numbered env vars:
 | Env | Meaning |
 | --- | --- |
 | `MAILER_SECRETS_KEY_1` | Version 1 material (≥32 bytes) |
-| `MAILER_SECRETS_KEY_2` | Version 2 material |
-| `MAILER_SECRETS_KEY_n` | Version *n* (scanned through 32) |
+| `MAILER_SECRETS_KEY_n` | Version *n* (scanned through **1024**; gaps OK) |
+| `MAILER_SECRETS_ACTIVE_KEY_VERSION` | Optional; encrypt + migrate/rewrap target. Default = highest `KEY_n` present |
 
-Highest present version encrypts new secrets. Keep every older `MAILER_SECRETS_KEY_*` that rows still reference until after a successful rewrap.
+Keep every `MAILER_SECRETS_KEY_*` that rows still reference until after a successful rewrap onto the active version.
 
 **Rotate in Compose**
 
 1. Add `MAILER_SECRETS_KEY_2: "your-new-key-at-least-32-bytes!!!!"` (keep `_1`).
-2. Set `MAILER_SECRETS_MIGRATE_ON_STARTUP: "true"` (or migrate later in UI: Parameters → Migrate secrets).
-3. `docker compose up -d --force-recreate app`.
-4. After migrate, you may remove retired keys from Compose **only** when no row still uses that `key_version`.
+2. Set `MAILER_SECRETS_ACTIVE_KEY_VERSION: "2"` (optional if `_2` is already the highest key).
+3. Set `MAILER_SECRETS_MIGRATE_ON_STARTUP: "true"` (or migrate later in UI: Parameters → Migrate secrets).
+4. `docker compose up -d --force-recreate app`.
+5. After migrate, you may remove retired keys from Compose **only** when no row still uses that `key_version`.
 
 If no `MAILER_SECRETS_KEY_*` is set, the app logs a warning and uses a built-in version-1 **dev** default (not for production).
 

@@ -25,13 +25,16 @@ public class SecretStore {
     return crypto.currentVersion();
   }
 
+  /** Secrets not encrypted with the active key version. */
   public long outdatedCount() {
-    return secrets.countByKeyVersionLessThan(crypto.currentVersion());
+    return secrets.countByKeyVersionNot(crypto.currentVersion());
   }
 
-  /** Rows encrypted with a key version higher than any configured key (config was rolled back). */
-  public long countWithKeyVersionAboveCurrent() {
-    return secrets.countByKeyVersionGreaterThan(crypto.currentVersion());
+  /**
+   * Rows encrypted with a key version higher than any configured key (that material is missing).
+   */
+  public long countWithKeyVersionAboveMaxConfigured() {
+    return secrets.countByKeyVersionGreaterThan(crypto.maxConfiguredVersion());
   }
 
   public String requirePlain(String secretId) {
@@ -90,13 +93,21 @@ public class SecretStore {
     }
   }
 
+  /** Rewrap every secret that is not already on the active key version. */
   @Transactional
   public RewrapResult rewrapAllToLatest() {
+    long missingKey = countWithKeyVersionAboveMaxConfigured();
+    if (missingKey > 0) {
+      throw new IllegalStateException(
+          missingKey
+              + " secret(s) use a key_version above the highest configured key — restore that key"
+              + " as MAILER_SECRETS_KEY_<version>");
+    }
     int current = crypto.currentVersion();
-    int alreadyCurrent = (int) (secrets.count() - secrets.countByKeyVersionLessThan(current));
+    int alreadyCurrent = (int) (secrets.count() - secrets.countByKeyVersionNot(current));
     int migrated = 0;
     int failed = 0;
-    for (SecretEntity row : secrets.findByKeyVersionLessThan(current)) {
+    for (SecretEntity row : secrets.findByKeyVersionNot(current)) {
       int oldVer = row.getKeyVersion();
       byte[] oldCipher = row.getCiphertext();
       try {

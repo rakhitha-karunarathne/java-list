@@ -9,11 +9,17 @@ public class SecretsProperties {
 
   /**
    * Optional YAML fallback when no {@code MAILER_SECRETS_KEY_*} env is set (tests / rare). Prefer
-   * env vars {@code MAILER_SECRETS_KEY_1}, {@code MAILER_SECRETS_KEY_2}, …
+   * env vars {@code MAILER_SECRETS_KEY_1} … {@code MAILER_SECRETS_KEY_1024}.
    */
   private List<KeyEntry> keys = new ArrayList<>();
 
-  /** When true, rewrap every secret to the highest configured key version on startup. */
+  /**
+   * Version that encrypts new secrets and is the migrate/rewrap target. Null → highest present key
+   * index. Env: {@code MAILER_SECRETS_ACTIVE_KEY_VERSION}.
+   */
+  private Integer activeKeyVersion;
+
+  /** When true, rewrap every secret onto the active key version on startup. */
   private boolean migrateOnStartup = false;
 
   public List<KeyEntry> getKeys() {
@@ -22,6 +28,14 @@ public class SecretsProperties {
 
   public void setKeys(List<KeyEntry> keys) {
     this.keys = keys != null ? keys : new ArrayList<>();
+  }
+
+  public Integer getActiveKeyVersion() {
+    return activeKeyVersion;
+  }
+
+  public void setActiveKeyVersion(Integer activeKeyVersion) {
+    this.activeKeyVersion = activeKeyVersion;
   }
 
   public boolean isMigrateOnStartup() {

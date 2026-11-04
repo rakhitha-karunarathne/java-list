@@ -34,7 +34,8 @@ public class SecretsConfig {
           "No MAILER_SECRETS_KEY_* set; using built-in version 1 dev default. "
               + "Set MAILER_SECRETS_KEY_1 (and higher) in the environment for real deploys.");
     }
-    return new SecretsCrypto(validateKeys(byVersion));
+    Integer active = resolveActiveKeyVersion(props, environment);
+    return new SecretsCrypto(validateKeys(byVersion), active);
   }
 
   @Bean
@@ -42,14 +43,6 @@ public class SecretsConfig {
     return args -> {
       if (!props.isMigrateOnStartup()) {
         return;
-      }
-      long newerThanConfig = store.countWithKeyVersionAboveCurrent();
-      if (newerThanConfig > 0) {
-        throw new IllegalStateException(
-            "mailer.secrets.migrate-on-startup: "
-                + newerThanConfig
-                + " secret(s) use a key_version above the highest configured key — restore that key"
-                + " as MAILER_SECRETS_KEY_<version>");
       }
       SecretStore.RewrapResult r = store.rewrapAllToLatest();
       log.info(
@@ -65,15 +58,55 @@ public class SecretsConfig {
     };
   }
 
+  /**
+   * Explicit active version from env (preferred) or YAML property; null means use highest key
+   * index.
+   */
+  static Integer resolveActiveKeyVersion(SecretsProperties props, Environment environment) {
+    String raw =
+        environment != null ? environment.getProperty("MAILER_SECRETS_ACTIVE_KEY_VERSION") : null;
+    if (StringUtils.hasText(raw)) {
+      try {
+        int v = Integer.parseInt(raw.trim());
+        if (v < 1 || v > SecretsKeyEnv.MAX_VERSION) {
+          throw new IllegalStateException(
+              "MAILER_SECRETS_ACTIVE_KEY_VERSION must be 1.."
+                  + SecretsKeyEnv.MAX_VERSION
+                  + " (got "
+                  + v
+                  + ")");
+        }
+        return v;
+      } catch (NumberFormatException ex) {
+        throw new IllegalStateException(
+            "MAILER_SECRETS_ACTIVE_KEY_VERSION must be an integer (got \"" + raw + "\")");
+      }
+    }
+    Integer fromProps = props != null ? props.getActiveKeyVersion() : null;
+    if (fromProps != null && (fromProps < 1 || fromProps > SecretsKeyEnv.MAX_VERSION)) {
+      throw new IllegalStateException(
+          "mailer.secrets.active-key-version must be 1.."
+              + SecretsKeyEnv.MAX_VERSION
+              + " (got "
+              + fromProps
+              + ")");
+    }
+    return fromProps;
+  }
+
   private static Map<Integer, String> keysFromProperties(SecretsProperties props) {
     Map<Integer, String> byVersion = new LinkedHashMap<>();
     for (SecretsProperties.KeyEntry e : props.getKeys()) {
       if (e == null) {
         throw new IllegalStateException("mailer.secrets.keys entry must not be null");
       }
-      if (e.getVersion() < 1) {
+      if (e.getVersion() < 1 || e.getVersion() > SecretsKeyEnv.MAX_VERSION) {
         throw new IllegalStateException(
-            "mailer.secrets.keys version must be >= 1 (got " + e.getVersion() + ")");
+            "mailer.secrets.keys version must be 1.."
+                + SecretsKeyEnv.MAX_VERSION
+                + " (got "
+                + e.getVersion()
+                + ")");
       }
       if (byVersion.put(e.getVersion(), e.getKey()) != null) {
         throw new IllegalStateException(
@@ -88,9 +121,13 @@ public class SecretsConfig {
     for (Map.Entry<Integer, String> e : byVersion.entrySet()) {
       int version = e.getKey();
       String key = e.getValue();
-      if (version < 1) {
+      if (version < 1 || version > SecretsKeyEnv.MAX_VERSION) {
         throw new IllegalStateException(
-            "MAILER_SECRETS_KEY version must be >= 1 (got " + version + ")");
+            "MAILER_SECRETS_KEY version must be 1.."
+                + SecretsKeyEnv.MAX_VERSION
+                + " (got "
+                + version
+                + ")");
       }
       if (!StringUtils.hasText(key) || key.getBytes(StandardCharsets.UTF_8).length < 32) {
         throw new IllegalStateException(

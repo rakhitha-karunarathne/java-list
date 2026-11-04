@@ -1051,15 +1051,15 @@ export function ParametersPage({ token, onError }) {
     <section className="card">
       <h2>Secrets</h2>
       <p className="hint">
-        Reversible credentials (mail passwords, MFA seed) are encrypted. Highest configured key
-        version is current
+        Reversible credentials (mail passwords, MFA seed) are encrypted with the active key version
         {secretStatus
-          ? ` (v${secretStatus.currentKeyVersion}; ${secretStatus.outdatedCount} on older keys).`
-          : '.'}
+          ? ` (v${secretStatus.currentKeyVersion}; ${secretStatus.outdatedCount} not on that version).`
+          : '.'}{' '}
+        Set via MAILER_SECRETS_ACTIVE_KEY_VERSION (default: highest MAILER_SECRETS_KEY_n).
       </p>
       {secretMsg ? <p className="hint">{secretMsg}</p> : null}
       <button type="button" className="btn secondary" disabled={rewrapping} onClick={rewrapSecrets}>
-        Migrate secrets to latest key
+        Migrate secrets to active key
       </button>
     </section>
     <div className="card">
