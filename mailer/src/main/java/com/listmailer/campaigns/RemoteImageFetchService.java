@@ -40,21 +40,25 @@ public class RemoteImageFetchService {
     if (html == null) {
       return "";
     }
-    int maxPayload = intParam(ParameterKeys.CAMPAIGN_PAYLOAD_MAX_BYTES, 2_000_000);
-    int maxImage = intParam(ParameterKeys.CAMPAIGN_IMAGE_MAX_BYTES, 512_000);
+    int maxPayloadKb = intParam(ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB, 2000);
+    int maxImageKb = intParam(ParameterKeys.CAMPAIGN_IMAGE_MAX_KB, 500);
     for (ListEntity list : selectedLists) {
       if (list.getPayloadOverride() != null && !list.getPayloadOverride().isBlank()) {
         try {
-          maxPayload = Math.min(maxPayload, Integer.parseInt(list.getPayloadOverride().trim()));
+          // List payload_override is KB (same unit as campaign.payload.max.kb).
+          maxPayloadKb =
+              Math.min(maxPayloadKb, Integer.parseInt(list.getPayloadOverride().trim()));
         } catch (NumberFormatException ignored) {
           // keep system default
         }
       }
     }
+    int maxPayload = Math.max(1, maxPayloadKb) * 1024;
+    int maxImage = Math.max(1, maxImageKb) * 1024;
     int approx = html.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
     if (approx > maxPayload) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "payload exceeds ceiling (" + maxPayload + " bytes)");
+          HttpStatus.BAD_REQUEST, "payload exceeds ceiling (" + maxPayloadKb + " KB)");
     }
     if (mode == ImageFetchMode.OFF) {
       return html;

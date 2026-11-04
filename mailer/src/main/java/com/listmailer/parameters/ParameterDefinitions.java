@@ -113,13 +113,13 @@ public final class ParameterDefinitions {
         "Off",
         "Remote image fetch on Campaign queue: Off | Best Effort | Mandatory. Default Off.");
     put(
-        ParameterKeys.CAMPAIGN_PAYLOAD_MAX_BYTES,
-        "2000000",
-        "Hard upper for Campaign HTML+text payload bytes before queue. Integer >= 1. Default 2000000.");
+        ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB,
+        "2000",
+        "Hard upper for Campaign HTML+text payload size in KB before queue. Integer >= 1. Default 2000.");
     put(
-        ParameterKeys.CAMPAIGN_IMAGE_MAX_BYTES,
-        "512000",
-        "Hard upper for a single fetched/stored Campaign image. Integer >= 1. Default 512000.");
+        ParameterKeys.CAMPAIGN_IMAGE_MAX_KB,
+        "500",
+        "Hard upper for a single fetched/stored Campaign image in KB. Integer >= 1. Default 500.");
     put(
         ParameterKeys.CAMPAIGN_IMAGE_INLINE_MAX_KB,
         "256",

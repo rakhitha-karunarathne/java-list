@@ -112,7 +112,13 @@ public class ParametersProbeController {
         || ParameterKeys.SEND_BATCH_SIZE.equals(key)
         || ParameterKeys.SEND_BATCH_DURATION_MINUTES.equals(key)
         || ParameterKeys.SEND_MESSAGES_PER_HOUR.equals(key)
-        || ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS.equals(key)) {
+        || ParameterKeys.PUBLIC_DL_CACHE_MAX_AGE_HOURS.equals(key)
+        || ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB.equals(key)
+        || ParameterKeys.CAMPAIGN_IMAGE_MAX_KB.equals(key)
+        || ParameterKeys.CAMPAIGN_IMAGE_INLINE_MAX_KB.equals(key)
+        || ParameterKeys.CAMPAIGN_IMAGE_INLINE_TOTAL_MAX_KB.equals(key)
+        || ParameterKeys.BOUNCE_MESSAGES_PROCESSED_RETENTION_DAYS.equals(key)
+        || ParameterKeys.BOUNCE_MESSAGES_UNCORRELATED_RETENTION_DAYS.equals(key)) {
       requireInt(body.value(), 1);
     }
     if (ParameterKeys.SEND_DELAY_PER_EMAIL_MS.equals(key)

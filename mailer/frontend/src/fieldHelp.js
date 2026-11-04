@@ -43,6 +43,8 @@ export const fieldHelp = {
   listSendingPath: 'Default SMTP path for campaigns that include this list (unless overridden).',
   footerId: 'Footer appended to messages for this list (or sender grant).',
   spamThreshold: 'Optional spam score threshold for this list; blank uses the system default.',
+  payloadOverride:
+    'Optional max campaign HTML+text size in KB for this list. Blank uses the system Parameter.',
   footerHtml: 'HTML appended after the campaign body.',
   footerText: 'Plain-text footer appended after the campaign text body.',
   bulkAddresses: 'One address per line, or separated by commas or semicolons.',

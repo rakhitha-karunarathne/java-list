@@ -35,8 +35,8 @@ public final class ParameterKeys {
   public static final String SEND_BATCH_DURATION_MINUTES = "send.batch.duration.minutes";
   public static final String SEND_MESSAGES_PER_HOUR = "send.messages.per.hour";
   public static final String IMAGE_FETCH_MODE = "campaign.image.fetch.mode";
-  public static final String CAMPAIGN_PAYLOAD_MAX_BYTES = "campaign.payload.max.bytes";
-  public static final String CAMPAIGN_IMAGE_MAX_BYTES = "campaign.image.max.bytes";
+  public static final String CAMPAIGN_PAYLOAD_MAX_KB = "campaign.payload.max.kb";
+  public static final String CAMPAIGN_IMAGE_MAX_KB = "campaign.image.max.kb";
   /** Per-image max size (KB) for CID embed when Campaign embed flag is on. */
   public static final String CAMPAIGN_IMAGE_INLINE_MAX_KB = "campaign.image.inline.max.kb";
   /** Max total CID image bytes (KB) per outbound message. */
