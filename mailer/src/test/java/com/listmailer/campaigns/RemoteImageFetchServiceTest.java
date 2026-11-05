@@ -28,7 +28,7 @@ class RemoteImageFetchServiceTest {
   @Test
   void payloadCeilingUsesKbParameter() {
     when(parameters.get(ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB)).thenReturn(Optional.of("1"));
-    when(parameters.get(ParameterKeys.CAMPAIGN_IMAGE_MAX_KB)).thenReturn(Optional.of("500"));
+    when(parameters.get(ParameterKeys.CAMPAIGN_IMAGE_MAX_KB)).thenReturn(Optional.of("4096"));
     String html = "x".repeat(1025);
 
     ResponseStatusException ex =
@@ -41,8 +41,8 @@ class RemoteImageFetchServiceTest {
 
   @Test
   void listPayloadOverrideIsKb() {
-    when(parameters.get(ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB)).thenReturn(Optional.of("2000"));
-    when(parameters.get(ParameterKeys.CAMPAIGN_IMAGE_MAX_KB)).thenReturn(Optional.of("500"));
+    when(parameters.get(ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB)).thenReturn(Optional.of("2048"));
+    when(parameters.get(ParameterKeys.CAMPAIGN_IMAGE_MAX_KB)).thenReturn(Optional.of("4096"));
     ListEntity list =
         new ListEntity("L1", "News", "sp", null, null, "1", null, Instant.now());
     String html = "x".repeat(1025);

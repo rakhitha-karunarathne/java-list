@@ -40,8 +40,8 @@ public class RemoteImageFetchService {
     if (html == null) {
       return "";
     }
-    int maxPayloadKb = intParam(ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB, 2000);
-    int maxImageKb = intParam(ParameterKeys.CAMPAIGN_IMAGE_MAX_KB, 500);
+    int maxPayloadKb = intParam(ParameterKeys.CAMPAIGN_PAYLOAD_MAX_KB, 2048);
+    int maxImageKb = intParam(ParameterKeys.CAMPAIGN_IMAGE_MAX_KB, 4096);
     for (ListEntity list : selectedLists) {
       if (list.getPayloadOverride() != null && !list.getPayloadOverride().isBlank()) {
         try {
